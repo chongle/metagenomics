@@ -15,6 +15,7 @@ class Edge;
 
 struct MPlist
 {
+    // SVN test
 	UINT64 matePairID;				// This list stores the list of ID's of the matepairs of the current read.
 	UINT8 matePairOrientation; 		// List of mate pair orientation.
 									// 0 = 00 means the reverse of this read and the reverse of the second read are matepairs.
@@ -33,7 +34,6 @@ class Read
 	private:
 		UINT64 readNumber; 						// Unique Identification of the read.
 		string read; 							// String representation of the read.
-		// CP: Is readReverse stored in memory for every read? Why can't this be calculated on the flight to save memory?
 		string readReverse;
 		UINT32 frequency; 						// Frequency of the read. Number of times this read is present in the dataset. Used in some statistical analysis.
 		vector<MPlist> *matePairList;
