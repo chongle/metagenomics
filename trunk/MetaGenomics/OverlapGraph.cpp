@@ -71,6 +71,7 @@ OverlapGraph::OverlapGraph(void)
 /**********************************************************************************************************************
 	Another Constructor. Build the overlap grpah using the hash table.
 **********************************************************************************************************************/
+/*
 OverlapGraph::OverlapGraph(HashTable *ht)
 {
 	// Initialize the variables.
@@ -80,6 +81,7 @@ OverlapGraph::OverlapGraph(HashTable *ht)
 	flowComputed = false;
 	buildOverlapGraphFromHashTable(ht);
 }
+*/
 
 
 
@@ -117,12 +119,16 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	vector<nodeType> *exploredReads = new vector<nodeType>;
 	exploredReads->reserve(dataSet->getNumberOfUniqueReads()+1);
 
+	// This is a queue used to process the reads. The reads are processed in a certain order so that we can remove the transitive edges after inserting all the edges of a read.
+	// Once all edges of a read is inserted, then we add all the edges of neighbors and then neighbors' neighbors.
 	vector<UINT64> * queue = new vector<UINT64>;
 	queue->reserve(dataSet->getNumberOfUniqueReads()+1);
 
+	//This vector is used for discovering transitive edges.
 	vector<markType> *markedNodes = new vector<markType>;
 	markedNodes->reserve(dataSet->getNumberOfUniqueReads()+1);
 
+	// CP: Initialize graph containing every unique read represented by a node.
 	graph = new vector< vector<Edge *> * >;
 	graph->reserve(dataSet->getNumberOfUniqueReads()+1);
 
@@ -136,17 +142,21 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 		queue->push_back(0);
 		markedNodes->push_back(VACANT);
 	}
-
+	// CP: assign contained reads to super-reads (populate superReadID in the Read class), but not remove them
 	markContainedReads();
 
+	// CP: why reading the mate pair information here, not when constructing Dataset initially?
+	// BH: We read the matepair information here again. Because some of the reads are contained and will be assegned to their super read ID in the mate-pair.
 	this->dataSet->readMatePairsFromFile();
 
+	// CP: find the overlap between reads and remove transitive edges along the way
 	for(UINT64 i = 1; i <= dataSet->getNumberOfUniqueReads(); i++)
 	{
 		if(exploredReads->at(i) == UNEXPLORED)
 		{
 			UINT64 start = 0, end = 0; 											// Initialize queue start and end.
-			queue->at(end++) = i;
+			queue->at(end) = i;													// CP: use the value of end [i.e. queue->at(0) = i], THEN increment end.
+			end ++;
 			while(start < end) 													// This loop will explore all connected component starting from read i.
 			{
 				counter++;
@@ -207,7 +217,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	delete exploredReads;
 	delete queue;
 	delete markedNodes;
-	delete hashTable;	// Do not need the hash table any more.
+	//delete hashTable;	// Do not need the hash table any more.
 	do
 	{
 		 counter = contractCompositePaths();
@@ -1129,9 +1139,9 @@ bool OverlapGraph::calculateMeanAndSdOfInsertSize(void)
 	if(dataSet->pairedEndDatasetFileNames.size() == 0)			// If no paired-edge dataset
 		return true;											// No need to proceed.
 
-	vector<UINT64> *insertSizes = new vector<UINT64>;
+	vector<INT64> *insertSizes = new vector<INT64>;
 	vector<Edge *> listOfEdgesRead1, listOfEdgesRead2;
-	vector<UINT64> locationOnEdgeRead1, locationOnEdgeRead2;
+	vector<INT64> locationOnEdgeRead1, locationOnEdgeRead2;
 
 	for(UINT64 d = 0; d < dataSet->pairedEndDatasetFileNames.size(); d++)	// For each dataset.
 	{
@@ -1180,7 +1190,7 @@ bool OverlapGraph::calculateMeanAndSdOfInsertSize(void)
 			}
 		}
 
-		UINT64 sum = 0, variance=0;
+		INT64 sum = 0, variance=0;
 		if(insertSizes->size() == 0) // If no insert size found
 		{
 			cout << "No insert-size found for dataset: " << d << endl;
@@ -1199,7 +1209,6 @@ bool OverlapGraph::calculateMeanAndSdOfInsertSize(void)
 
 		sdOfInsertSizes.push_back(sqrt(variance/insertSizes->size()));  // Calculate and insert the standard deviation.
 
-
 		// Print the values of the current dataset.
 		cout << "Mean set to: " << meanOfInsertSizes.at(d) << endl;
 		cout << "SD set to: " << sdOfInsertSizes.at(d) << endl;
@@ -1208,7 +1217,7 @@ bool OverlapGraph::calculateMeanAndSdOfInsertSize(void)
 	}
 	for(UINT64 i = 0; i < meanOfInsertSizes.size(); i++)
 	{
-		if(longestMeanOfInsertSize <meanOfInsertSizes.at(i))
+		if(longestMeanOfInsertSize < meanOfInsertSizes.at(i))
 		{
 			longestMeanOfInsertSize = meanOfInsertSizes.at(i);
 		}
@@ -1466,6 +1475,7 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 				UINT64 u = listOfNodes->at(edge->getSourceRead()->getReadNumber());
 				UINT64 v = listOfNodes->at(edge->getDestinationRead()->getReadNumber());
 
+				// CP: comment more details about the cost function
 				// set the bound and cost here
 				// if edge has more than 20 reads:
 				//   FLOWLB[0] = 1; FLOWUB[0] = 1; COST[0] = 1;
@@ -1475,6 +1485,10 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 				//   FLOWLB[0] = 0; FLOWUB[0] = 1; COST[0] = 1;
 				//   FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000;
 				//   FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000;
+				// cost function is set in such a way that for the composite edges with more that 20 reads in them we will push at least one units of flow.
+				// Otherwise we set the lower bound of flow to 0, meaning that these edges might not have any flow at the endl.
+				// The cost of pushing the first using of flow in very cheap and then we pay high price to push more than 1 units of flow.
+				// This will ensure that we do not push flow were it is not necessary.
 				calculateBoundAndCost(edge, FLOWLB, FLOWUB, COST);
 
 				if(u < v || (u == v && edge < edge->getReverseEdge()))
@@ -1819,7 +1833,7 @@ UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 dista
 	{
 		if(firstEdge == lastEdge) // Destination found.
 		{
-			if(distanceOnLastEdge + pathLengths.at(level - 1) >= getMean(datasetNumber) - 3 * getSD(datasetNumber) && distanceOnLastEdge + pathLengths.at(level - 1) <= getMean(datasetNumber) + 3 * getSD(datasetNumber))
+			if((INT64)(distanceOnLastEdge + pathLengths.at(level - 1)) >= (INT64)((INT64)(getMean(datasetNumber)) - 3 * (INT64)(getSD(datasetNumber))) && distanceOnLastEdge + pathLengths.at(level - 1) <= getMean(datasetNumber) + 3 * getSD(datasetNumber))
 			{
 				listOfEdges.push_back(firstEdge);
 				pathLengths.push_back(distanceOnLastEdge + pathLengths.at(level - 1));

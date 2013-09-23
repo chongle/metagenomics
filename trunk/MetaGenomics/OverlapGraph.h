@@ -24,33 +24,42 @@ enum nodeType {
 };
 
 enum markType{
-	VACANT = 0,
-	INPLAY = 1,
-	ELIMINATED = 2
+	// This type is used when we discover transitive edges.
+	VACANT = 0,	// Initially all nodes are marked as VACANT.
+	INPLAY = 1,	// then all the neighbors of the current node is marked as INPLAY
+	ELIMINATED = 2	// Then neighbors' (marked as INPLAY) neighbors (marked as INPLAY) are marked as ELIMINATED
+					// At the end all edges to the neighbor marked as ELIMINATED are marked as transitive edges and will be removed.
 };
 
 class OverlapGraph
 {
 	private:
+		//CP: these two objects are NOT modified here
 		Dataset * dataSet; 											// Pointer to the dataset containing all the reads.
 		HashTable * hashTable;										// Pointer to the hash table.
+		// CP: the overlap graph is a vector of nodes (i.e. reads) with their vectors of incident edges
+		// CP: the readNumber of a read is equal to the index of the node in this vector. Because readNumber starts from 1, the
 		vector< vector<Edge *> * > *graph;							// Adjacency list of the graph.
-		vector<UINT64> meanOfInsertSizes; 							// Mean of insert sizes.
-		vector<UINT64> sdOfInsertSizes; 							// Standard deviation of insert sizes.
-		UINT64 longestMeanOfInsertSize;
-		UINT64 estimatedGenomeSize;									// Estimated genome size. Works for isolated genome. Will not work for Metagenomics.
 		UINT64 numberOfNodes;										// Number of nodes in the overlap graph.
 		UINT64 numberOfEdges;										// Number of edges in the overlap graph.
+		// CP: the vector corresponds to a list of datasets
+		vector<INT64> meanOfInsertSizes; 							// Mean of insert sizes.
+		vector<INT64> sdOfInsertSizes; 							// Standard deviation of insert sizes.
+		INT64 longestMeanOfInsertSize;
+		UINT64 estimatedGenomeSize;									// Estimated genome size. Works for isolated genome. Will not work for Metagenomics.
 		UINT8 mergedEdgeOrientation(Edge *edge1, Edge *edge2);		// Orientation of the edge when two edges are merged.
 		UINT8 twinEdgeOrientation(UINT8 orientation);				// Orientation of the reverse edge.
+		// When we merge two edges, we need to merge the list of ordered reads, their overlap offsets and orientations.
 		bool mergeList(Edge *edge1, Edge *edge2, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * ListOrientations);
+		// Find support between to reads in the the overlap graph. Find all pathas between two reads in the graph. Only the subpath that are common in all such paths are considered to be supported.
 		bool findPathBetweenMatepairs(Read * read1, Read * read2, UINT8 orient, UINT8 datasetNumbe, vector <Edge *> &copyOfPath, vector <UINT64> &copyOfFlags);
+		// Starting from the firstEdge we try to reach lastEdge by distance mean + 3 *sd of the datasetNumber.
 		UINT64 exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags);
 
 	public:
 		bool flowComputed;											// Flag to check wheather the flow is computed or not.
 		OverlapGraph(void);											// Default constructor.
-		OverlapGraph(HashTable *ht);								// Another constructor.
+		//OverlapGraph(HashTable *ht);								// Another constructor.
 		~OverlapGraph();											// Destructor.
 		bool markTransitiveEdges(UINT64 readNumber, vector<markType> * markedNodes); // Mark transitive edges of a read.
 		bool buildOverlapGraphFromHashTable(HashTable *ht);			// Build the overlap graph using hashtable.

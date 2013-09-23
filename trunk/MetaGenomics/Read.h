@@ -34,6 +34,8 @@ class Read
 	private:
 		UINT64 readNumber; 						// Unique Identification of the read.
 		string read; 							// String representation of the read.
+		// CP: Is readReverse stored in memory for every read? Why can't this be calculated on the flight to save memory?
+		// BH: We need to find reverse complement of the reads in many places. That's whey I computed them once and saved them.
 		string readReverse;
 		UINT32 frequency; 						// Frequency of the read. Number of times this read is present in the dataset. Used in some statistical analysis.
 		vector<MPlist> *matePairList;
