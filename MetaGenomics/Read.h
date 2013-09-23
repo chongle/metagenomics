@@ -15,7 +15,7 @@ class Edge;
 
 struct MPlist
 {
-    // SVN test
+        // Merge test
 	UINT64 matePairID;				// This list stores the list of ID's of the matepairs of the current read.
 	UINT8 matePairOrientation; 		// List of mate pair orientation.
 									// 0 = 00 means the reverse of this read and the reverse of the second read are matepairs.
