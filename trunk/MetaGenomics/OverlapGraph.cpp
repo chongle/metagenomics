@@ -71,7 +71,6 @@ OverlapGraph::OverlapGraph(void)
 /**********************************************************************************************************************
 	Another Constructor. Build the overlap grpah using the hash table.
 **********************************************************************************************************************/
-/*
 OverlapGraph::OverlapGraph(HashTable *ht)
 {
 	// Initialize the variables.
@@ -81,7 +80,7 @@ OverlapGraph::OverlapGraph(HashTable *ht)
 	flowComputed = false;
 	buildOverlapGraphFromHashTable(ht);
 }
-*/
+
 
 
 /**********************************************************************************************************************
@@ -115,21 +114,20 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	hashTable = ht;
 	dataSet = ht->getDataset();
 	UINT64 counter = 0;
+	vector<nodeType> *exploredReads = new vector<nodeType>;
+	exploredReads->reserve(dataSet->getNumberOfUniqueReads()+1);
 
-	vector<nodeType> *exploredReads = new vector<nodeType>;      // CP: store the node type of each read for their explore status
-	exploredReads->reserve(dataSet->getNumberOfUniqueReads()+1); // CP: +1 because the node index starts from 1, 2, ...
-
-	// CP: comment
 	vector<UINT64> * queue = new vector<UINT64>;
 	queue->reserve(dataSet->getNumberOfUniqueReads()+1);
 
-	// CP: comment
 	vector<markType> *markedNodes = new vector<markType>;
 	markedNodes->reserve(dataSet->getNumberOfUniqueReads()+1);
 
-	// CP: Initialize graph containing every unique read represented by a node.
 	graph = new vector< vector<Edge *> * >;
 	graph->reserve(dataSet->getNumberOfUniqueReads()+1);
+
+
+
 	for(UINT64 i = 0; i <= dataSet->getNumberOfUniqueReads(); i++) // Initialization
 	{
 		vector<Edge *> *newList = new vector<Edge *>;
@@ -139,19 +137,16 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 		markedNodes->push_back(VACANT);
 	}
 
-	// CP: assign contained reads to super-reads (populate superReadID in the Read class), but not remove them
 	markContainedReads();
 
-	// CP: why reading the mate pair information here, not when constructing Dataset initially?
 	this->dataSet->readMatePairsFromFile();
 
-	// CP: find the overlap between reads and remove transitive edges along the way
 	for(UINT64 i = 1; i <= dataSet->getNumberOfUniqueReads(); i++)
 	{
 		if(exploredReads->at(i) == UNEXPLORED)
 		{
 			UINT64 start = 0, end = 0; 											// Initialize queue start and end.
-			queue->at(end++) = i;					// CP: use the value of end [i.e. queue->at(0) = i], THEN increment end.
+			queue->at(end++) = i;
 			while(start < end) 													// This loop will explore all connected component starting from read i.
 			{
 				counter++;
@@ -212,7 +207,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	delete exploredReads;
 	delete queue;
 	delete markedNodes;
-//	delete hashTable;	// Do not need the hash table any more.
+	delete hashTable;	// Do not need the hash table any more.
 	do
 	{
 		 counter = contractCompositePaths();
@@ -743,7 +738,7 @@ bool OverlapGraph::mergeEdges(Edge *edge1, Edge *edge2)
 	insertEdge(edgeReverse);						// Insert the new reverse edge in the graph.
 
 	edge1->flow = edge1->flow - flow;				// Remove the used flow from edge1.
-	edge1->getReverseEdge()->flow = edge1->flow;	// Revmod the used flow from the reverse of edge1.
+	edge1->getReverseEdge()->flow = edge1->flow;	// Remove the used flow from the reverse of edge1.
 
 	edge2->flow = edge2->flow - flow;				// Remove the used flow from edge2.
 	edge2->getReverseEdge()->flow = edge2->flow;	// Remove the used flow from teh reverse of edge2.
@@ -925,6 +920,7 @@ UINT64 OverlapGraph::removeAllSimpleEdgesWithoutFlow()
 	}
 	for(UINT64 i = 0 ; i < listOfEdges.size(); i++)
 		removeEdge(listOfEdges.at(i));		// remove the edges from the list.
+	cout<<"Edges removed: " << listOfEdges.size() << endl;
 	CLOCKSTOP;
 	return listOfEdges.size();
 }
@@ -1129,6 +1125,7 @@ bool OverlapGraph::removeReadLocations(Edge *edge)
 bool OverlapGraph::calculateMeanAndSdOfInsertSize(void)
 {
 	CLOCKSTART;
+	longestMeanOfInsertSize = 0;
 	if(dataSet->pairedEndDatasetFileNames.size() == 0)			// If no paired-edge dataset
 		return true;											// No need to proceed.
 
@@ -1209,6 +1206,14 @@ bool OverlapGraph::calculateMeanAndSdOfInsertSize(void)
 		cout << "Reads on same edge: " << insertSizes->size() << endl;
 
 	}
+	for(UINT64 i = 0; i < meanOfInsertSizes.size(); i++)
+	{
+		if(longestMeanOfInsertSize <meanOfInsertSizes.at(i))
+		{
+			longestMeanOfInsertSize = meanOfInsertSizes.at(i);
+		}
+	}
+	cout << "Mean of longest insert size: " << longestMeanOfInsertSize << endl;
 
 	delete insertSizes;
 	CLOCKSTOP;
@@ -1460,8 +1465,6 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 				Edge *edge = graph->at(i)->at(j);
 				UINT64 u = listOfNodes->at(edge->getSourceRead()->getReadNumber());
 				UINT64 v = listOfNodes->at(edge->getDestinationRead()->getReadNumber());
-
-				// CP: comment more details about the cost function
 
 				// set the bound and cost here
 				// if edge has more than 20 reads:
@@ -2125,6 +2128,198 @@ bool OverlapGraph::simplifyGraph(void)
 	Original Scaffolder function.
 	*******************************************************************************************************************/
 UINT64 OverlapGraph::scaffolder(void)
+{
+	CLOCKSTART;
+	UINT64 pairsOfEdgesMerged = 0;
+	vector <pairedEdges> listOfPairedEdges;
+	vector<Edge *> *listOfCompositeEdges = new vector<Edge *>;
+	for(UINT64 i = 1; i < graph->size(); i++) // For each node
+	{
+		for(UINT64 j = 0 ; j < graph->at(i)->size(); j++) // for each edge
+		{
+			Edge *edge = graph->at(i)->at(j);
+			if(!edge->getListOfReads()->empty()) // composite edge
+			{
+				listOfCompositeEdges->push_back(edge);	// List of all the composite edges.
+			}
+		}
+	}
+	for(UINT64 i = 0 ; i < listOfCompositeEdges->size(); i++) // For each composite edge in the graph
+	{
+		Edge *edge1 = listOfCompositeEdges->at(i);
+		vector<Edge *> *listOfFeasibleEdges = getListOfFeasibleEdges(listOfCompositeEdges->at(i)); // Find the list of other edges that share unique matepairs with the current edge. Only check one of the endpoints of the current edge.
+		for(UINT64 j = 0; j < listOfFeasibleEdges->size(); j++ ) // Check the current edge vs the list of edges for suppor for scaffolder
+		{
+			Edge *edge2 =listOfFeasibleEdges->at(j);
+			UINT64 distance;
+			UINT64 support = checkForScaffold(edge1,edge2,&distance); // check the support and distance
+			if(support>0)	// If there are support then add the current pair in the list.
+			{
+				pairedEdges newPair;
+				newPair.edge1 = edge1;
+				newPair.edge2 = edge2;
+				newPair.support = support;
+				newPair.distance = distance;
+				newPair.isFreed = false;
+				listOfPairedEdges.push_back(newPair);
+
+			}
+		}
+		delete listOfFeasibleEdges;	// Free the memory
+	}
+
+	sort(listOfPairedEdges.begin(), listOfPairedEdges.end());		// Sort the list according to support.
+
+	for(UINT64 i = 0; i < listOfPairedEdges.size(); i++)
+	{
+		if(listOfPairedEdges.at(i).isFreed == false && listOfPairedEdges.at(i).support >= minimumSupport)
+		{
+			pairsOfEdgesMerged++;
+			listOfPairedEdges.at(i).distance = listOfPairedEdges.at(i).distance / listOfPairedEdges.at(i).support;
+			cout << setw(4) << i + 1 << " (" << setw(10) << listOfPairedEdges.at(i).edge1->getSourceRead()->getReadNumber() << "," << setw(10) <<listOfPairedEdges.at(i).edge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge1->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge1->flow << " and (" << setw(10) << listOfPairedEdges.at(i).edge2->getSourceRead()->getReadNumber() << "," << setw(10) << listOfPairedEdges.at(i).edge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge2->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge2->flow << " are supported " << setw(4) << listOfPairedEdges.at(i).support << " times. Average distance: "<< setw(4) << listOfPairedEdges.at(i).distance << endl;
+			Edge * e1f = listOfPairedEdges.at(i).edge1, *e1r = listOfPairedEdges.at(i).edge1->getReverseEdge();
+			Edge * e2f = listOfPairedEdges.at(i).edge2, *e2r = listOfPairedEdges.at(i).edge2->getReverseEdge();
+			mergeEdgesDisconnected(listOfPairedEdges.at(i).edge1, listOfPairedEdges.at(i).edge2,listOfPairedEdges.at(i).distance);		// Merge the edges.
+			for(UINT64 j = i + 1; j<listOfPairedEdges.size(); j++)
+			{
+				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r || listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
+					listOfPairedEdges.at(j).isFreed = true;
+				if( listOfPairedEdges.at(j).edge2 == e1f || listOfPairedEdges.at(j).edge2 == e1r || listOfPairedEdges.at(j).edge2 == e2f || listOfPairedEdges.at(j).edge2 == e2r )
+					listOfPairedEdges.at(j).isFreed = true;
+			}
+		}
+	}
+
+	CLOCKSTOP;
+	return pairsOfEdgesMerged;
+}
+
+/**********************************************************************************************************************
+ 	 This functions returns a list of edges that might be joined to "edge"
+***********************************************************************************************************************/
+vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(Edge *edge)
+{
+
+	Edge * rEdge=edge->getReverseEdge(); // We want to find if there are other edges that share matepairs. current edge (u,v) we check the matepairs near the node v. That's why we took the reverse edge.
+	vector<Edge *> * feasibleListOfEdges = new vector<Edge *>;
+	UINT64 dist = 0;
+	for(UINT64 i = 0; i <rEdge->getListOfReads()->size(); i++) // for each read in the edge
+	{
+		dist+=rEdge->getListOfOverlapOffsets()->at(i);	// offset. We do not have to go much deeper. we need to make sure that we atleast go upto the longest insert size.
+		if(dist > 2*longestMeanOfInsertSize)	// longest insert size mean
+			 break;
+		UINT64 mp1=rEdge->getListOfReads()->at(i); // mate pair 1
+		Read *r1 = dataSet->getReadFromID(mp1); // read1
+
+		if(r1->getListOfEdgesForward()->size() == 1) // only present in this current edge
+		{
+			for(UINT64 j = 0; j < r1->getMatePairList()->size(); j++) // for each matepair of current read1
+			{
+				UINT64 mp2 = r1->getMatePairList()->at(j).matePairID; // matepair 2
+				Read* r2 = dataSet->getReadFromID(mp2); // read2
+				vector<Edge *> *list = r2->getListOfEdgesForward(); // location of read2
+				if(list->empty() || list->size() > 1 || list->at(0) == edge || list->at(0) == edge->getReverseEdge() || r2->getLocationOnEdgeForward()->at(0) > 2*longestMeanOfInsertSize) // Must be present uniquly on the edge and withing the distance of longest insert size.
+					continue;
+				UINT64 k;
+				for(k = 0; k<feasibleListOfEdges->size();k++)		// add in the list of feasible edges. This list is expected to be small.
+				{
+					if(feasibleListOfEdges->at(k) == list->at(0))	// already in the list.
+						break;
+				}
+				if(k == feasibleListOfEdges->size())	// Not presnet in the list.
+				{
+					feasibleListOfEdges->push_back(list->at(0));	// insert the edge in the list.
+				}
+			}
+
+			for(UINT64 j = 0; j < r1->getMatePairList()->size(); j++)		// Same thing we do for the revese edges.
+			{
+				UINT64 mp2 = r1->getMatePairList()->at(j).matePairID;
+				Read* r2 = dataSet->getReadFromID(mp2);
+				vector<Edge *> *list = r2->getListOfEdgesReverse();
+				if(list->empty() || list->size() > 1 || list->at(0) == edge || list->at(0) == edge->getReverseEdge() || r2->getLocationOnEdgeReverse()->at(0) > 2*longestMeanOfInsertSize)
+					continue;
+				UINT64 k;
+				for(k = 0; k<feasibleListOfEdges->size();k++)
+				{
+					if(feasibleListOfEdges->at(k) == list->at(0))
+						break;
+				}
+				if(k == feasibleListOfEdges->size())
+				{
+					feasibleListOfEdges->push_back(list->at(0));
+				}
+			}
+		}
+	}
+
+	return feasibleListOfEdges;	// list of edges that might be joined with the current edge for scaffolding
+}
+
+
+/**********************************************************************************************************************
+ 	 Check how many unique matepairs support this pair of edges.
+***********************************************************************************************************************/
+
+UINT64 OverlapGraph::checkForScaffold(Edge *edge1,Edge *edge2,UINT64 *distance)
+{
+	UINT64 support = 0,dist = 0;
+	*distance = 0;
+	vector<UINT64> listOfReads;
+	Edge *rEdge1 = edge1->getReverseEdge();
+	vector<Edge *> *listRead1, *listRead2;
+	vector<UINT64> *locationOnEdgeRead1, *locationOnEdgeRead2;
+	for(UINT64 i = 0; i <rEdge1->getListOfReads()->size(); i++)
+	{
+		dist+=rEdge1->getListOfOverlapOffsets()->at(i);
+		if(dist>2*longestMeanOfInsertSize)
+			 break;
+		listOfReads.push_back(rEdge1->getListOfReads()->at(i));
+	}
+	for(UINT64 i = 0; i < listOfReads.size(); i++)
+	{
+		Read *read1 = dataSet->getReadFromID(listOfReads.at(i));
+		for(UINT64 j = 0; j < read1->getMatePairList()->size(); j++)// For each matepair
+		{
+			Read *read2 = dataSet->getReadFromID(read1->getMatePairList()->at(j).matePairID);	// Get the read object of the matepair.
+			//if(read1->getReadNumber() > read2->getReadNumber()) // To avoid duplicate computation
+				//	continue;
+			UINT64 orient = read1->getMatePairList()->at(j).matePairOrientation;		// Get the matepair orientation
+			UINT64 datasetNumber = read1->getMatePairList()->at(j).datasetNumber;		// Get the dataset number
+
+			// 0 = 00 means the reverse of r1 and the reverse of r2 are matepairs.
+			// 1 = 01 means the reverse of r1 and the forward of r2 are matepairs.
+			// 2 = 10 means the forward of r1 and the reverse of r2 are matepairs.
+			// 3 = 11 means the forward of r1 and the forward of r2 are matepairs.
+			// To calculate distance of forward read, flip the read and get the location of the offset.
+			listRead1 = (orient == 0 || orient == 1) ? read1->getListOfEdgesForward() : read1->getListOfEdgesReverse();
+			locationOnEdgeRead1 = (orient == 0 || orient == 1) ? read1->getLocationOnEdgeForward() : read1->getLocationOnEdgeReverse();
+			// To calculate distance of reverse read, flip the read and get the location of the offset.
+			listRead2 = (orient == 0 || orient == 2) ? read2->getListOfEdgesForward() : read2->getListOfEdgesReverse();
+			locationOnEdgeRead2 = (orient == 0 || orient == 2) ? read2->getLocationOnEdgeForward() : read2->getLocationOnEdgeReverse();
+			// Only consider uniquely mapped reads and the distance is less than mean+3*SD
+			if( listRead1->size() == 1 && listRead2->size() == 1 && listRead1->at(0) == edge1->getReverseEdge() && listRead2->at(0) == edge2 && locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + 3 * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
+			{
+				dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0);
+				// if there are already in the same edge, don't do anything
+				if(listRead1->at(0) == listRead2->at(0) ||  listRead1->at(0) == listRead2->at(0)->getReverseEdge()) // Not on the same edge
+					continue;
+				*distance +=dist;
+				support++;
+			}
+		}
+	}
+	return support;
+}
+
+
+
+
+
+/**********************************************************************************************************************
+	Original Scaffolder function.
+	*******************************************************************************************************************/
+UINT64 OverlapGraph::scaffolderTemp(void)
 {
 	CLOCKSTART;
 	UINT64 pairsOfEdgesMerged = 0, dist;

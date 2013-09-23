@@ -44,13 +44,10 @@ int main(int argc, char **argv)
 	{
 		HashTable *hashTable=new HashTable();
 		hashTable->insertDataset(dataSet, minimumOverlapLength);
-//		overlapGraph=new OverlapGraph(hashTable);
-		overlapGraph = new OverlapGraph();
-		overlapGraph->buildOverlapGraphFromHashTable(hashTable);
-		delete hashTable;
-		dataSet->saveReads(allFileName+"_sortedReads.fasta");
+		overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
+		//dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		overlapGraph->sortEdges();
-		overlapGraph->saveGraphToFile(allFileName+".unitig");
+		//overlapGraph->saveGraphToFile(allFileName+".unitig");
 	}
 
 	overlapGraph->calculateFlow(allFileName+"_flow.input", allFileName+"_flow.output");
@@ -58,7 +55,6 @@ int main(int argc, char **argv)
 	overlapGraph->printGraph(allFileName+"graph1.gdl", allFileName+"contigs1.fasta");
 
 	overlapGraph->removeAllSimpleEdgesWithoutFlow();
-
 	overlapGraph->calculateMeanAndSdOfInsertSize();
 
 
