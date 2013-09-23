@@ -174,9 +174,11 @@ bool HashTable::insertIntoTable(Read *read, string subString, UINT64 orientation
 	while(!hashTable->at(index)->empty())
 	{
 		UINT64 data = hashTable->at(index)->at(0);
+		// CP: explain these two bit operations
 		UINT64 readNumber = data & 0X3FFFFFFFFFFFFFFF;
 		UINT64 orient = data >> 62;
         // Ted: clear cases
+		// CP: comment
 		string str = (orient == 0 || orient == 1) ? dataSet->getReadFromID(readNumber)->getStringForward() : dataSet->getReadFromID(readNumber)->getStringReverse();
 		string subStr = (orient == 0 || orient == 2) ? str.substr(0,hashStringLength) : str.substr(str.length() - hashStringLength, hashStringLength);
 		if(subStr == subString)

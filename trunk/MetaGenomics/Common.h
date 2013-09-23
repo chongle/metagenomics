@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cstdlib>
-#include<time.h>
+#include <time.h>
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -36,7 +36,7 @@ typedef long INT32;
 typedef unsigned long long UINT64;
 typedef long long INT64;
 
-
+// CP: Please comment what are these constants
 #define aStatisticsThreshold 3
 #define minDelta 1000
 #define deadEndLength 10

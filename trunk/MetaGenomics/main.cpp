@@ -44,7 +44,10 @@ int main(int argc, char **argv)
 	{
 		HashTable *hashTable=new HashTable();
 		hashTable->insertDataset(dataSet, minimumOverlapLength);
-		overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
+//		overlapGraph=new OverlapGraph(hashTable);
+		overlapGraph = new OverlapGraph();
+		overlapGraph->buildOverlapGraphFromHashTable(hashTable);
+		delete hashTable;
 		dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		overlapGraph->sortEdges();
 		overlapGraph->saveGraphToFile(allFileName+".unitig");
