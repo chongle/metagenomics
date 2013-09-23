@@ -71,6 +71,7 @@ OverlapGraph::OverlapGraph(void)
 /**********************************************************************************************************************
 	Another Constructor. Build the overlap grpah using the hash table.
 **********************************************************************************************************************/
+/*
 OverlapGraph::OverlapGraph(HashTable *ht)
 {
 	// Initialize the variables.
@@ -80,7 +81,7 @@ OverlapGraph::OverlapGraph(HashTable *ht)
 	flowComputed = false;
 	buildOverlapGraphFromHashTable(ht);
 }
-
+*/
 
 
 /**********************************************************************************************************************
@@ -114,20 +115,21 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	hashTable = ht;
 	dataSet = ht->getDataset();
 	UINT64 counter = 0;
-	vector<nodeType> *exploredReads = new vector<nodeType>;
-	exploredReads->reserve(dataSet->getNumberOfUniqueReads()+1);
 
+	vector<nodeType> *exploredReads = new vector<nodeType>;      // CP: store the node type of each read for their explore status
+	exploredReads->reserve(dataSet->getNumberOfUniqueReads()+1); // CP: +1 because the node index starts from 1, 2, ...
+
+	// CP: comment
 	vector<UINT64> * queue = new vector<UINT64>;
 	queue->reserve(dataSet->getNumberOfUniqueReads()+1);
 
+	// CP: comment
 	vector<markType> *markedNodes = new vector<markType>;
 	markedNodes->reserve(dataSet->getNumberOfUniqueReads()+1);
 
+	// CP: Initialize graph containing every unique read represented by a node.
 	graph = new vector< vector<Edge *> * >;
 	graph->reserve(dataSet->getNumberOfUniqueReads()+1);
-
-
-
 	for(UINT64 i = 0; i <= dataSet->getNumberOfUniqueReads(); i++) // Initialization
 	{
 		vector<Edge *> *newList = new vector<Edge *>;
@@ -137,16 +139,19 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 		markedNodes->push_back(VACANT);
 	}
 
+	// CP: assign contained reads to super-reads (populate superReadID in the Read class), but not remove them
 	markContainedReads();
 
+	// CP: why reading the mate pair information here, not when constructing Dataset initially?
 	this->dataSet->readMatePairsFromFile();
 
+	// CP: find the overlap between reads and remove transitive edges along the way
 	for(UINT64 i = 1; i <= dataSet->getNumberOfUniqueReads(); i++)
 	{
 		if(exploredReads->at(i) == UNEXPLORED)
 		{
 			UINT64 start = 0, end = 0; 											// Initialize queue start and end.
-			queue->at(end++) = i;
+			queue->at(end++) = i;					// CP: use the value of end [i.e. queue->at(0) = i], THEN increment end.
 			while(start < end) 													// This loop will explore all connected component starting from read i.
 			{
 				counter++;
@@ -207,7 +212,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	delete exploredReads;
 	delete queue;
 	delete markedNodes;
-	delete hashTable;	// Do not need the hash table any more.
+//	delete hashTable;	// Do not need the hash table any more.
 	do
 	{
 		 counter = contractCompositePaths();
@@ -1455,6 +1460,8 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 				Edge *edge = graph->at(i)->at(j);
 				UINT64 u = listOfNodes->at(edge->getSourceRead()->getReadNumber());
 				UINT64 v = listOfNodes->at(edge->getDestinationRead()->getReadNumber());
+
+				// CP: comment more details about the cost function
 
 				// set the bound and cost here
 				// if edge has more than 20 reads:
