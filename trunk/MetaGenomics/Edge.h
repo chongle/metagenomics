@@ -16,6 +16,8 @@
 class Edge{
 	private:
 		// CP: How is it determined which read is the source and which read is the destination?
+		// BH: An edge (u,v) is stored twice in the graph. In the list of edges of the node u, the node u is the source  and the edge is (u,v)
+		// Similarly in the list of edges of the node v, the node v is the source and the edge is (v,u).
 		Read *source; 							// Source read u
 		Read *destination; 						// Destination read v
 		UINT8 overlapOrientation;				// Orientation of overlap

@@ -41,8 +41,10 @@ typedef long long INT64;
 #define minDelta 1000			// This in not used. Used previously in estimating the genome size in isolated genome assembly.
 #define deadEndLength 10		// Threshold of number of nodes in an edge for deleting dead-ends.
 								// CP: if a node has many duplicate reads, it's still counted as one, right?
+								// BH: Yes we only consider a read once.
 #define minimumSupport 1		// Minimum number of support required to merge to edges (both using matepair paths and scaffolding step)
-								// CP: should we consider using different threholds for matepair paths and scaffolding?
+								// CP: should we consider using different thresholds for matepair paths and scaffolding?
+								// BH: If we want we can use different thresholds.
 #define loopLimit 15			// Number of time to loop in the main function.
 
 //	Exit code that displays the place of exit and message.
@@ -51,8 +53,31 @@ typedef long long INT64;
 
 
 // To keep time information of functions.
-#define CLOCKSTART clock_t begin = clock(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
-#define CLOCKSTOP clock_t end = clock(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) / CLOCKS_PER_SEC<< " Seconds." << endl << endl;
+#define CLOCKSTART INT64 mem_start = checkMemoryUsage(); clock_t begin = clock(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
+#define CLOCKSTOP INT64 mem_end = checkMemoryUsage(); clock_t end = clock(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) / CLOCKS_PER_SEC<< " Seconds." << endl << "Memory used: " << mem_end << " - " <<  mem_start << " = "<< mem_end - mem_start << " MB."<< endl;
+
+// Get the memory usage with a Linux kernel.
+inline unsigned int checkMemoryUsage()
+{
+    // get KB memory into count
+    unsigned int count=0;
+
+    #if defined(__linux__)
+    ifstream f("/proc/self/status"); // read the linux file
+    while(!f.eof()){
+        string key;
+        f>>key;
+        if(key=="VmData:"){     // size of data
+            f>>count;
+        break;
+        }
+    }
+    f.close();
+    #endif
+
+    // return MBs memory (size of data)
+    return (count/1024);
+};
 
 
 

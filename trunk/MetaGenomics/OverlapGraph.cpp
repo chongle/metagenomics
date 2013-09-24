@@ -29,7 +29,6 @@ bool matchEdgeType(Edge *edge1, Edge *edge2)
 /**********************************************************************************************************************
 	Function to compare two edges. Used for sorting.
 **********************************************************************************************************************/
-
 bool compareEdgeID (Edge *edge1, Edge* edge2)
 {
 	return (edge1->getDestinationRead()->getReadNumber() < edge2->getDestinationRead()->getReadNumber());
@@ -39,13 +38,15 @@ bool compareEdgeID (Edge *edge1, Edge* edge2)
 	Function to compare two edges. Used for sorting.
 **********************************************************************************************************************/
 // CP: Sort by overlap offset. What for?
+// BH: In the transitive edge removal step, we need the edges to be sorted according to their overlap offset.
 bool compareEdges (Edge *edge1, Edge* edge2)
 {
 	return (edge1->getOverlapOffset() < edge2->getOverlapOffset());
 }
 
 // CP: if we want to use a different way to decide to resolve a cross by coverage depth, we just need to change this function, right?
-bool isOverlappintInterval(UINT64 mean1, UINT64 sd1, UINT64 mean2, UINT64 sd2)
+// BH: Yes you only need to change this function to match the coverage depth.
+bool isOverlappintInterval(INT64 mean1, INT64 sd1, INT64 mean2, INT64 sd2)
 {
 	int start1 = mean1 - 2*sd1;
 	int end1 = mean1 + 2*sd2;
@@ -225,6 +226,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	} while (counter > 0);
 
 	// CP: do you remove nodes that don't have any edge? If yes, where is this done?
+	// BH: If a node u does not have any edge in the graph then the list of edges of node u will be empty in the graph.
 
 	CLOCKSTOP;
 	return true;
@@ -692,8 +694,11 @@ UINT64 OverlapGraph::contractCompositePaths(void)
 			if(flowComputed == true || !isEdgePresent(edge1->getDestinationRead()->getReadNumber(), edge2->getDestinationRead()->getReadNumber()))
 																						// Before flow is computed we do not insert multiple edges between the same endpoints.
 				// CP: Before flow is computed (flowComputed == false), why checking if there is an edge between the two destination reads? why don't you need to do this after flow is calculated?
+				// BH: Before the flow is computed we do not want to insert multiple edges between the same nodes. This condition is required for CS2 minimum Cost flow algorithm
 				// CP: Why the destination reads, not the source reads??
+				// BH: We do not want to remove loops (a,a).
 				// CP: using the example above, don't you need to check if u and w are different reads or not?
+				// BH: We do not need to check if u and w are different read or not.
 			{
 				if( matchEdgeType(edge1->getReverseEdge(), edge2) && edge1->getSourceRead() != edge1->getDestinationRead()) // One incoming edge and one outgoing edge.
 				{
@@ -947,6 +952,9 @@ UINT64 OverlapGraph::removeAllSimpleEdgesWithoutFlow()
 	Remove nodes with all simple edges and all same arrow type
 	CP: Please give the definition and an example for a deadend node, like below
 	u*-------->v
+	A node is all incomming edges or all outgoing edges is called a dead end node. While traversing the graph if we
+	enter such node, there is no way we can go out. So we remove such nodes from the graph. To remove the node all
+	of its edges must be simple edges or very short edges (less than 10 read in it).
 **********************************************************************************************************************/
 UINT64 OverlapGraph::removeDeadEndNodes(void)
 {
@@ -958,6 +966,8 @@ UINT64 OverlapGraph::removeDeadEndNodes(void)
 		if(!graph->at(i)->empty())	// If the read has some edges.
 		{
 			// CP: comment on what's flag, inEdge and outEdge. It's hard to figure them out by reading the functions below
+			// BH: flag is used to check if we need to remove the current node.
+			// Initailly flag is set to 0. If the current node has an edge with more than 10 reads in it, then the flag will be 1 and the node will not be removed.
 			UINT64 flag = 0, inEdge = 0 , outEdge = 0;
 			for(UINT64 j=0; j < graph->at(i)->size(); j++) // For each edge
 			{
@@ -966,6 +976,7 @@ UINT64 OverlapGraph::removeDeadEndNodes(void)
 				// 1. if composite edge is more than deadEndLength reads
 				// 2. if the edge is loop for the current node
 				// Then flag=1 and exit the loop
+				// If the current node has an edge with more than 10 reads in it then we do not mark it as dead end.
 				if(edge->getListOfReads()->size() > deadEndLength || edge->getSourceRead()->getReadNumber() == edge->getDestinationRead()->getReadNumber())
 				{
 					flag = 1;
@@ -978,6 +989,7 @@ UINT64 OverlapGraph::removeDeadEndNodes(void)
 					outEdge++;
 			}
 			// CP: if what, this node is marked to be removed?
+			// This node does not have any composite edge with more than 10 reads in it.
 			if(flag == 0) // If not break case
 			{
 				if( (inEdge > 0 && outEdge == 0) || (inEdge == 0 && outEdge > 0)) // only one type of simple edges
@@ -1445,6 +1457,7 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 	INT64 FLOWLB[3], FLOWUB[3], COST[3];			// Flow bounds and cost of the edges.
 	// CP: comment on what's inputfile and output files.
 	// CP: it's confusing to open outputFile with inputFileName
+	// BH: This is an ouput file for this function, but an input file for CS2
 	ofstream outputFile;
 	outputFile.open(inputFileName.c_str());
 	if(outputFile == NULL)
@@ -1474,7 +1487,7 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 		listOfNodesReverse->push_back(0);
 	}
 
-	// This loop set lower bound and upper bound from super source to super sink. All costs are 0.
+	// This loop set lower bound and upper bound from super source to all the nodes. All costs are 0.
 	// CP: really? it's actually the bounds of each node to super source and to super sink, right?
 	UINT64 currentIndex = 1;
 	for(UINT64 i = 1; i < graph->size(); i++)
@@ -1483,7 +1496,8 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 		{
 			listOfNodes->at(i) = currentIndex;					// Mapping between original node ID and cs2 node ID
 			listOfNodesReverse->at(currentIndex) = i;			// Mapping between original node ID and cs2 node ID
-			// CP: don't you creat two CS2 node for each original node? where is the second CS2 node ID?
+			// CP: don't you create two CS2 node for each original node? where is the second CS2 node ID?
+			// BH: Yes I created two nodes for CS2. For a node u in the listOfNodes. We created 2*u and 2*u+1 in for the cs2
 
 			// CP: give an sample of ss
 			FLOWLB[0] = 0; FLOWUB[0] = 1000000; COST[0] = 0;
@@ -1522,6 +1536,7 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 				// The cost of pushing the first using of flow in very cheap and then we pay high price to push more than 1 units of flow.
 				// This will ensure that we do not push flow were it is not necessary.
 				// CP: if we need to change the cost function, we just need to change this function, right?
+				// BH: Yes, we only need to change this function if we want to use different cost function.
 				calculateBoundAndCost(edge, FLOWLB, FLOWUB, COST);
 
 
@@ -1532,6 +1547,7 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 					// For details on how to convert the edges off different types please see my thesis.
 
 					// CP: u1, u2, v1 and v2 are the actual CS2 node IDs, right?
+					// BH: Yes.
 					UINT64 u1 = 2 * u, u2 = 2 * u + 1, v1 =  2 * v, v2 = 2 * v + 1;
 
 					// CP: please provide a sample of what's input to ss below
@@ -1593,6 +1609,7 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 	ss.str(std::string());
 
 	// CP: what are  you doing here?
+	// BH: CS2 requires the file name to be char * not string. We convert the string filename to char *
 	char * inFile = new char[inputFileName.size() + 1];
 	std::copy(inputFileName.begin(), inputFileName.end(), inFile);
 	inFile[inputFileName.size()] = '\0';
@@ -1616,7 +1633,8 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 
 
 	// CP: where are these variables used?
-	string s, d, f;
+	// BH: not used. Removed. These variables were used before. But I changed the function and forgot to remove them.
+	// string s, d, f;
 
 	UINT64 lineNum = 0;
 	while(!inputFile.eof())
@@ -1678,6 +1696,7 @@ bool OverlapGraph::isEdgePresent(UINT64 source, UINT64 destination)
 /**********************************************************************************************************************
 	This function calculates the cost and bounds for an edge in the overlap graph.
 	This function is very sensitive to the assembled contigs. CP: what does this mean?
+	BH: changing the bounds and threshold of number of nodes in the edge (here 20) many give use very wrong flow.
 
 	CP: given an *edge, calculate and return FLOWLB, FLOWUB, and COST
 	CP: FLOWLB, FLOWUB, and COST are all array of size 3 because each overlap graph edge is represented by 3 CS2 edges to define a cost function
@@ -2240,6 +2259,7 @@ UINT64 OverlapGraph::scaffolder(void)
 		}
 		delete listOfFeasibleEdges;	// Free the memory
 	}
+	delete listOfCompositeEdges;
 
 	sort(listOfPairedEdges.begin(), listOfPairedEdges.end());		// Sort the list according to support.
 
