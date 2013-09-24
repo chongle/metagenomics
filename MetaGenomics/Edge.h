@@ -15,6 +15,7 @@
 **********************************************************************************************************************/
 class Edge{
 	private:
+		// CP: How is it determined which read is the source and which read is the destination?
 		Read *source; 							// Source read u
 		Read *destination; 						// Destination read v
 		UINT8 overlapOrientation;				// Orientation of overlap

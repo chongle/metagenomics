@@ -40,7 +40,9 @@ typedef long long INT64;
 #define aStatisticsThreshold 3  // This in not used. Used previously in estimating the genome size in isolated genome assembly.
 #define minDelta 1000			// This in not used. Used previously in estimating the genome size in isolated genome assembly.
 #define deadEndLength 10		// Threshold of number of nodes in an edge for deleting dead-ends.
+								// CP: if a node has many duplicate reads, it's still counted as one, right?
 #define minimumSupport 1		// Minimum number of support required to merge to edges (both using matepair paths and scaffolding step)
+								// CP: should we consider using different threholds for matepair paths and scaffolding?
 #define loopLimit 15			// Number of time to loop in the main function.
 
 //	Exit code that displays the place of exit and message.
