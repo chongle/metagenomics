@@ -1360,31 +1360,32 @@ bool OverlapGraph::saveGraphToFile(string fileName)
 	filePointer.open(fileName.c_str());
 	if(filePointer == NULL)
 		MYEXIT("Unable to open file: "+fileName);
-	filePointer << dataSet->getNumberOfUniqueReads() << endl;
-	filePointer << dataSet->numberOfPairedDatasets<< endl;
-	filePointer << meanOfInsertSizes.size()<< endl;
-	for(UINT64 i = 0; i< meanOfInsertSizes.size();i++)
+	filePointer << dataSet->getNumberOfUniqueReads() << endl;	// save the number of unique reads.
+	filePointer << (int)(flowComputed) << endl;					// save whether the flow is computed or not
+	filePointer << dataSet->numberOfPairedDatasets<< endl;		// number of pair end datasets.
+	filePointer << meanOfInsertSizes.size()<< endl;				// Number of insert sizes for different datasets
+	for(UINT64 i = 0; i< meanOfInsertSizes.size();i++)			// save the mean and sd of insert sizes if already calculated.
 	{
 		filePointer << meanOfInsertSizes.at(i) << endl;
 		filePointer << sdOfInsertSizes.at(i) << endl;
 
 	}
-	for(UINT64 i = 1; i < graph->size(); i++)
+	for(UINT64 i = 1; i < graph->size(); i++)					// store the reads.
 	{
-		Read *r = dataSet->getReadFromID(i);
-		filePointer << r->getReadNumber() << endl;
-		filePointer << r->getStringForward() << endl;
-		filePointer << r->superReadID << endl;
-		filePointer << r->getFrequency() << endl;
-		filePointer << r->getMatePairList()->size() << endl;
-		for(UINT64 j=0; j< r->getMatePairList()->size(); j++ )
+		Read *r = dataSet->getReadFromID(i);					// get each read from the datasset
+		filePointer << r->getReadNumber() << endl;				// save the read ID
+		filePointer << r->getStringForward() << endl;			// save the forward string in the read.
+		filePointer << r->superReadID << endl;					// save the super read ID.
+		filePointer << r->getFrequency() << endl;				// save the frequecny of the read.
+		filePointer << r->getMatePairList()->size() << endl;	// How many matepairs of the current read.
+		for(UINT64 j=0; j< r->getMatePairList()->size(); j++ )	// store each of the matepair informatoin.
 		{
-			filePointer << r->getMatePairList()->at(j).matePairID << endl;
-			filePointer << (int)(r->getMatePairList()->at(j).matePairOrientation) << endl;
-			filePointer << (int)(r->getMatePairList()->at(j).datasetNumber) << endl;
+			filePointer << r->getMatePairList()->at(j).matePairID << endl;										// ID of the matepair
+			filePointer << (int)(r->getMatePairList()->at(j).matePairOrientation) << endl;						// Orientation of the matepair
+			filePointer << (int)(r->getMatePairList()->at(j).datasetNumber) << endl;							// dataset number of the matepair
 		}
 	}
-	vector<UINT64> *list = new vector<UINT64>;
+	vector<UINT64> *list = new vector<UINT64>;		// Now store the edges.
 	for(UINT64 i = 1; i < graph->size(); i++) // for each node
 	{
 		if(!graph->at(i)->empty())
@@ -1392,20 +1393,21 @@ bool OverlapGraph::saveGraphToFile(string fileName)
 			for(UINT64 j = 0; j < graph->at(i)->size(); j++)	// for each edge of the node
 			{
 				Edge * e = graph->at(i)->at(j);
-				UINT64 source = e->getSourceRead()->getReadNumber();
-				UINT64 destination = e->getDestinationRead()->getReadNumber();
+				UINT64 source = e->getSourceRead()->getReadNumber();			// source read.
+				UINT64 destination = e->getDestinationRead()->getReadNumber();	// destination read.
 				if(source < destination || (source == destination && e < e->getReverseEdge()))
 				{
-					list->push_back(source);	// store the edge information first
-					list->push_back(destination);
-					list->push_back(e->getOrientation());
-					list->push_back(e->getOverlapOffset());
+					list->push_back(source);	// store the source read ID
+					list->push_back(destination);	// destination read ID
+					list->push_back(e->getOrientation());	// Orientaiton of the edge.
+					list->push_back(e->getOverlapOffset());		// overlap offset of the edge
+					list->push_back(e->flow);					// flow of the edge
 					list->push_back(e->getListOfReads()->size());	// store the size of the vector of elements in the edge.
 					for(UINT64 k = 0; k < e->getListOfReads()->size(); k++)	// store information about the reads in the edge.
 					{
-						list->push_back(e->getListOfReads()->at(k));
-						list->push_back(e->getListOfOverlapOffsets()->at(k));
-						list->push_back(e->getListOfOrientations()->at(k));
+						list->push_back(e->getListOfReads()->at(k));				// store the ordered reads in the edge.
+						list->push_back(e->getListOfOverlapOffsets()->at(k));		// ofset of this read from the previous read.
+						list->push_back(e->getListOfOrientations()->at(k));			// orientiaon of the read in the edge.
 					}
 				}
 			}
@@ -1543,42 +1545,44 @@ bool OverlapGraph::readGraphFromFile(string fileName)
 
 
 	UINT64 numOfUniqueRead,numOfMatePairDataset,temp1,temp2;
-	filePointer >> numOfUniqueRead;
+	filePointer >> numOfUniqueRead;							// Number of unique reads in the dataset.
 	dataSet->numberOfUniqueReads = numOfUniqueRead;
-	filePointer >> numOfMatePairDataset;
+	filePointer >> temp1;									// Flag for flow computed or not.
+	flowComputed = temp1;
+	filePointer >> numOfMatePairDataset;					// Number of mate pair datasets
 	dataSet->numberOfPairedDatasets = numOfMatePairDataset;
-	filePointer>>temp1;
+	filePointer>>temp1;										// Number of mean and sd of insert size calculated.
 	for(UINT64 i =0; i<temp1;i++)
 	{
-		filePointer>> temp2;
+		filePointer>> temp2;								// get the mean of each dataset if calculated already.
 		this->meanOfInsertSizes.push_back(temp2);
-		filePointer>> temp2;
+		filePointer>> temp2;								// get the standard deviation of insert size.
 		this->sdOfInsertSizes.push_back(temp2);
 	}
-	for(UINT64 i = 0; i < numOfUniqueRead; i++)
+	for(UINT64 i = 0; i < numOfUniqueRead; i++)				// we have to read all the unique reads from the file.
 	{
 		UINT64 n;
 		string s;
 		Read *r = new Read;
 
-		filePointer >> n;
+		filePointer >> n;									// first number is the read ID
 		r->setReadNumber(n);
-		filePointer >> s;
+		filePointer >> s;									// second string is the forward string of the read.
 		r->setRead(s);
-		filePointer >> n;
+		filePointer >> n;									// thirs number is the ID of superRead. 0 means no super read.
 		r->superReadID = n;
-		filePointer >> n;
+		filePointer >> n;									// frequency of this read in all the datasets.
 		r->setFrequency(n);
-		filePointer >> n;
-		for(UINT64 j=0; j< n; j++ )
+		filePointer >> n;									// Number of mate pairs of this read.
+		for(UINT64 j=0; j< n; j++ )							// Read all the matepair information.
 		{
-			UINT64 a,b,c;
-			filePointer >> a;
-			filePointer >> b;
-			filePointer >> c;
-			r->addMatePair(a,b,c);
+			UINT64 matePairID,orient,datasetNumber;
+			filePointer >> matePairID;						// This is the ID of the matepair.
+			filePointer >> orient;							// Orientation of the matepair.
+			filePointer >> datasetNumber;					// dataset number of the matepair.
+			r->addMatePair(matePairID,orient,datasetNumber);		// add the mate pair
 		}
-		dataSet->addRead(r);
+		dataSet->addRead(r);								// add the read in the dataset
 	}
 	graph = new vector< vector<Edge *> * >;
 	graph->reserve(dataSet->getNumberOfUniqueReads()+1);
@@ -1602,6 +1606,7 @@ bool OverlapGraph::readGraphFromFile(string fileName)
 		UINT64 destination = list->at(i++);	// destination read id.
 		UINT64 orientation = list->at(i++);	// orientation of the edge.
 		UINT64 overlapOffset = list->at(i++);	// overlap offset of the edge
+		UINT64 flow = list->at(i++); // get the flow
 		UINT64 numberOfReadsInEdge = list->at(i++);	// Array size
 		vector<UINT64> *listReads = new vector<UINT64>;
 		vector<UINT16> *listOverlapOffsets = new vector<UINT16>;
@@ -1609,9 +1614,9 @@ bool OverlapGraph::readGraphFromFile(string fileName)
 		UINT64 length = 0;
 		for(UINT64 j = 0; j < 3 * numberOfReadsInEdge; j += 3)	// Read all the three arrays. list of reads, overlap offsets and orientation of the reads.
 		{
-			listReads->push_back(list->at(i + j));
-			listOverlapOffsets->push_back(list->at(i + j + 1));
-			listOrientations->push_back(list->at(i + j + 2));
+			listReads->push_back(list->at(i + j));					// This is the read ID
+			listOverlapOffsets->push_back(list->at(i + j + 1));		// This is the offset of the read from the previous read.
+			listOrientations->push_back(list->at(i + j + 2));		// This is the orientaion of the read on this edge.
 			length += list->at(i + j + 1);
 		}
 
@@ -1656,7 +1661,9 @@ bool OverlapGraph::readGraphFromFile(string fileName)
 		edgeReverse->makeEdge(read2, read1, twinEdgeOrientation(orientation), revereseOverlapOffset, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);	// make the reverse edge.
 
 		edgeForward->setReverseEdge(edgeReverse); // set the reverse edge pointer
+		edgeForward->flow = flow;				// Add the flow in the forward edge.
 		edgeReverse->setReverseEdge(edgeForward); // set the reverse edge pinter.
+		edgeReverse->flow = flow;					// add the flow in the reverse edge.
 
 		insertEdge(edgeForward);	// insert the forward edge
 		insertEdge(edgeReverse);	// insert the reverse edge.
@@ -1717,6 +1724,17 @@ bool OverlapGraph::readGraphFromFile(string fileName)
 bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 {
 	CLOCKSTART;
+	for(UINT64 i = 1; i < graph->size(); i++) // clear all the flow
+	{
+		if(!graph->at(i)->empty())
+		{
+			for(UINT64 j = 0; j< graph->at(i)->size(); j++)
+			{
+				graph->at(i)->at(j)->flow =0;
+			}
+
+		}
+	}
 	// CP: the number of vertices for CS2 graph, two CS2 nodes for each read nodes plus supersource and supersink
 	UINT64 V = numberOfNodes * 2 + 2;
 	// CP: the number of edges for CS2 graph,
