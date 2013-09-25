@@ -18,6 +18,7 @@ class Edge{
 		// CP: How is it determined which read is the source and which read is the destination?
 		// BH: An edge (u,v) is stored twice in the graph. In the list of edges of the node u, the node u is the source  and the edge is (u,v)
 		// Similarly in the list of edges of the node v, the node v is the source and the edge is (v,u).
+		// CP: If the read u has multiple edges, all these edges contain u?
 		Read *source; 							// Source read u
 		Read *destination; 						// Destination read v
 		UINT8 overlapOrientation;				// Orientation of overlap
@@ -30,8 +31,11 @@ class Edge{
 												// 	  012345678901234567890123456789
 												//	u ACTTACGGGATTATACCATCGAGA
 												//	v       GGGATTATACCATCGAGATTCAAT
+												// CP: what about a composite edge? from the beginning of the first read to the beginning of the last read?
+
 		vector<UINT64> * listOfReads; 			// List of ordered reads in the current edge.
 		vector<UINT16> * listOfOverlapOffsets; 	// List of overlap offsets of the ordered reads in the current edge.
+												// CP: this is relative to the intermediate previous read?
 		vector<UINT8> * listOfOrientations;		// List of orientations of the ordered reads in the current edge.
 		Edge *reverseEdge;						// This points to the reverse edge in the overlap graph.
 												// Each edge (u,v) is present twice in the graph.
