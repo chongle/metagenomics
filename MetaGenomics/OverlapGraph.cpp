@@ -1436,7 +1436,9 @@ bool OverlapGraph::saveGraphToFile(string fileName)
 		MYEXIT("Unable to open file: "+fileName);
 
 	graph = new vector< vector<Edge *> * >;
+	// Ted: Because read ID starts with 1, not 0, reserve numberOfUniqueReads + 1
 	graph->reserve(dataSet->getNumberOfUniqueReads()+1);
+
 	for(UINT64 i = 0; i <= dataSet->getNumberOfUniqueReads(); i++) // initialize the list
 	{
 		vector<Edge *> *newList = new vector<Edge *>;
@@ -1452,9 +1454,14 @@ bool OverlapGraph::saveGraphToFile(string fileName)
 		list->push_back(temp);
 	};
 	filePointer.close();
+
 	for(UINT64 i = 0; i < list->size() -1;) // parse the numbers.
+	// Ted: above loop iterate from 0 to size()-2, so size()-1 times..Why?
 	{
 
+		// Ted: The unitig grap should be 5 columns text file
+		// Column 1: source read id.
+		// Column 2:
 		UINT64 source = list->at(i++);	// first number is the source read id.
 		UINT64 destination = list->at(i++);	// destination read id.
 		UINT64 orientation = list->at(i++);	// orientation of the edge.

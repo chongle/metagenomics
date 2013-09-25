@@ -37,7 +37,12 @@ int main(int argc, char **argv)
 	{
 		overlapGraph = new OverlapGraph();
 		dataSet=new Dataset();
+		// Ted: Read the mate-pair information here.
+		// Without using the unitig graph, the mate-pair infomation was retrieved again after markContainedReads() in buildOverlapGraphFromHashTable().
+        // Only mate-pair information reload is enough to work with unitig graph??
 		overlapGraph->setDataset(dataSet);
+		// Ted: -s option does not get argument.
+		// unitig graph filename prefix should be same to the all output filename prefix.
 		overlapGraph->readGraphFromFile(allFileName+".unitig");
 		overlapGraph->sortEdges();
 	}
