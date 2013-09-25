@@ -77,7 +77,7 @@ class Read
 		vector<UINT64> * getLocationOnEdgeForward(void){return locationOnEdgeForward;}	// Get the list of locations on the edges that contain the forward string of the current read.
 		vector<Edge *> * getListOfEdgesReverse(void){return listOfEdgesReverse;}		// Get the list of edges that contain the reverse string of the current read.
 		vector<UINT64> * getLocationOnEdgeReverse(void){return locationOnEdgeReverse;}	// Get the list of locations on the edges that contain the reverse string of the current read.
-		bool addMatePair(Read *r, UINT8 orientation, UINT64 datasetNumber);				// Add a matepair in the list.
+		bool addMatePair(UINT64 read, UINT8 orientation, UINT64 datasetNumber);				// Add a matepair in the list.
 
 };
 

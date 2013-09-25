@@ -86,7 +86,7 @@ class OverlapGraph
 		UINT64 getNumberOfNodes(void){return numberOfNodes;}		// Get the number of nodes in the overlap graph.
 		bool saveGraphToFile(string fileName);						// Save the unitig graph to a file. This file can be used to reproduced the graph. Useful to avoid recomputing the graph.
 		bool readGraphFromFile(string fileName);					// Read the graph from a file stored before.
-		bool setDataset(Dataset *dataset){dataSet=dataset; dataset->readMatePairsFromFile(); return true;}	// Set the dataset pointer.
+		bool setDataset(Dataset *dataset){dataSet=dataset;  return true;}	// Set the dataset pointer.
 		bool calculateFlow(string inputFileName, string outputFileName);									// Calculate the minimum cost flow of the overlap graph.
 		Edge *findEdge(UINT64 source, UINT64 destination);			// Find an edge from source to destination in the overlap graph.
 		bool isEdgePresent(UINT64 source, UINT64 destination);		// Check if an edge is present in the overlap graph between source and destination.

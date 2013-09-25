@@ -30,25 +30,27 @@ int main(int argc, char **argv)
 	string allFileName;
 	bool startFromUnitigGraph = false;
 	parseArguments(argc, argv, pairedEndFileNames, singleEndFileNames, allFileName, minimumOverlapLength, startFromUnitigGraph);
-	Dataset *dataSet = new Dataset(pairedEndFileNames, singleEndFileNames, minimumOverlapLength);
+	Dataset *dataSet;
 	OverlapGraph *overlapGraph;
 
 	if(startFromUnitigGraph) // Read the graph from unitig file
 	{
 		overlapGraph = new OverlapGraph();
+		dataSet=new Dataset();
 		overlapGraph->setDataset(dataSet);
 		overlapGraph->readGraphFromFile(allFileName+".unitig");
 		overlapGraph->sortEdges();
 	}
 	else // Build the graph from the scratch
 	{
+		dataSet = new Dataset(pairedEndFileNames, singleEndFileNames, minimumOverlapLength);
 		HashTable *hashTable=new HashTable();
 		hashTable->insertDataset(dataSet, minimumOverlapLength);
 		//overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
 		overlapGraph = new OverlapGraph();
 		overlapGraph->buildOverlapGraphFromHashTable(hashTable);
 		delete hashTable;
-		dataSet->saveReads(allFileName+"_sortedReads.fasta");
+		//dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		overlapGraph->sortEdges();
 		overlapGraph->saveGraphToFile(allFileName+".unitig");
 	}
