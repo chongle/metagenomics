@@ -439,6 +439,42 @@ bool OverlapGraph::insertEdge(Read *read1, Read *read2, UINT8 orient, UINT16 ove
 	aisee (free software available at http://www.aisee.com/)
 	It also stores the contigs in a file.
 
+
+graph: {
+layoutalgorithm :forcedir
+fdmax:704
+tempmax:254
+tempmin:0
+temptreshold:3
+tempscheme:3
+tempfactor:1.08
+randomfactor:100
+gravity:0.0
+repulsion:161
+attraction:43
+ignore_singles:yes
+node.fontname:"helvB10"
+edge.fontname:"helvB10"
+node.shape:box
+node.width:80
+node.height:20
+node.borderwidth:1
+node.bordercolor:31
+node: { title:"43" label: "43" }	// node, Title and label are both node ID 43 (and read number)
+node: { title:"65" label: "65" }
+............................................
+............................................
+// edges from source node 43 to destination node 32217, thickness of 3 means composite edge, thickness of 1 for simple edge
+// edge type of backarrowstyle:solid arrowstyle:solid color: green is >----------------<
+// edge type of arrowstyle:solid color: red is <----------------<
+// edge type of arrowstyle: none color: blue  is <------------------->
+// (1,0x,206,30) means (Flow, coverageDepth, OverlapOffset, numberOfReads)
+
+edge: { source:"43" target:"32217" thickness: 3 backarrowstyle:solid arrowstyle:solid color: green label: "(1,0x,206,30)" }
+edge: { source:"65" target:"38076" thickness: 3 arrowstyle:solid color: red label: "(0,0x,75,11)" }
+edge: { source:"280" target:"47580" thickness: 3 arrowstyle: none color: blue label: "(0,0x,123,11)" }
+}
+
 **********************************************************************************************************************/
 bool OverlapGraph::printGraph(string graphFileName, string contigFileName)
 {
@@ -1254,10 +1290,23 @@ bool OverlapGraph::calculateMeanAndSdOfInsertSize(void)
 }
 
 // CP: saveGraphToFile and readGraphFromFile are a pair of functions used together
-// CP: Please give an example section of a unitig graph file.
 
 /**********************************************************************************************************************
 	Save the unitig graph in a text file
+	Only stores the edges, there are two copies of each edge (forward and reverse). Only store one copy from smaller ID to larger ID here. when retrieve information, make two copies
+	Sample:
+12				// source read
+14115			// destination read
+2				// orientation of the edge
+84				// overlap offset from the beginning of the source read to the beginning of the destination read
+11				// number of read in the edge
+27591			// the first read in the edge
+7				// overlap offset from the source read to the first read (beginning to beginning)
+0				// the orientation of the read
+27049			// the second read in the edge
+1				// overlap offset from the first read to the second read
+1				// the orientation
+// this will continue for all 11 reads in this edge and then start the next edge
 **********************************************************************************************************************/
 bool OverlapGraph::saveGraphToFile(string fileName)
 {
@@ -1441,6 +1490,18 @@ bool OverlapGraph::readGraphFromFile(string fileName)
 
 /**********************************************************************************************************************
 	Calculate min cost flow
+
+	// An sample input to the CS2 algorithm
+
+	p min       3840      13449										// p min numberOfNodes numberOfEdges
+	n          1         0											// initial flow of 0 in node 1, node 1 is the supersource
+	n       3840         0											// initial flow of 0 in node 3840, which is the supersink (equal to the number of nodes)
+	a       3840          1          1    1000000    1000000		// edge from supersink to supersource, LowBound(1), UpperBound(1000000), Cost per unit of flow(1000000)
+	a          1          2          0    1000000          0		// edge from supersource to node 2, with the defined cost function
+	// this continues to
+	// connect each node to supersource and supersink
+	// connect every edge in the original graph
+
 **********************************************************************************************************************/
 bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 {
@@ -1462,7 +1523,7 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 	outputFile.open(inputFileName.c_str());
 	if(outputFile == NULL)
 		MYEXIT("Unable to open file: "+inputFileName);
-	// CP: Give an sample of ss
+
 	stringstream ss;
 	ss << "p min " << setw(10) << V << " " << setw(10) << E << endl;  	// Number of nodes and edges in the new graph.
 	ss << "n " << setw(10) << SUPERSOURCE << setw(10) << " 0" << endl;	// Flow in the super source
@@ -1487,8 +1548,7 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 		listOfNodesReverse->push_back(0);
 	}
 
-	// This loop set lower bound and upper bound from super source to all the nodes. All costs are 0.
-	// CP: really? it's actually the bounds of each node to super source and to super sink, right?
+	// This loop set lower bound and upper bound of each node to super source and to super sink. All costs are 0.
 	UINT64 currentIndex = 1;
 	for(UINT64 i = 1; i < graph->size(); i++)
 	{
@@ -1498,8 +1558,6 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 			listOfNodesReverse->at(currentIndex) = i;			// Mapping between original node ID and cs2 node ID
 			// CP: don't you create two CS2 node for each original node? where is the second CS2 node ID?
 			// BH: Yes I created two nodes for CS2. For a node u in the listOfNodes. We created 2*u and 2*u+1 in for the cs2
-
-			// CP: give an sample of ss
 			FLOWLB[0] = 0; FLOWUB[0] = 1000000; COST[0] = 0;
 			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
@@ -1546,19 +1604,22 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 					// Total 6 edges considering the reverse edge too.
 					// For details on how to convert the edges off different types please see my thesis.
 
-					// CP: u1, u2, v1 and v2 are the actual CS2 node IDs, right?
-					// BH: Yes.
+					// BH: u1, u2, v1 and v2 are the actual CS2 node IDs
 					UINT64 u1 = 2 * u, u2 = 2 * u + 1, v1 =  2 * v, v2 = 2 * v + 1;
 
-					// CP: please provide a sample of what's input to ss below
+					// Connect the edges of the original graph
+					// for each orignal edge, we add six edges
 					if(edge->getOrientation() == 0)
 					{
+						// first edge in the cost function, forward and reverse
 						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
+						// second edge in the cost function, forward and reverse
 						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
+						// third edge in the cost function, forward and reverse
 						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 					}
@@ -1631,11 +1692,6 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 	if(inputFile == NULL)
 		MYEXIT("Unable to open file: "+outputFileName);
 
-
-	// CP: where are these variables used?
-	// BH: not used. Removed. These variables were used before. But I changed the function and forgot to remove them.
-	// string s, d, f;
-
 	UINT64 lineNum = 0;
 	while(!inputFile.eof())
 	{
@@ -1643,7 +1699,11 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 		UINT64 source, destination, flow;
 		inputFile >> source >> destination >> flow;		// get the flow from CS2
 		// CP: give an sample of the CS2 output
-
+		/*
+		From To Flow
+		1 2421 0 from node 1 to node 2421 with flow of 0
+		1 3 0	from node 1 to node 3 with flow of 0
+		*/
 		if(source != SUPERSINK && source != SUPERSOURCE && destination != SUPERSOURCE && destination != SUPERSINK && flow!=0)
 		{
 			UINT64 mySource = listOfNodesReverse->at(source/2);				// Map the source to the original graph
@@ -1717,9 +1777,9 @@ bool OverlapGraph::calculateBoundAndCost(Edge *edge, INT64* FLOWLB, INT64* FLOWU
 
 			// this edge carry the first 1 flow
 			FLOWLB[0] = 1; FLOWUB[0] = 1; COST[0] = 1;
-			// this edge won't be used, because of the high unit cost
+			// this edge carries the second 1 flow with high cost
 			FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000;
-			// this edge provides additional flow after the first flow
+			// this edge provides additional flow after the second flow
 			FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000;
 		}
 		else // Short composite edge containing less than 20 reads. May have zero flow.
@@ -1729,9 +1789,9 @@ bool OverlapGraph::calculateBoundAndCost(Edge *edge, INT64* FLOWLB, INT64* FLOWU
 
 			// this edge carries the first 1 flow
 			FLOWLB[0] = 0; FLOWUB[0] = 1; COST[0] = 1;
-			// this edge won't be used??
+			// this edge carries the second unit of flow with high cost
 			FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000;
-			// this edge provides additional flow after the first flow.
+			// this edge provides additional flow after the two units of flow.
 			FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000;
 		}
 	}
