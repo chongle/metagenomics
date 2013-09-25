@@ -17,12 +17,14 @@ struct MPlist
 {
         // Merge test
 	UINT64 matePairID;				// This list stores the list of ID's of the matepairs of the current read.
+									// CP: this is NOT a list, but a read ID, right?
 	UINT8 matePairOrientation; 		// List of mate pair orientation.
 									// 0 = 00 means the reverse of this read and the reverse of the second read are matepairs.
 									// 1 = 01 means the reverse of this read and the forward of the second read are matepairs.
 									// 2 = 10 means the forward of this read and the reverse of the second read are matepairs.
 									// 3 = 11 means the forward of this read and the forward of the second read are matepairs.
 	UINT8 datasetNumber;			//Dataset number.
+									// CP: different datasets have different insert sizes
 };
 
 /**********************************************************************************************************************
@@ -40,6 +42,7 @@ class Read
 		UINT32 frequency; 						// Frequency of the read. Number of times this read is present in the dataset. Used in some statistical analysis.
 		vector<MPlist> *matePairList;
 		vector<Edge *> *listOfEdgesForward;   	// List of edges that contain the forward string of this read.
+		// CP: How is the location defined? from where to the beginning of this read?
 		vector<UINT64> *locationOnEdgeForward;	// List of locations on the edges that contain the forward string of the current read.
 		vector<Edge *> *listOfEdgesReverse;		// List of edges that contain the reverse string of this read.
 		vector<UINT64> *locationOnEdgeReverse;	// List of locations on the edges that contain the reverse string of the current read.
@@ -47,6 +50,7 @@ class Read
 		string reverseComplement(const string & read);
 
 	public:
+		// CP: can the two variables be removed?
 		UINT64 coverageDepth;					// Estimated depth of coverage.  --> Not use anymore
 		UINT64 locationInDataset;				// Not for debugging only. Will be removed.  --> Not use anymore
 		bool isContainedRead;
