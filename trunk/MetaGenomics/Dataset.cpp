@@ -38,6 +38,7 @@ Dataset::Dataset(void)
 **********************************************************************************************************************/
 Dataset::Dataset(vector<string> pairedEndFileNames, vector<string> singleEndFileNames, UINT64 minOverlap)
 {
+	CLOCKSTART;
 	// Initialize the variables.
 	numberOfUniqueReads = 0;
 	numberOfReads = 0;
@@ -62,6 +63,7 @@ Dataset::Dataset(vector<string> pairedEndFileNames, vector<string> singleEndFile
 	cout << " Longest read length in all datasets: " << setw(5) << longestReadLength <<endl;;
 	sortReads();
 	removeDupicateReads();								// Remove duplicated reads for the dataset.
+	CLOCKSTOP;
 }
 
 
