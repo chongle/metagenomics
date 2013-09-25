@@ -1831,6 +1831,7 @@ bool OverlapGraph::findPathBetweenMatepairs(Read * read1, Read * read2, UINT8 or
 	locationOnEdgeRead1 = (orient == 2 || orient == 3) ? read1->getLocationOnEdgeForward() : read1->getLocationOnEdgeReverse();
 
 	// CP: Explain how this forward-forward/forward-reverse is related to mate-pair orientation listed above?
+	// BH: if the first read is a forward read and the second read is a reverse read then we have to look for the forward read in the first edge and the reverse read in the second edge.
 
 	// CP: use this, if the matepairs are forward - forward
 	// CP: Ted, we need to add this to the config file, instead of hard-coding it here
@@ -1871,8 +1872,10 @@ bool OverlapGraph::findPathBetweenMatepairs(Read * read1, Read * read2, UINT8 or
 			if(firstEdge !=lastEdge && firstEdge != lastEdge->getReverseEdge()) //not on the same edge
 			{
 				// CP: distance from the end of the read1 to the end of the last read of the edge, right?
+				// BH: Yes.
 				UINT64 distanceOnFirstEdge = firstEdge->getOverlapOffset() - locationOnEdgeRead1->at(i);
 				// CP: distance from the beginning of the first read of the edge to the beginning of the read2, right?
+				// BH: Yes.
 				UINT64 distanceOnLastEdge = locationOnEdgeRead2->at(j);
 				// CP: the two reads can't be too far apart within their own edges
 				if(distanceOnFirstEdge + distanceOnLastEdge < getMean(datasetNumber) + 3 * getSD(datasetNumber))
@@ -1959,12 +1962,14 @@ UINT64 OverlapGraph::calculateEditDistance(const std::string &s1, const std::str
 
 /**********************************************************************************************************************
 	Explore all paths starting from firstEdge and tries to reach lastEdge using depth first search.
-	Depth is limited to 10 to reduce running time
+	Depth is limited to 100 to reduce running time
 **********************************************************************************************************************/
 // CP: this a recursive function
 // CP: inputs: firstEdge and lastEdge in the path, distanceOnFirstEdge and distanceOnLastEdge are the relative position of the paired reads on the two edges
 // CP: inputs: datasetNumber retrieves the mean and SD of insert size of the dataset
 // CP: outputs: level is the level of the depth first search, firstPath and flags are ???
+// BH: when we find the first path we save it and flag is used to indicate that all the edges in the first path are supported.
+//     When we find another path, we unmark the flag for the pair of edges in the first path that are not present in the second path and so on.
 // CP: return the number of paths found
 UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags)
 {
@@ -1988,6 +1993,7 @@ UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 dista
 	}
 
 	// CP: don't go deeper than 100 levels? the comments above says it's 10 levels. This should probably be set in the config file for long insert size? Move this to Common.h at least for now
+	// BH: we do not go deeper than 100 levels. We can put this in the config file.
 	// CP: when reaching the maximum depth, return 0 path found and exit the recursive call loop
 	if(level > 100) return 0; // Do not go very deep.
 
@@ -2004,6 +2010,8 @@ UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 dista
 		{
 			// CP: comment more on the exact conditions of the if
 			// CP: what if mean - 3*SD is negative?
+			// If we read our destination read, we check if the distance is within 3 sd of the mean.
+			// mean - 3*sd can be negative. I think we do not have to worry about it.
 			if((INT64)(distanceOnLastEdge + pathLengths.at(level - 1)) >= (INT64)((INT64)(getMean(datasetNumber)) - 3 * (INT64)(getSD(datasetNumber))) && distanceOnLastEdge + pathLengths.at(level - 1) <= getMean(datasetNumber) + 3 * getSD(datasetNumber))
 			{
 				// CP: the path length is within the insert size range
@@ -2074,6 +2082,7 @@ UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 dista
 
 // Please move this into header file
 // CP: Please comment on what's this struct and all its member variables.
+// This structure is used to store list of pair of edges and their support. Used in two function: 1. when we find path by mate-pairs 2. scaffolder.
 struct pairedEdges
 {
 		Edge * edge1;
@@ -2100,8 +2109,10 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 	if(meanOfInsertSizes.size() == 0) // no mate-pair
 		return 0;
 	// CP: a path is defined by a vector of edges, right?
+	// BH: yes.
 	vector <Edge *> copyOfPath;
 	// CP: What's this flag vector for?
+	// This is used to mark the edges that are common in all paths found.
 	vector <UINT64> copyOfFlags;
 	UINT64 noPathsFound = 0, pathsFound = 0, mpOnSameEdge=0;
 
@@ -2189,6 +2200,7 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 			mergeEdges(listOfPairedEdges.at(i).edge1, listOfPairedEdges.at(i).edge2);
 
 			// CP: what is done here?
+			// BH; once we merge edge1 and edge2. We make sure that we do not try to merge these edges again. We mark all the pair of edes that contains edge1 and edge2 or their reverse edges.
 			for(UINT64 j = i + 1; j<listOfPairedEdges.size(); j++)
 			{
 				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r || listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
