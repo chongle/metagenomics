@@ -755,6 +755,8 @@ UINT64 OverlapGraph::contractCompositePaths(void)
 
 /**********************************************************************************************************************
 	Merge two edges in the overlap graph.
+	CP: the flow of the new edge is the minimum flow of the two old edges and the flow of the new edge is deducted from those of the old edges
+	CP: Remove the old edges that doesn't have any flow left, but keep the old edges that still have flow left.
 **********************************************************************************************************************/
 bool OverlapGraph::mergeEdges(Edge *edge1, Edge *edge2)
 {
@@ -2342,6 +2344,8 @@ UINT64 OverlapGraph::scaffolder(void)
 	CLOCKSTART;
 	UINT64 pairsOfEdgesMerged = 0;
 	vector <pairedEdges> listOfPairedEdges;
+
+	// CP: listOfCompositeEdges contains all the composite edges
 	vector<Edge *> *listOfCompositeEdges = new vector<Edge *>;
 	for(UINT64 i = 1; i < graph->size(); i++) // For each node
 	{
@@ -2354,6 +2358,7 @@ UINT64 OverlapGraph::scaffolder(void)
 			}
 		}
 	}
+
 	for(UINT64 i = 0 ; i < listOfCompositeEdges->size(); i++) // For each composite edge in the graph
 	{
 		Edge *edge1 = listOfCompositeEdges->at(i);
@@ -2412,20 +2417,26 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(Edge *edge)
 {
 
 	Edge * rEdge=edge->getReverseEdge(); // We want to find if there are other edges that share matepairs. current edge (u,v) we check the matepairs near the node v. That's why we took the reverse edge.
+											// CP: why do you only check near v, not u?
 	vector<Edge *> * feasibleListOfEdges = new vector<Edge *>;
 	UINT64 dist = 0;
 	for(UINT64 i = 0; i <rEdge->getListOfReads()->size(); i++) // for each read in the edge
 	{
+		// CP: dist is the distance from the beginning of rEdge to the beginning of this read.
 		dist+=rEdge->getListOfOverlapOffsets()->at(i);	// offset. We do not have to go much deeper. we need to make sure that we atleast go upto the longest insert size.
+		// CP: if this read is too far inside rEdge, then no need to go further inside. Stop and return the list
 		if(dist > 2*longestMeanOfInsertSize)	// longest insert size mean
 			 break;
+		// CP: retrieve the current read: r1
 		UINT64 mp1=rEdge->getListOfReads()->at(i); // mate pair 1
 		Read *r1 = dataSet->getReadFromID(mp1); // read1
 
 		if(r1->getListOfEdgesForward()->size() == 1) // only present in this current edge
 		{
+			// CP: r1 is a unique read that is present in this current edge only. Ignore non-unique reads
 			for(UINT64 j = 0; j < r1->getMatePairList()->size(); j++) // for each matepair of current read1
 			{
+				// CP: r2 is the paired read of r1
 				UINT64 mp2 = r1->getMatePairList()->at(j).matePairID; // matepair 2
 				Read* r2 = dataSet->getReadFromID(mp2); // read2
 				vector<Edge *> *list = r2->getListOfEdgesForward(); // location of read2
@@ -3222,7 +3233,10 @@ void OverlapGraph::sortEdges()
 
 /**********************************************************************************************************************
 	This function remove loops that can be traversed in only one way.
-	a--->b--->b--->c
+	a>--->b>--->b>--->c
+
+	CP: this function doesn't resolve loops that can be traversed in two ways:
+	CP: example: a<---<b<--->b>--->c
 **********************************************************************************************************************/
 UINT64 OverlapGraph::reduceLoops(void)
 {

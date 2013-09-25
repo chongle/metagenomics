@@ -44,7 +44,8 @@ class Edge{
 												// Each edge (u,v) is present twice in the graph.
 												// Edge (u,v) is present in the list of edges of node u
 												// Edge (v,u) is present in the list of edges of node v.
-												// Edge (u,v) and (v,u) are called twin edge and are reverse of one another.
+												// Edge (u,v) and (v,u) are called twin edge and are reverse of one another.'
+												// CP: does the reverseEdge always have the same flow as the forward Edge?
 
 
 	public:

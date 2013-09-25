@@ -45,7 +45,7 @@ class OverlapGraph
 		// CP: the vector corresponds to a list of datasets
 		vector<INT64> meanOfInsertSizes; 							// Mean of insert sizes.
 		vector<INT64> sdOfInsertSizes; 							// Standard deviation of insert sizes.
-		INT64 longestMeanOfInsertSize;
+		INT64 longestMeanOfInsertSize;								// CP: the longest mean insert size out of all datasets
 		UINT64 estimatedGenomeSize;									// Estimated genome size. Works for isolated genome. Will not work for Metagenomics.
 		UINT8 mergedEdgeOrientation(Edge *edge1, Edge *edge2);		// Orientation of the edge when two edges are merged.
 		UINT8 twinEdgeOrientation(UINT8 orientation);				// Orientation of the reverse edge.
