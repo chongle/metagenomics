@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 		overlapGraph->setDataset(dataSet);
 		// Ted: -s option does not get argument.
 		// unitig graph filename prefix should be same to the all output filename prefix.
-		overlapGraph->readGraphFromFile(allFileName+".unitig");
+		overlapGraph->readGraphFromFile(allFileName+".unitig");			// CP: replace this function to read from the new overlap graph file
 		overlapGraph->sortEdges();
 	}
 	else // Build the graph from the scratch
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 		delete hashTable;
 		//dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		overlapGraph->sortEdges();
-		overlapGraph->saveGraphToFile(allFileName+".unitig");
+		overlapGraph->saveGraphToFile(allFileName+".unitig");			// CP: save to the new overlap graph file
 	}
 
 	overlapGraph->calculateFlow(allFileName+"_flow.input", allFileName+"_flow.output");
@@ -82,6 +82,7 @@ int main(int argc, char **argv)
 		counter = overlapGraph->findSupportByMatepairsAndMerge();
 	} while (counter > 0 && iteration < loopLimit); // To avoid infinite loops
 
+	// CP: write the new overlap graph file and test restarting from the overlap graph from this point
 	overlapGraph->printGraph(allFileName+"graph2.gdl", allFileName+"contigs2.fasta");
 
 	iteration = 0;
@@ -97,6 +98,7 @@ int main(int argc, char **argv)
 
 	} while (counter > 0 && iteration < loopLimit);// To avoid infinite loops
 
+	// CP: write the new overlap graph file and test restarting from the overlap graph from this point
 	overlapGraph->printGraph(allFileName+"graph3.gdl", allFileName+"contigs3.fasta");
 
 	iteration = 0;
