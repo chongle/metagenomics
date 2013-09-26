@@ -225,7 +225,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 		 counter += removeDeadEndNodes();
 	} while (counter > 0);
 
-	// CP: do you remove nodes that don't have any edge? If yes, where is this done?
+	// CP: nodes that don't have any edge will be ignored in all operations
 	// BH: If a node u does not have any edge in the graph then the list of edges of node u will be empty in the graph.
 
 	CLOCKSTOP;
@@ -732,7 +732,7 @@ UINT64 OverlapGraph::contractCompositePaths(void)
 				// CP: Before flow is computed (flowComputed == false), why checking if there is an edge between the two destination reads? why don't you need to do this after flow is calculated?
 				// BH: Before the flow is computed we do not want to insert multiple edges between the same nodes. This condition is required for CS2 minimum Cost flow algorithm
 				// CP: Why the destination reads, not the source reads??
-				// BH: We do not want to remove loops (a,a).
+				// BH: We do not want to remove loops (a,a).o you remove
 				// CP: using the example above, don't you need to check if u and w are different reads or not?
 				// BH: We do not need to check if u and w are different read or not.
 			{
@@ -987,9 +987,38 @@ UINT64 OverlapGraph::removeAllSimpleEdgesWithoutFlow()
 
 
 /**********************************************************************************************************************
+	Remove an all edge in the overlap graph that does not have any flow.
+	CP: return the number of edges removed
+**********************************************************************************************************************/
+UINT64 OverlapGraph::removeAllEdgesWithoutFlow()
+{
+	CLOCKSTART;
+	vector <Edge *> listOfEdges;
+	for(UINT64 i = 1; i < graph->size(); i++) // For each read.
+	{
+		if(!graph->at(i)->empty())	// If the read has some edges.
+		{
+			for(UINT64 j=0; j < graph->at(i)->size(); j++) // For each edge
+			{
+				Edge * edge = graph->at(i)->at(j);
+			if(edge->getSourceRead()->getReadNumber() < edge->getDestinationRead()->getReadNumber() && edge->flow == 0) // The edge is simple edge with no flow.
+				{
+					listOfEdges.push_back(edge); // Put in the list of edges to be removed.
+				}
+			}
+		}
+	}
+	for(UINT64 i = 0 ; i < listOfEdges.size(); i++)
+		removeEdge(listOfEdges.at(i));		// remove the edges from the list.
+	cout<<"Edges removed: " << listOfEdges.size() << endl;
+	CLOCKSTOP;
+	return listOfEdges.size();
+}
+
+
+/**********************************************************************************************************************
 	Remove nodes with all simple edges and all same arrow type
-	CP: Please give the definition and an example for a deadend node, like below
-	u*-------->v
+
 	A node is all incomming edges or all outgoing edges is called a dead end node. While traversing the graph if we
 	enter such node, there is no way we can go out. So we remove such nodes from the graph. To remove the node all
 	of its edges must be simple edges or very short edges (less than 10 read in it).
@@ -1022,11 +1051,11 @@ UINT64 OverlapGraph::removeDeadEndNodes(void)
 				}
 
 				if(edge->getOrientation() == 0 || edge->getOrientation() == 1)
-					inEdge++;
+					inEdge++;			// the number of incoming edges to this node
 				else
-					outEdge++;
+					outEdge++;			// the number of outgoing edges to this node
 			}
-			// CP: if what, this node is marked to be removed?
+			// if all edges are incoming or outgoing AND has less than 10 reads, this node is marked to be removed?
 			// This node does not have any composite edge with more than 10 reads in it.
 			if(flag == 0) // If not break case
 			{
@@ -1038,7 +1067,7 @@ UINT64 OverlapGraph::removeDeadEndNodes(void)
 		}
 	}
 
-	// CP: in below actually to remove the marked deadend nodes and all their edges.
+	//  in below actually to remove the marked deadend nodes and all their edges.
 	vector <Edge *> listOfEdges;
 	for(UINT64 i = 0 ; i < listOfNodes.size(); i++)
 	{
@@ -1677,35 +1706,6 @@ bool OverlapGraph::readGraphFromFile(string fileName)
 }
 
 
-
-
-/**********************************************************************************************************************
-	Remove dead ends containing less than threshold number of reads.
-**********************************************************************************************************************/
-/*UINT64 OverlapGraph::removeDeadEnds(void)
-{
-	CLOCKSTART;
-	UINT64 counter = 0;
-	for(UINT64 i = 0; i < graph->size(); i++)	// For each node in the graph.
-	{
-		if(graph->at(i)->size() == 1) 	// If the node has only one edge.
-		{
-			Edge *edge = graph->at(i)->at(0); // The only edge of the current node.
-			if(edge->getListOfReads()->size() < deadEndLength) // If it has fewer reads in it.
-			{
-				removeEdge(edge);	// We then remove the edge/
-				counter++;			// Count the number of such dead-end removed.
-			}
-		}
-	}
-	cout << setw(10) << counter << " Dead ends removed." << endl;
-	CLOCKSTOP;
-	return counter;
-}*/
-
-
-
-
 /**********************************************************************************************************************
 	Calculate min cost flow
 
@@ -1950,41 +1950,9 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 }
 
 
-
-
-/**********************************************************************************************************************
-	return edge between source and destination
-**********************************************************************************************************************/
-Edge * OverlapGraph::findEdge(UINT64 source, UINT64 destination)
-{
-	for(UINT64 i = 0; i < graph->at(source)->size(); i++) // For the list of edges of the source node.
-	{
-		if(graph->at(source)->at(i)->getDestinationRead()->getReadNumber() == destination)	// check if there is an edge to destination
-			return graph->at(source)->at(i);	// return the edge.
-	}
-	cout << "Check for error " << source << " to " << destination << endl;
-	MYEXIT("Unable to find edge");
-}
-
-
-
-/**********************************************************************************************************************
-	Checks if there is an edge (source, destination)
-**********************************************************************************************************************/
-bool OverlapGraph::isEdgePresent(UINT64 source, UINT64 destination)
-{
-	for(UINT64 i = 0; i < graph->at(source)->size(); i++)	// flro the list of edges of the source node
-	{
-		if(graph->at(source)->at(i)->getDestinationRead()->getReadNumber() == destination)	// check if there is an edge to destination
-			return true;	// return true if there is an edge (source,destination)
-	}
-	return false;	// edge not found between source and destination
-}
-
-
 /**********************************************************************************************************************
 	This function calculates the cost and bounds for an edge in the overlap graph.
-	This function is very sensitive to the assembled contigs. CP: what does this mean?
+	This function is very sensitive to the assembled contigs and to the cost function parameters
 	BH: changing the bounds and threshold of number of nodes in the edge (here 20) many give use very wrong flow.
 
 	CP: given an *edge, calculate and return FLOWLB, FLOWUB, and COST
@@ -2026,6 +1994,330 @@ bool OverlapGraph::calculateBoundAndCost(Edge *edge, INT64* FLOWLB, INT64* FLOWU
 	}
 
 	return true;
+}
+
+
+/**********************************************************************************************************************
+	Calculate min cost flow
+
+	// An sample input to the CS2 algorithm
+
+	p min       3840      13449										// p min numberOfNodes numberOfEdges
+	n          1         0											// initial flow of 0 in node 1, node 1 is the supersource
+	n       3840         0											// initial flow of 0 in node 3840, which is the supersink (equal to the number of nodes)
+	a       3840          1          1    1000000    1000000		// edge from supersink to supersource, LowBound(1), UpperBound(1000000), Cost per unit of flow(1000000)
+	a          1          2          0    1000000          0		// edge from supersource to node 2, with the defined cost function
+	// this continues to
+	// connect each node to supersource and supersink
+	// connect every edge in the original graph
+
+**********************************************************************************************************************/
+bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
+{
+	CLOCKSTART;
+	for(UINT64 i = 1; i < graph->size(); i++) // clear all the flow
+	{
+		if(!graph->at(i)->empty())
+		{
+			for(UINT64 j = 0; j< graph->at(i)->size(); j++)
+			{
+				graph->at(i)->at(j)->flow =0;
+			}
+
+		}
+	}
+	// CP: the number of vertices for CS2 graph, two CS2 nodes for each read nodes plus supersource and supersink
+	UINT64 V = numberOfNodes * 2 + 2;
+	// CP: the number of edges for CS2 graph,
+	// CP: 3 CS2 edges for each overlap graph edge, plus two edges for CS nodes to supersource and supersink, plus an edge between supersource and supersink
+	UINT64 E = numberOfEdges * 3 + numberOfNodes * 4 + 1;
+	UINT64 SUPERSOURCE = 1;
+	UINT64 SUPERSINK = V;
+	// For each edge in the overlap graph, we add 3 edges in the directed graph. Two nodes are created for each node in the original graph.
+	// A super source and a super sink is added. Each node is connected to the super source and super sink.
+	INT64 FLOWLB[3], FLOWUB[3], COST[3];			// Flow bounds and cost of the edges.
+	// CP: comment on what's inputfile and output files.
+	// CP: it's confusing to open outputFile with inputFileName
+	// BH: This is an ouput file for this function, but an input file for CS2
+	ofstream outputFile;
+	outputFile.open(inputFileName.c_str());
+	if(outputFile == NULL)
+		MYEXIT("Unable to open file: "+inputFileName);
+
+	stringstream ss;
+	ss << "p min " << setw(10) << V << " " << setw(10) << E << endl;  	// Number of nodes and edges in the new graph.
+	ss << "n " << setw(10) << SUPERSOURCE << setw(10) << " 0" << endl;	// Flow in the super source
+	ss << "n " << setw(10) << SUPERSINK << setw(10) << " 0" << endl;	// Flow in the super sink.
+	FLOWLB[0] = 1; FLOWUB[0] = 1000000; COST[0] = 1000000;
+	ss << "a " << setw(10) << SUPERSINK << " " << setw(10) << SUPERSOURCE << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl; // Add an edge from super sink to super source with very high cost.
+
+	// CP: this is a lookup table from the overlap graph node ID to the CS2 graph ID
+	vector<UINT64> *listOfNodes = new vector<UINT64>;
+	// CP: this is a lookup table from the CS2 graph ID to the overlap graph node ID
+	vector<UINT64> *listOfNodesReverse = new vector<UINT64>;
+
+	// For n nodes in the graph, CS2 requires that the nodes are numbered from 1 to n. In the overlap graph, the nodes does not have sequencinal ID. We need to convert them to 1 - n
+
+	// If the ID of a node in the original graph is 100 and directed graph is 5
+	// Then listOfNodes->at(100) is equal to 5
+	// and ListOfNodesReverse->at(5) is equal to 100.
+
+	for(UINT64 i = 0; i <= graph->size(); i++)
+	{
+		listOfNodes->push_back(0);
+		listOfNodesReverse->push_back(0);
+	}
+
+	// This loop set lower bound and upper bound of each node to super source and to super sink. All costs are 0.
+	UINT64 currentIndex = 1;
+	for(UINT64 i = 1; i < graph->size(); i++)
+	{
+		if(!graph->at(i)->empty()) // edges to and from the super source and super sink
+		{
+			listOfNodes->at(i) = currentIndex;					// Mapping between original node ID and cs2 node ID
+			listOfNodesReverse->at(currentIndex) = i;			// Mapping between original node ID and cs2 node ID
+			// CP: don't you create two CS2 node for each original node? where is the second CS2 node ID?
+			// BH: Yes I created two nodes for CS2. For a node u in the listOfNodes. We created 2*u and 2*u+1 in for the cs2
+			FLOWLB[0] = 0; FLOWUB[0] = 1000000; COST[0] = 0;
+			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << 2 * currentIndex << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			currentIndex++;
+		}
+	}
+
+	// This loop converts the original bi-directed edges to directed edges (1 becomes 6).
+	for(UINT64 i = 1; i < graph->size(); i++)
+	{
+		if(!graph->at(i)->empty()) // edges to and from the super source and super sink
+		{
+			for(UINT64 j = 0; j < graph->at(i)->size(); j++)
+			{
+
+				// CP: u and v are the CS2 node IDs of the source node and destination node, respectively, of the edge
+				Edge *edge = graph->at(i)->at(j);
+				UINT64 u = listOfNodes->at(edge->getSourceRead()->getReadNumber());
+				UINT64 v = listOfNodes->at(edge->getDestinationRead()->getReadNumber());
+
+				// set the bound and cost here
+				// if edge has more than 20 reads:
+				//   FLOWLB[0] = 1; FLOWUB[0] = 1; COST[0] = 1;
+				//   FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000;
+				//   FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000;
+				// else:
+				//   FLOWLB[0] = 0; FLOWUB[0] = 1; COST[0] = 1;
+				//   FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000;
+				//   FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000;
+				// cost function is set in such a way that for the composite edges with more that 20 reads in them we will push at least one units of flow.
+				// Otherwise we set the lower bound of flow to 0, meaning that these edges might not have any flow at the endl.
+				// The cost of pushing the first using of flow in very cheap and then we pay high price to push more than 1 units of flow.
+				// This will ensure that we do not push flow were it is not necessary.
+				// CP: if we need to change the cost function, we just need to change this function, right?
+				// BH: Yes, we only need to change this function if we want to use different cost function.
+				calculateBoundAndCost2(edge, FLOWLB, FLOWUB, COST);
+
+
+				if(u < v || (u == v && edge < edge->getReverseEdge()))
+				{
+					// Here for each edge we add three edges with different values of cost and bounds.
+					// Total 6 edges considering the reverse edge too.
+					// For details on how to convert the edges off different types please see my thesis.
+
+					// BH: u1, u2, v1 and v2 are the actual CS2 node IDs
+					UINT64 u1 = 2 * u, u2 = 2 * u + 1, v1 =  2 * v, v2 = 2 * v + 1;
+
+					// Connect the edges of the original graph
+					// for each orignal edge, we add six edges
+					if(edge->getOrientation() == 0)
+					{
+						// first edge in the cost function, forward and reverse
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+
+						// second edge in the cost function, forward and reverse
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+
+						// third edge in the cost function, forward and reverse
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+					}
+					else if(edge->getOrientation() == 1)
+					{
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+
+					}
+					else if(edge->getOrientation() == 2)
+					{
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+
+					}
+					else if(edge->getOrientation() == 3)
+					{
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+
+					}
+				}
+			}
+		}
+	}
+	outputFile << ss.str();		// Write the string in a file for CS2
+	outputFile.close();
+
+	// CP: clear ss, right?
+	ss.str(std::string());
+
+	// CP: what are  you doing here?
+	// BH: CS2 requires the file name to be char * not string. We convert the string filename to char *
+	char * inFile = new char[inputFileName.size() + 1];
+	std::copy(inputFileName.begin(), inputFileName.end(), inFile);
+	inFile[inputFileName.size()] = '\0';
+
+	char * outFile = new char[outputFileName.size() + 1];
+	std::copy(outputFileName.begin(), outputFileName.end(), outFile);
+	outFile[outputFileName.size()] = '\0';
+
+
+	cout << "Calling CS2" << endl;
+	main_cs2(inFile,outFile);			// Call CS2
+	cout << "CS2 finished" << endl;
+
+	delete[] inFile;
+	delete[] outFile;
+
+	ifstream inputFile;
+	inputFile.open(outputFileName.c_str());
+	if(inputFile == NULL)
+		MYEXIT("Unable to open file: "+outputFileName);
+
+	UINT64 lineNum = 0;
+	while(!inputFile.eof())
+	{
+		lineNum ++;
+		UINT64 source, destination, flow;
+		inputFile >> source >> destination >> flow;		// get the flow from CS2
+		// CP: give an sample of the CS2 output
+		/*
+		From To Flow
+		1 2421 0 from node 1 to node 2421 with flow of 0
+		1 3 0	from node 1 to node 3 with flow of 0
+		*/
+		if(source != SUPERSINK && source != SUPERSOURCE && destination != SUPERSOURCE && destination != SUPERSINK && flow!=0)
+		{
+			UINT64 mySource = listOfNodesReverse->at(source/2);				// Map the source to the original graph
+			UINT64 myDestination = listOfNodesReverse->at(destination/2);	// Map the destination in the original graph
+			Edge *edge = findEdge(mySource, myDestination);					// Find the edge in the original graph.
+			edge->flow += flow;												// Add the flow in the original graph.
+		}
+	}
+	inputFile.close();
+	delete listOfNodes;
+	delete listOfNodesReverse;
+	this->flowComputed = true;
+	CLOCKSTOP;
+	return true;
+}
+
+
+/**********************************************************************************************************************
+	This function calculates the cost and bounds for an edge in the overlap graph.
+	This function is very sensitive to the assembled contigs. CP: what does this mean?
+	BH: changing the bounds and threshold of number of nodes in the edge (here 20) many give use very wrong flow.
+
+	CP: given an *edge, calculate and return FLOWLB, FLOWUB, and COST
+	CP: FLOWLB, FLOWUB, and COST are all array of size 3 because each overlap graph edge is represented by 3 CS2 edges to define a cost function
+**********************************************************************************************************************/
+bool OverlapGraph::calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST)
+{
+	for(UINT64 i = 0; i < 3; i++)		// For the simple edges we put very high cost
+	{
+		FLOWLB[i] = 0; FLOWUB[i] = 10; COST[i] = 500000;
+	}
+	getBaseByBaseCoverage(edge);
+	if(!edge->getListOfReads()->empty()) // Composite Edge
+	{
+		if(edge->coverageDepth > 60)
+		{
+			// the first 1 flow must be used and has a cost of 1
+			// each additional flow up to 8 flows has a cost of 100000
+
+			// this edge carry the first 1 flow
+			FLOWLB[0] = 1; FLOWUB[0] = 1; COST[0] = 1;
+			// this edge carries the second 1 flow with high cost
+			FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000;
+			// this edge provides additional flow after the second flow
+			FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000;
+		}
+		else // Short composite edge containing less than 20 reads. May have zero flow.
+		{
+			// the first 1 flow may not be required, but has a low cost of 1
+			// each additional flow up to 8 flows has a cost of 100000
+
+			// this edge carries the first 1 flow
+			FLOWLB[0] = 0; FLOWUB[0] = 1; COST[0] = 1;
+			// this edge carries the second unit of flow with high cost
+			FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000;
+			// this edge provides additional flow after the two units of flow.
+			FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000;
+		}
+	}
+
+	return true;
+}
+
+
+
+
+
+/**********************************************************************************************************************
+	return edge between source and destination
+**********************************************************************************************************************/
+Edge * OverlapGraph::findEdge(UINT64 source, UINT64 destination)
+{
+	for(UINT64 i = 0; i < graph->at(source)->size(); i++) // For the list of edges of the source node.
+	{
+		if(graph->at(source)->at(i)->getDestinationRead()->getReadNumber() == destination)	// check if there is an edge to destination
+			return graph->at(source)->at(i);	// return the edge.
+	}
+	cout << "Check for error " << source << " to " << destination << endl;
+	MYEXIT("Unable to find edge");
+}
+
+
+
+/**********************************************************************************************************************
+	Checks if there is an edge (source, destination)
+**********************************************************************************************************************/
+bool OverlapGraph::isEdgePresent(UINT64 source, UINT64 destination)
+{
+	for(UINT64 i = 0; i < graph->at(source)->size(); i++)	// flro the list of edges of the source node
+	{
+		if(graph->at(source)->at(i)->getDestinationRead()->getReadNumber() == destination)	// check if there is an edge to destination
+			return true;	// return true if there is an edge (source,destination)
+	}
+	return false;	// edge not found between source and destination
 }
 
 
@@ -2100,13 +2392,11 @@ bool OverlapGraph::findPathBetweenMatepairs(Read * read1, Read * read2, UINT8 or
 			Edge * lastEdge = listRead2->at(j);
 			if(firstEdge !=lastEdge && firstEdge != lastEdge->getReverseEdge()) //not on the same edge
 			{
-				// CP: distance from the end of the read1 to the end of the last read of the edge, right?
-				// BH: Yes.
+				// distance from the end of the read1 to the end of the last read of the edge,
 				UINT64 distanceOnFirstEdge = firstEdge->getOverlapOffset() - locationOnEdgeRead1->at(i);
-				// CP: distance from the beginning of the first read of the edge to the beginning of the read2, right?
-				// BH: Yes.
+				// distance from the beginning of the first read of the edge to the beginning of the read2
 				UINT64 distanceOnLastEdge = locationOnEdgeRead2->at(j);
-				// CP: the two reads can't be too far apart within their own edges
+				// the two reads can't be too far apart within their own edges
 				if(distanceOnFirstEdge + distanceOnLastEdge < getMean(datasetNumber) + 3 * getSD(datasetNumber))
 				{
 					UINT64 newPaths= exploreGraph(firstEdge, lastEdge, distanceOnFirstEdge, distanceOnLastEdge, datasetNumber, 0, firstPath, flags);	// from firs edge  try to find a path to the last edge.
@@ -2203,12 +2493,12 @@ UINT64 OverlapGraph::calculateEditDistance(const std::string &s1, const std::str
 UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags)
 {
 	// CP: use static variables to carry their values through the recursive calls of this function
-	static UINT64 pathFound;					// CP: what's this?
-	static vector <Edge *> listOfEdges;			// CP: what's this?
-	static vector <UINT64> pathLengths;			// CP: what's this?
+	static UINT64 pathFound;					// number of paths found
+	static vector <Edge *> listOfEdges;			// list of edges in the current path
+	static vector <UINT64> pathLengths;			// length of the path from the beginning of the source read of the first edge to the current edge's source read's beginning
 	if(level == 0)
 	{
-		// CP: why resize these vectors, not clear them?
+		// clear the variables and resize their capacity to free memory
 		pathFound = 0;
 		firstPath.resize(0);
 		flags.resize(0);
@@ -2221,7 +2511,6 @@ UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 dista
 		pathLengths.resize(level);
 	}
 
-	// CP: don't go deeper than 100 levels? the comments above says it's 10 levels. This should probably be set in the config file for long insert size? Move this to Common.h at least for now
 	// BH: we do not go deeper than 100 levels. We can put this in the config file.
 	// CP: when reaching the maximum depth, return 0 path found and exit the recursive call loop
 	if(level > 100) return 0; // Do not go very deep.
@@ -2237,8 +2526,6 @@ UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 dista
 	{
 		if(firstEdge == lastEdge) // Destination found.
 		{
-			// CP: comment more on the exact conditions of the if
-			// CP: what if mean - 3*SD is negative?
 			// If we read our destination read, we check if the distance is within 3 sd of the mean.
 			// mean - 3*sd can be negative. I think we do not have to worry about it.
 			if((INT64)(distanceOnLastEdge + pathLengths.at(level - 1)) >= (INT64)((INT64)(getMean(datasetNumber)) - 3 * (INT64)(getSD(datasetNumber))) && distanceOnLastEdge + pathLengths.at(level - 1) <= getMean(datasetNumber) + 3 * getSD(datasetNumber))
@@ -2309,22 +2596,7 @@ UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 dista
 }
 
 
-// Please move this into header file
-// CP: Please comment on what's this struct and all its member variables.
-// This structure is used to store list of pair of edges and their support. Used in two function: 1. when we find path by mate-pairs 2. scaffolder.
-struct pairedEdges
-{
-		Edge * edge1;
-		Edge * edge2;
-		UINT64 support;
-		UINT64 distance;
-		bool isFreed;
-		bool operator < (const pairedEdges& rhs) const
-		{
-		       return support > rhs.support;
-		}
 
-};
 
 
 /**********************************************************************************************************************
@@ -2337,11 +2609,9 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 	// if the file set is not mate-pair, then just skip
 	if(meanOfInsertSizes.size() == 0) // no mate-pair
 		return 0;
-	// CP: a path is defined by a vector of edges, right?
-	// BH: yes.
+	// a path is defined by a vector of edges,
 	vector <Edge *> copyOfPath;
-	// CP: What's this flag vector for?
-	// This is used to mark the edges that are common in all paths found.
+	// This list of flags is used to mark the edges that are common in all paths found.
 	vector <UINT64> copyOfFlags;
 	UINT64 noPathsFound = 0, pathsFound = 0, mpOnSameEdge=0;
 
@@ -2428,7 +2698,6 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 
 			mergeEdges(listOfPairedEdges.at(i).edge1, listOfPairedEdges.at(i).edge2);
 
-			// CP: what is done here?
 			// BH: once we merge edge1 and edge2. We make sure that we do not try to merge these edges again. We mark all the pair of edes that contains edge1 and edge2 or their reverse edges.
 			for(UINT64 j = i + 1; j<listOfPairedEdges.size(); j++)
 			{
@@ -2572,7 +2841,7 @@ UINT64 OverlapGraph::scaffolder(void)
 	UINT64 pairsOfEdgesMerged = 0;
 	vector <pairedEdges> listOfPairedEdges;
 
-	// CP: listOfCompositeEdges contains all the composite edges
+	// listOfCompositeEdges contains all the composite edges
 	vector<Edge *> *listOfCompositeEdges = new vector<Edge *>;
 	for(UINT64 i = 1; i < graph->size(); i++) // For each node
 	{
@@ -2623,7 +2892,7 @@ UINT64 OverlapGraph::scaffolder(void)
 			Edge * e1f = listOfPairedEdges.at(i).edge1, *e1r = listOfPairedEdges.at(i).edge1->getReverseEdge();
 			Edge * e2f = listOfPairedEdges.at(i).edge2, *e2r = listOfPairedEdges.at(i).edge2->getReverseEdge();
 			mergeEdgesDisconnected(listOfPairedEdges.at(i).edge1, listOfPairedEdges.at(i).edge2,listOfPairedEdges.at(i).distance);		// Merge the edges.
-			// CP: what's done below?
+			// BH: if an edge is merged already, I make sure that I will not try to merge it again with other edges.
 			for(UINT64 j = i + 1; j<listOfPairedEdges.size(); j++)
 			{
 				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r || listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
@@ -2647,7 +2916,9 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(Edge *edge)
 {
 
 	Edge * rEdge=edge->getReverseEdge(); // We want to find if there are other edges that share matepairs. current edge (u,v) we check the matepairs near the node v. That's why we took the reverse edge.
-											// CP: why do you only check near v, not u?
+										// CP: why do you only check near v, not u?
+										// BH: Here we are checkin if we can merge (u,v) followed by another edge. That why we only take the reads near v.
+										// BH: At some point we will call this function with the reverse edge (v,u) as well. In that case we will look at the reads near vertex u.
 	vector<Edge *> * feasibleListOfEdges = new vector<Edge *>;
 	UINT64 dist = 0;
 	for(UINT64 i = 0; i <rEdge->getListOfReads()->size(); i++) // for each read in the edge
@@ -2725,7 +2996,7 @@ UINT64 OverlapGraph::checkForScaffold(Edge *edge1,Edge *edge2,UINT64 *distance)
 	UINT64 support = 0,dist = 0;
 	*distance = 0;
 	Edge *rEdge1 = edge1->getReverseEdge();
-	vector<Edge *> *listRead1, *listRead2;		// CP: should this be called listEdge1 and listEdge2? What are they?
+	vector<Edge *> *listRead1, *listRead2;		//  This is the lists of edges that contain read1 and read2
 	vector<UINT64> *locationOnEdgeRead1, *locationOnEdgeRead2;
 	// CP: listOfReads contains all the reads in the end section of edge1
 	vector<UINT64> listOfReads;
@@ -3071,6 +3342,7 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 	if(overlapLength == 0) // Strings in the read B and C do not overlap
 	{
 		// CP: do you insert Ns if they don't overlap? It's important to insert Ns
+		// BH: We do not add N here. But when we generate the string from the edges, we insert N's there.
 		overlapOffset1 = edge1->getDestinationRead()->getReadLength();	// In this case we concatenate the strings in the edges. So the offset is the length of the read B
 		overlapOffset2 = edge2->getSourceRead()->getReadLength();		// This is the overlap offset of the reverse edge.
 	}
@@ -3093,11 +3365,11 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 	vector<UINT16> * listOverlapOffsetsReverse= new vector<UINT16>;	// List of overlap offsets in the reads of the reverse edge.
 	vector<UINT8> * listOrientationsReverse = new vector<UINT8>;	// List of orientations of the reads of the reverse edge. 1 means forward string of the reads, 0 means reverse string of the read
 	mergeListDisconnected(edge2->getReverseEdge(),edge1->getReverseEdge(), overlapOffset2, gapLength, listReadsReverse, listOverlapOffsetsReverse,listOrientationsReverse); // Merge the list of reads, overlaps etc for the reverse edge
-	// CP: what's edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2
-	// CP: should be changed to
-	// UINT64 lengthReverseEdge = edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2;
-	// edgeReverse->makeEdge(read2, read1, orientationReverse, lengthReverseEdge, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
-	edgeReverse->makeEdge(read2, read1, orientationReverse, edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
+	// BH: lengthReverseEdge is the overlap offset of the new edge.
+	UINT64 lengthReverseEdge = edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2;
+	edgeReverse->makeEdge(read2, read1, orientationReverse, lengthReverseEdge, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
+
+//	edgeReverse->makeEdge(read2, read1, orientationReverse, edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
 
 	edgeForward->setReverseEdge(edgeReverse);	// set the pointer of reverse edge
 	edgeReverse->setReverseEdge(edgeForward);	// set the pointer of reverse edge
@@ -3140,7 +3412,8 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 /**********************************************************************************************************************
 	Merge the list of reads, list of overlap offsets and list of orientations of two edges.
 	CP: input: edge1 and edge2, NOT modified. All these pointers need to be changed to const Edge *edge1
-	CP: what are the overlapOffset and gapLength?? gapLength is not used here
+	CP: the overlapOffset is the overlapOffset of the new edge, which is from the beginning of source read of the old edge1 to the beginning of the destination read of the old edge2.
+	gapLength is not used here, but it's pairedEdges's distance
 	CP: return-by-pointer: *listReads,  *listOverlapOffsets, *listOrientations
 **********************************************************************************************************************/
 
@@ -3315,6 +3588,7 @@ UINT64 OverlapGraph::resolveNodes(void)
 				Edge *inEdge1, *inEdge2, *outEdge1, *outEdge2;
 				// Calculate the mean and SD of coverage depth of the unique reads in these edges.
 				// CP: why not call this function for every edge of the graph at the beginning?
+				// BH: I do not need this function for all the edges. I only called this function when I need the covrage depth.
 				getBaseByBaseCoverage(listOfInEdges.at(0));
 				getBaseByBaseCoverage(listOfInEdges.at(1));
 				getBaseByBaseCoverage(listOfOutEdges.at(0));
@@ -3485,8 +3759,8 @@ void OverlapGraph::sortEdges()
 	This function remove loops that can be traversed in only one way.
 	a>--->b>--->b>--->c
 
-	CP: this function doesn't resolve loops that can be traversed in two ways:
-	CP: example: a<---<b<--->b>--->c
+	this function doesn't resolve loops that can be traversed in two ways:
+	example: a<---<b<--->b>--->c
 **********************************************************************************************************************/
 UINT64 OverlapGraph::reduceLoops(void)
 {

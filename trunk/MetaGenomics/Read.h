@@ -16,14 +16,17 @@ class Edge;
 // Ted: SVN test
 struct MPlist
 {
-	UINT64 matePairID;				// This list stores the ID of the matepair of the current read.
-									// CP: this is NOT a list, but a read ID, right?
-									// BH: yes this in not a list. It contains only one read ID. We use a vector of the structure to store all the matepairs.
+	UINT64 matePairID;				// the ID of the matepair of the current read.
+									// We use a vector of MPlist to store all the matepairs.
 	UINT8 matePairOrientation; 		// List of mate pair orientation.
 									// 0 = 00 means the reverse of this read and the reverse of the second read are matepairs.
 									// 1 = 01 means the reverse of this read and the forward of the second read are matepairs.
 									// 2 = 10 means the forward of this read and the reverse of the second read are matepairs.
 									// 3 = 11 means the forward of this read and the forward of the second read are matepairs.
+									// paired reads are in forward - reverse orientation on different DNA strands, example:
+									// TAT------------
+									// ------------CAG
+									// But the lexicographically smaller sequence of the read is stored, so the orientation of the matepair is lost and should be stored here
 	UINT8 datasetNumber;			//Dataset number.
 									// CP: different datasets have different insert sizes
 };
@@ -41,10 +44,10 @@ class Read
 		// BH: We need to find reverse complement of the reads in many places. That's whey I computed them once and saved them.
 		string readReverse;
 		UINT32 frequency; 						// Frequency of the read. Number of times this read is present in the dataset. Used in some statistical analysis.
-		vector<MPlist> *matePairList;
+		vector<MPlist> *matePairList;			// will contain the matepair of contained reads assigned to self
+		// listOfEdgesForward and locationOnEdgeReverse stores the list of forward version and reverse version of the same set of edges
 		vector<Edge *> *listOfEdgesForward;   	// List of edges that contain the forward string of this read.
-		// CP: How is the location defined? from where to the beginning of this read?
-		// BH: Location is the distance from the first read on the edge.
+		// BH: Location is the distance from the source read on the edge to the beginning of this read.
 		vector<UINT64> *locationOnEdgeForward;	// List of locations on the edges that contain the forward string of the current read.
 		vector<Edge *> *listOfEdgesReverse;		// List of edges that contain the reverse string of this read.
 		vector<UINT64> *locationOnEdgeReverse;	// List of locations on the edges that contain the reverse string of the current read.

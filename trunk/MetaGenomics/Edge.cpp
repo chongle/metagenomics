@@ -38,9 +38,9 @@ Edge::Edge(void)
 /**********************************************************************************************************************
 	Another Constructor
 **********************************************************************************************************************/
-Edge::Edge(Read *from, Read *to, UINT64 orient, UINT64 length)
+Edge::Edge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput)
 {
-	makeEdge(from, to, orient, length);
+	makeEdge(from, to, orient, overlapOffsetInput);
 }
 
 
@@ -48,9 +48,9 @@ Edge::Edge(Read *from, Read *to, UINT64 orient, UINT64 length)
 /**********************************************************************************************************************
  	 Another Constructor
 **********************************************************************************************************************/
-Edge::Edge(Read *from, Read *to, UINT64 orient, UINT64 length, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations)
+Edge::Edge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations)
 {
-	makeEdge(from, to, orient, length, listReads, listOverlapOffsets, listOrientations);
+	makeEdge(from, to, orient, overlapOffsetInput, listReads, listOverlapOffsets, listOrientations);
 }
 
 
@@ -71,12 +71,12 @@ Edge::~Edge()
 /**********************************************************************************************************************
 	Function to insert a simple edge
 **********************************************************************************************************************/
-bool Edge::makeEdge(Read *from, Read *to, UINT64 orient, UINT64 length)
+bool Edge::makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput)
 {
 	source = from;
 	destination = to;
 	overlapOrientation = orient;
-	overlapOffset = length;
+	overlapOffset = overlapOffsetInput;
 
 	// Initialize variables.
 	transitiveRemovalFlag = false;
@@ -100,12 +100,12 @@ bool Edge::makeEdge(Read *from, Read *to, UINT64 orient, UINT64 length)
 /**********************************************************************************************************************
 	Function to add a composite edge
 **********************************************************************************************************************/
-bool Edge::makeEdge(Read *from, Read *to, UINT64 orient, UINT64 length,  vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations)
+bool Edge::makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput,  vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations)
 {
 	source = from;
 	destination = to;
 	overlapOrientation = orient;
-	overlapOffset = length;
+	overlapOffset = overlapOffsetInput;
 	transitiveRemovalFlag = false;
 	flow = 0;
 	coverageDepth = 0;
