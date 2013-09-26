@@ -2623,6 +2623,7 @@ UINT64 OverlapGraph::scaffolder(void)
 			Edge * e1f = listOfPairedEdges.at(i).edge1, *e1r = listOfPairedEdges.at(i).edge1->getReverseEdge();
 			Edge * e2f = listOfPairedEdges.at(i).edge2, *e2r = listOfPairedEdges.at(i).edge2->getReverseEdge();
 			mergeEdgesDisconnected(listOfPairedEdges.at(i).edge1, listOfPairedEdges.at(i).edge2,listOfPairedEdges.at(i).distance);		// Merge the edges.
+			// CP: what's done below?
 			for(UINT64 j = i + 1; j<listOfPairedEdges.size(); j++)
 			{
 				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r || listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
@@ -2639,6 +2640,8 @@ UINT64 OverlapGraph::scaffolder(void)
 
 /**********************************************************************************************************************
  	 This functions returns a list of edges that might be joined to "edge"
+ 	 CP: For the input edge, find all the feasible edges that are linked with the input edge by a pair of edge-unique reads with appropriate distance
+ 	 CP: edge-unique reads are reads that are only present on one edge
 ***********************************************************************************************************************/
 vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(Edge *edge)
 {
@@ -2661,12 +2664,14 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(Edge *edge)
 		if(r1->getListOfEdgesForward()->size() == 1) // only present in this current edge
 		{
 			// CP: r1 is a unique read that is present in this current edge only. Ignore non-unique reads
+			// CP: this for loop considers r1 and forward edges of r2: r1->.......r2->
 			for(UINT64 j = 0; j < r1->getMatePairList()->size(); j++) // for each matepair of current read1
 			{
 				// CP: r2 is the paired read of r1
 				UINT64 mp2 = r1->getMatePairList()->at(j).matePairID; // matepair 2
 				Read* r2 = dataSet->getReadFromID(mp2); // read2
 				vector<Edge *> *list = r2->getListOfEdgesForward(); // location of read2
+				// CP: use read2 if it's on one and only one edge and it's not on the input forward/reverse edge and its distance is adequate
 				if(list->empty() || list->size() > 1 || list->at(0) == edge || list->at(0) == edge->getReverseEdge() || r2->getLocationOnEdgeForward()->at(0) > 2*longestMeanOfInsertSize) // Must be present uniquly on the edge and withing the distance of longest insert size.
 					continue;
 				UINT64 k;
@@ -2680,7 +2685,8 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(Edge *edge)
 					feasibleListOfEdges->push_back(list->at(0));	// insert the edge in the list.
 				}
 			}
-
+			// CP: this for loop considers r1 and reverse edges of r2: r1->.......r2<-
+			// CP: what if the same read are on a forward edge or another reverse edge? Is this read still unique?
 			for(UINT64 j = 0; j < r1->getMatePairList()->size(); j++)		// Same thing we do for the revese edges.
 			{
 				UINT64 mp2 = r1->getMatePairList()->at(j).matePairID;
@@ -2708,16 +2714,21 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(Edge *edge)
 
 /**********************************************************************************************************************
  	 Check how many unique matepairs support this pair of edges.
+ 	 CP: *edge1 and *edge2 are NOT modified here
+ 	 CP: return the number of matepairs supporting this pair or edges.
+ 	 CP: *distance (the distance between the ends of the two edges) is returned by reference
+ 	 CP: *distance is actually the sum of the distances measured by all matepairs. this would be easier to understand if it's the average distance
 ***********************************************************************************************************************/
 
 UINT64 OverlapGraph::checkForScaffold(Edge *edge1,Edge *edge2,UINT64 *distance)
 {
 	UINT64 support = 0,dist = 0;
 	*distance = 0;
-	vector<UINT64> listOfReads;
 	Edge *rEdge1 = edge1->getReverseEdge();
-	vector<Edge *> *listRead1, *listRead2;
+	vector<Edge *> *listRead1, *listRead2;		// CP: should this be called listEdge1 and listEdge2? What are they?
 	vector<UINT64> *locationOnEdgeRead1, *locationOnEdgeRead2;
+	// CP: listOfReads contains all the reads in the end section of edge1
+	vector<UINT64> listOfReads;
 	for(UINT64 i = 0; i <rEdge1->getListOfReads()->size(); i++)
 	{
 		dist+=rEdge1->getListOfOverlapOffsets()->at(i);
@@ -3014,6 +3025,7 @@ UINT64 OverlapGraph::scaffolder(void)
 
 /**********************************************************************************************************************
 	Check if two strings overlap. At least 10 bp must overlap.
+	CP: return the length of the overlap. 0 if no overlap
 **********************************************************************************************************************/
 
 UINT64 OverlapGraph::findOverlap(string string1, string string2)
@@ -3056,12 +3068,9 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 	UINT8 orientationForward = mergedEdgeOrientationDisconnected(edge1,edge2); // Orientation of the forward edge based on the orientations of edge1 and edge2
 	UINT8 orientationReverse = twinEdgeOrientation(orientationForward);			// Orientation of the reverse edge.
 
-	vector<UINT64> * listReadsForward = new vector<UINT64>;		// List of reads in the forward edge.
-	vector<UINT16> * listOverlapOffsetsForward= new vector<UINT16>;	// List of overlap offsets in the reads of the forward edge.
-	vector<UINT8> * listOrientationsForward = new vector<UINT8>;	// List of orientations of the reads of the forward edge. 1 means forward string of the reads, 0 means reverse string of the read
-
 	if(overlapLength == 0) // Strings in the read B and C do not overlap
 	{
+		// CP: do you insert Ns if they don't overlap? It's important to insert Ns
 		overlapOffset1 = edge1->getDestinationRead()->getReadLength();	// In this case we concatenate the strings in the edges. So the offset is the length of the read B
 		overlapOffset2 = edge2->getSourceRead()->getReadLength();		// This is the overlap offset of the reverse edge.
 	}
@@ -3072,14 +3081,22 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 	}
 
 
+	// CP: merge the forward edge
+	vector<UINT64> * listReadsForward = new vector<UINT64>;		// List of reads in the forward edge.
+	vector<UINT16> * listOverlapOffsetsForward= new vector<UINT16>;	// List of overlap offsets in the reads of the forward edge.
+	vector<UINT8> * listOrientationsForward = new vector<UINT8>;	// List of orientations of the reads of the forward edge. 1 means forward string of the reads, 0 means reverse string of the read
 	mergeListDisconnected(edge1, edge2, overlapOffset1, gapLength, listReadsForward, listOverlapOffsetsForward, listOrientationsForward);	// Merge the list of reads, overlaps etc for the forward edge
 	edgeForward->makeEdge(read1,read2,orientationForward, edge1->getOverlapOffset() + edge2->getOverlapOffset() + overlapOffset1, listReadsForward, listOverlapOffsetsForward, listOrientationsForward);
 
+	// CP: merge the reverse edge
 	vector<UINT64> * listReadsReverse = new vector<UINT64>;			// List of reads in the reverse edge.
 	vector<UINT16> * listOverlapOffsetsReverse= new vector<UINT16>;	// List of overlap offsets in the reads of the reverse edge.
 	vector<UINT8> * listOrientationsReverse = new vector<UINT8>;	// List of orientations of the reads of the reverse edge. 1 means forward string of the reads, 0 means reverse string of the read
-
 	mergeListDisconnected(edge2->getReverseEdge(),edge1->getReverseEdge(), overlapOffset2, gapLength, listReadsReverse, listOverlapOffsetsReverse,listOrientationsReverse); // Merge the list of reads, overlaps etc for the reverse edge
+	// CP: what's edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2
+	// CP: should be changed to
+	// UINT64 lengthReverseEdge = edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2;
+	// edgeReverse->makeEdge(read2, read1, orientationReverse, lengthReverseEdge, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
 	edgeReverse->makeEdge(read2, read1, orientationReverse, edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
 
 	edgeForward->setReverseEdge(edgeReverse);	// set the pointer of reverse edge
@@ -3122,11 +3139,16 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 
 /**********************************************************************************************************************
 	Merge the list of reads, list of overlap offsets and list of orientations of two edges.
+	CP: input: edge1 and edge2, NOT modified. All these pointers need to be changed to const Edge *edge1
+	CP: what are the overlapOffset and gapLength?? gapLength is not used here
+	CP: return-by-pointer: *listReads,  *listOverlapOffsets, *listOrientations
 **********************************************************************************************************************/
 
 bool OverlapGraph::mergeListDisconnected(Edge *edge1, Edge *edge2, UINT64 overlapOffset, UINT64 gapLength, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations)
 {
 	UINT64 sum = 0;
+
+	// CP: Add all the reads in the first edge, NOT including its source read
 	for(UINT64 i = 0; i < edge1->getListOfOrientations()->size(); i++)	// Get the list from the first edge.
 	{
 		listReads->push_back(edge1->getListOfReads()->at(i));
@@ -3134,25 +3156,24 @@ bool OverlapGraph::mergeListDisconnected(Edge *edge1, Edge *edge2, UINT64 overla
 		listOrientations->push_back(edge1->getListOfOrientations()->at(i));
 		sum += edge1->getListOfOverlapOffsets()->at(i);
 	}
-	listReads->push_back(edge1->getDestinationRead()->getReadNumber());		// Add the destination read of the first edge.
 
-		listOverlapOffsets->push_back(edge1->getOverlapOffset() - sum);
-
-	if(edge1->getOrientation() == 1 || edge1->getOrientation() == 3)
+	// CP: Add the destination read of the first edge and set its offset and orientation
+	listReads->push_back(edge1->getDestinationRead()->getReadNumber());		// CP: Add the destination read of the first edge.
+	listOverlapOffsets->push_back(edge1->getOverlapOffset() - sum);			// CP: calculate the overlapOffset of the destination read
+	if(edge1->getOrientation() == 1 || edge1->getOrientation() == 3)		// CP: calculate the orientation of the destination read
 		listOrientations->push_back(1);
 	else
 		listOrientations->push_back(0);
 
+	// CP: Add the source read of the second edge.
 	listReads->push_back(edge2->getSourceRead()->getReadNumber());		// Add the source read of the second edge.
-	listOverlapOffsets->push_back(overlapOffset);
-
+	listOverlapOffsets->push_back(overlapOffset);						// the overlapOff inputted from the function parameter
 	if(edge2->getOrientation() == 2 || edge2->getOrientation() == 3)
 		listOrientations->push_back(1);
 	else
 		listOrientations->push_back(0);
 
-
-
+	// CP: Add all the reads in the second edge, NOT including its destination read
 	for(UINT64 i = 0; i < edge2->getListOfOrientations()->size(); i++)	// Get the list from the second edge.
 	{
 		listReads->push_back(edge2->getListOfReads()->at(i));
@@ -3293,6 +3314,7 @@ UINT64 OverlapGraph::resolveNodes(void)
 
 				Edge *inEdge1, *inEdge2, *outEdge1, *outEdge2;
 				// Calculate the mean and SD of coverage depth of the unique reads in these edges.
+				// CP: why not call this function for every edge of the graph at the beginning?
 				getBaseByBaseCoverage(listOfInEdges.at(0));
 				getBaseByBaseCoverage(listOfInEdges.at(1));
 				getBaseByBaseCoverage(listOfOutEdges.at(0));
@@ -3369,6 +3391,7 @@ struct overlappingReads
 /**********************************************************************************************************************
 	Calculate the coverage depth of an edge for every basepair and then update the Mean and SD of coverage depth in
 	the edge. Only consider reads that are unique to the edge.
+	CP: Calculate the variable, coverageDepth and SD, the Edge class
 **********************************************************************************************************************/
 void OverlapGraph::getBaseByBaseCoverage(Edge *edge)
 {

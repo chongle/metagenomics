@@ -61,6 +61,8 @@ class OverlapGraph
 		OverlapGraph(void);											// Default constructor.
 		//OverlapGraph(HashTable *ht);								// Another constructor.
 		~OverlapGraph();											// Destructor.
+		// CP: Need to add const to all these pointers that are not supposed to be changed.
+		// CP: Currently it's hard to tell which parameters are the input and which parameters are return-by-pointer
 		bool markTransitiveEdges(UINT64 readNumber, vector<markType> * markedNodes); // Mark transitive edges of a read.
 		bool buildOverlapGraphFromHashTable(HashTable *ht);			// Build the overlap graph using hashtable.
 		bool insertEdge(Edge * edge); 								// Insert an edge in the overlap graph.
