@@ -31,6 +31,22 @@ enum markType{
 					// At the end all edges to the neighbor marked as ELIMINATED are marked as transitive edges and will be removed.
 };
 
+// This structure is used to store list of pair of edges and their support. Used in two function: 1. when we find path by mate-pairs 2. scaffolder.
+struct pairedEdges
+{
+		// edge 1 is in front of edge 2 in the sequence
+		Edge * edge1;
+		Edge * edge2;
+		UINT64 support;			// number of matepairs supporting these two edges
+		UINT64 distance;		// sum of the end of read1 to the end of edge 1 and the beginning of read2 to the beginning of edge2
+		bool isFreed;
+		bool operator < (const pairedEdges& rhs) const
+		{
+		       return support > rhs.support;
+		}
+
+};
+
 class OverlapGraph
 {
 	private:
@@ -43,11 +59,11 @@ class OverlapGraph
 		UINT64 numberOfNodes;										// Number of nodes in the overlap graph.
 		UINT64 numberOfEdges;										// Number of edges in the overlap graph.
 		// CP: the vector corresponds to a list of datasets
-		vector<INT64> meanOfInsertSizes; 							// Mean of insert sizes.
+		vector<INT64> meanOfInsertSizes; 							// Mean of insert sizes. index is the datasetNumber
 		vector<INT64> sdOfInsertSizes; 							// Standard deviation of insert sizes.
-		INT64 longestMeanOfInsertSize;								// CP: the longest mean insert size out of all datasets
+		INT64 longestMeanOfInsertSize;								// CP: the longest mean insert size out of all datasets: max(meanOfInsertSizes[i])
 		UINT64 estimatedGenomeSize;									// Estimated genome size. Works for isolated genome. Will not work for Metagenomics.
-		UINT8 mergedEdgeOrientation(Edge *edge1, Edge *edge2);		// Orientation of the edge when two edges are merged.
+		UINT8 mergedEdgeOrientation( Edge *edge1, Edge *edge2);		// Orientation of the edge when two edges are merged.
 		UINT8 twinEdgeOrientation(UINT8 orientation);				// Orientation of the reverse edge.
 		// When we merge two edges, we need to merge the list of ordered reads, their overlap offsets and orientations.
 		bool mergeList(Edge *edge1, Edge *edge2, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * ListOrientations);
@@ -112,6 +128,11 @@ class OverlapGraph
 		UINT64 reduceLoops(void);									// loops that can be traversed only one way
 		vector<Edge *> * getListOfFeasibleEdges(Edge *edge);
 		UINT64 checkForScaffold(Edge *edge1,Edge *edge2, UINT64 *distance);
+		//some new function for testing.
+		bool calculateFlow2(string inputFileName, string outputFileName);
+		bool calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST); // Calculate bounds and costs of flow for minimum cost flow in the overlap graph.
+		UINT64 removeAllEdgesWithoutFlow();						// Not used. Only for testing.
+		//End of test functions.
 };
 
 
