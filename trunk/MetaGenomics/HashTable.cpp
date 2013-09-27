@@ -85,7 +85,7 @@ bool HashTable::insertDataset(Dataset* d, UINT64 minOverlapLength)
 /**********************************************************************************************************************
 	Insert a read in the hashTable
 **********************************************************************************************************************/
-bool HashTable::hashRead(Read *read)
+bool HashTable::hashRead(const Read *read)
 {
 	string forwardRead = read->getStringForward();
 	string reverseRead = read->getStringReverse();
@@ -132,7 +132,7 @@ void HashTable::setHashTableSize(UINT64 size)
 /**********************************************************************************************************************
 	Returns the hash value of a subString
 **********************************************************************************************************************/
-UINT64 HashTable::hashFunction(string subString)
+UINT64 HashTable::hashFunction(const string & subString)
 {
 	UINT64 sum1 = 1, sum2 = 1, length = subString.length();
 	for(UINT64 i = 0; i < length; i++)			// We take the bit representation of the string. A = 00, C = 01, G = 11 and T = 10
@@ -160,7 +160,7 @@ UINT64 HashTable::hashFunction(string subString)
 /**********************************************************************************************************************
 	Insert a subString in a hashTable
 **********************************************************************************************************************/
-bool HashTable::insertIntoTable(Read *read, string subString, UINT64 orientation)
+bool HashTable::insertIntoTable(const Read *read, const string & subString, const UINT64 & orientation)
 {
 	UINT64 ID = read->getReadNumber() | (orientation << 62); 	// Most significant two bits are used to store the orientation of the string in the read.
 																// 00 = 0 means prefix of the forward string.
@@ -203,7 +203,7 @@ bool HashTable::insertIntoTable(Read *read, string subString, UINT64 orientation
 /**********************************************************************************************************************
 	Returns a list of read containing the subString as prefix or suffix.
 **********************************************************************************************************************/
-vector<UINT64> * HashTable::getListOfReads(string subString)
+vector<UINT64> * HashTable::getListOfReads(const string & subString)
 {
 
 		UINT64 index = hashFunction(subString);	// Get the index using the hash function.

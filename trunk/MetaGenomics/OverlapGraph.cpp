@@ -314,7 +314,7 @@ void OverlapGraph::markContainedReads(void)
 	orient 3 means prefix of reverse of the read2
 	We need to check if the remaining of the stings match to see if read2 is contained in read1.
 **********************************************************************************************************************/
-bool OverlapGraph::checkOverlapForContainedRead(Read *read1, Read *read2, UINT64 orient, UINT64 start)
+bool OverlapGraph::checkOverlapForContainedRead(const Read *read1, const Read *read2, UINT64 orient, UINT64 start)
 {
 	string string1=read1->getStringForward(); // Get the forward of read1
 	UINT64 hashStringLength = hashTable->getHashStringLength(), lengthRemaining1, lengthRemaining2;
@@ -816,7 +816,7 @@ bool OverlapGraph::mergeEdges(Edge *edge1, Edge *edge2)
 	Merge the list of reads, list of overlap offsets and list of orientations of two edges.
 **********************************************************************************************************************/
 
-bool OverlapGraph::mergeList(Edge *edge1, Edge *edge2, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations)
+bool OverlapGraph::mergeList(const Edge *edge1, const Edge *edge2, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations)
 {
 	UINT64 sum = 0;
 	for(UINT64 i = 0; i < edge1->getListOfOrientations()->size(); i++) 			// Take the list from edge1.
@@ -859,7 +859,7 @@ bool OverlapGraph::mergeList(Edge *edge1, Edge *edge2, vector<UINT64> *listReads
 	...................
 
 **********************************************************************************************************************/
-UINT8 OverlapGraph::mergedEdgeOrientation(Edge *edge1, Edge *edge2)
+UINT8 OverlapGraph::mergedEdgeOrientation(const Edge *edge1, const Edge *edge2)
 {
 	UINT8 or1 = edge1->getOrientation(), or2 = edge2->getOrientation(),returnValue;
 	if(or1 == 0 && or2 == 0)
@@ -1958,7 +1958,7 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 	CP: given an *edge, calculate and return FLOWLB, FLOWUB, and COST
 	CP: FLOWLB, FLOWUB, and COST are all array of size 3 because each overlap graph edge is represented by 3 CS2 edges to define a cost function
 **********************************************************************************************************************/
-bool OverlapGraph::calculateBoundAndCost(Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST)
+bool OverlapGraph::calculateBoundAndCost(const Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST)
 {
 	for(UINT64 i = 0; i < 3; i++)		// For the simple edges we put very high cost
 	{
@@ -2328,7 +2328,7 @@ bool OverlapGraph::isEdgePresent(UINT64 source, UINT64 destination)
 // CP: inputs: read1 and read2 are the pair, orient of the pair is defined in the MPlist struct, datasetNumber retrievs the mean and SD of insert size of the dataset
 // CP: outputs: copyOfPath is a path between the two reads and copyOfFlags indicates whether the connection between this edge to the next edge is supported by all possible paths or not
 // CP: return true if valid paths are found between them.
-bool OverlapGraph::findPathBetweenMatepairs(Read * read1, Read * read2, UINT8 orient, UINT8 datasetNumber, vector <Edge *> &copyOfPath, vector <UINT64> &copyOfFlags)
+bool OverlapGraph::findPathBetweenMatepairs(const Read * read1, const Read * read2, UINT8 orient, UINT8 datasetNumber, vector <Edge *> &copyOfPath, vector <UINT64> &copyOfFlags)
 {
 	UINT64 pathFound = 0;			// CP: the total number of paths found between the two reads
 	// CP: two variables passed to the exploreGraph function for return values
@@ -2439,7 +2439,7 @@ bool OverlapGraph::findPathBetweenMatepairs(Read * read1, Read * read2, UINT8 or
 	This function returns the edit distance between two strings.
 	Code downloaded from http://rosettacode.org/wiki/Levenshtein_distance#C.2B.2B
 **********************************************************************************************************************/
-UINT64 OverlapGraph::calculateEditDistance(const std::string &s1, const std::string &s2)
+UINT64 OverlapGraph::calculateEditDistance(const  string & s1, const string & s2)
 {
 	const UINT64 m(s1.size());
 	const UINT64 n(s2.size());
@@ -2912,7 +2912,7 @@ UINT64 OverlapGraph::scaffolder(void)
  	 CP: For the input edge, find all the feasible edges that are linked with the input edge by a pair of edge-unique reads with appropriate distance
  	 CP: edge-unique reads are reads that are only present on one edge
 ***********************************************************************************************************************/
-vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(Edge *edge)
+vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(const Edge *edge)
 {
 
 	Edge * rEdge=edge->getReverseEdge(); // We want to find if there are other edges that share matepairs. current edge (u,v) we check the matepairs near the node v. That's why we took the reverse edge.
@@ -2991,7 +2991,7 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(Edge *edge)
  	 CP: *distance is actually the sum of the distances measured by all matepairs. this would be easier to understand if it's the average distance
 ***********************************************************************************************************************/
 
-UINT64 OverlapGraph::checkForScaffold(Edge *edge1,Edge *edge2,UINT64 *distance)
+UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2,UINT64 *distance)
 {
 	UINT64 support = 0,dist = 0;
 	*distance = 0;
@@ -3299,7 +3299,7 @@ UINT64 OverlapGraph::scaffolder(void)
 	CP: return the length of the overlap. 0 if no overlap
 **********************************************************************************************************************/
 
-UINT64 OverlapGraph::findOverlap(string string1, string string2)
+UINT64 OverlapGraph::findOverlap(const string & string1, const string & string2)
 {
 	UINT64 minimum = min(string1.length(), string2.length());
 	for(UINT64 i = minimum - 1; i >= 10; i--)
