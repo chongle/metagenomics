@@ -52,6 +52,7 @@ class Edge{
 
 
 	public:
+		bool hignCoverageAndMatepairFlag;
 		bool transitiveRemovalFlag;							// Used to mark transitive edges.
 		UINT16 flow;							// Store the flow in the current edge.
 		UINT64 coverageDepth;					// Estimated depth of coverage.
