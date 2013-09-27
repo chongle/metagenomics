@@ -176,12 +176,15 @@ bool HashTable::insertIntoTable(const Read *read, const string & subString, cons
 		UINT64 data = hashTable->at(index)->at(0);
 		// CP: explain these two bit operations
 		// The least significant 62 bits are used to store the read ID
+		// Ted: readNumber =   00111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
+		//                   & data
+		//                 =   62 bits of the right most bit
 		UINT64 readNumber = data & 0X3FFFFFFFFFFFFFFF;
 		// The most significant 2 bits are used to store the orientation.
 		UINT64 orient = data >> 62;
         // Orientation 0 or 1 means that we took the forward string of the read. Otherwise we took the reverse string of the read.
 		string str = (orient == 0 || orient == 1) ? dataSet->getReadFromID(readNumber)->getStringForward() : dataSet->getReadFromID(readNumber)->getStringReverse();
-		// Orientation 0 or 2 means that we took the previs of the string. Otherwise we took the suffix of the read.
+		// Orientation 0 or 2 means that we took the prefix of the string. Otherwise we took the suffix of the read.
 		string subStr = (orient == 0 || orient == 2) ? str.substr(0,hashStringLength) : str.substr(str.length() - hashStringLength, hashStringLength);
 		if(subStr == subString)
 				break;
