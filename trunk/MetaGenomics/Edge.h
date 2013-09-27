@@ -62,16 +62,16 @@ class Edge{
 		~Edge();								// Destructor.
 		bool makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput);		// make a simple edge
 		bool makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput,  vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations);
-		string getStringInEdge(void); 			// return the string in the edge
+		string getStringInEdge(void) const; 			// return the string in the edge // CP: where is the implementation??
 		bool setReverseEdge(Edge * edge);		// Set the pointer to the reverse edge.
-		Read * getSourceRead() {return source;}	// Get the read object of the source node.
-		Read * getDestinationRead() {return destination; }	// Get the read object of the destination node.
-		UINT8 getOrientation() {return overlapOrientation;}	// Return the orientation of the edge.
-		UINT64 getOverlapOffset() {return overlapOffset;}	// Return the overlap offset.
-		vector<UINT64> * getListOfReads() {return listOfReads;}		// Get the ordered list of reads in the current edge.
-		vector<UINT16> * getListOfOverlapOffsets() {return listOfOverlapOffsets;} // Get the list of ordered offset.
-		vector<UINT8> * getListOfOrientations() {return listOfOrientations;}	// Get the ordered orientation of the reads. 1 means forward. 0 means reverse.
-		Edge * getReverseEdge() {return reverseEdge;}	// Return the pointer to the reverse edge.
+		Read * getSourceRead() const {return source;}	// Get the read object of the source node.
+		Read * getDestinationRead() const {return destination; }	// Get the read object of the destination node.
+		UINT8 getOrientation() const {return overlapOrientation;}	// Return the orientation of the edge.
+		UINT64 getOverlapOffset() const {return overlapOffset;}	// Return the overlap offset.
+		vector<UINT64> * getListOfReads() const {return listOfReads;}		// Get the ordered list of reads in the current edge.
+		vector<UINT16> * getListOfOverlapOffsets() const {return listOfOverlapOffsets;} // Get the list of ordered offset.
+		vector<UINT8> * getListOfOrientations() const {return listOfOrientations;}	// Get the ordered orientation of the reads. 1 means forward. 0 means reverse.
+		Edge * getReverseEdge() const {return reverseEdge;}	// Return the pointer to the reverse edge.
 };
 
 #endif /* EDGE_H_ */

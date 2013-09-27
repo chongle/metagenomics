@@ -89,7 +89,7 @@ class OverlapGraph
 		bool calculateMeanAndSdOfInsertSize(void); 								// Estimate the mean and standard deviation of insert sizes.
 		UINT64 getMean(UINT64 datasetNumber) {return meanOfInsertSizes.at(datasetNumber);} 			// Get the mean of insert sizes.
 		UINT64 getSD(UINT64 datasetNumber) {return sdOfInsertSizes.at(datasetNumber);} 				// Get standard deviation of insert sizes
-		bool checkOverlap(Read *read1, Read *read2, UINT64 orient, UINT64 start); // Check overlap between two reads after a match is found using the hash table.
+		bool checkOverlap(const Read *read1, const Read *read2, UINT64 orient, UINT64 start); // Check overlap between two reads after a match is found using the hash table.
 		bool checkOverlapForContainedRead(Read *read1, Read *read2, UINT64 orient, UINT64 start);
 		bool printGraph(string graphFileName, string contigFileName);	// Store the overlap graph for visual display and also store the contigs/scaffods in a file.
 		bool insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * exploredReads);	// Insert into the overlap graph all edges of a read.

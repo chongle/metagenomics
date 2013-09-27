@@ -70,16 +70,16 @@ class Read
 		bool setReadNumber(UINT64 id); 			// Set the read number.
 		bool setFrequency(UINT32 freq);			// Set the ferquency of the read.
 
-		string getStringForward(void){return read;} 									// Get the forward string of the current read.
-		string getStringReverse(void){return readReverse;} 								// Get the reverse string of the current read.
-		UINT16 getReadLength(void){return read.length();} 								// Get the length of the string in the current read.
-		UINT64 getReadNumber(void) {return readNumber;} 								// Get the read number of the current read.
-		UINT32 getFrequency(void) {return frequency;}									// Get the frequency of the current read.
-		vector<MPlist> * getMatePairList(void) {return matePairList;} 					// Get the list of matepairs.
-		vector<Edge *> * getListOfEdgesForward(void){return listOfEdgesForward;}		// Get the list of edges that contain the forward string of the current read.
-		vector<UINT64> * getLocationOnEdgeForward(void){return locationOnEdgeForward;}	// Get the list of locations on the edges that contain the forward string of the current read.
-		vector<Edge *> * getListOfEdgesReverse(void){return listOfEdgesReverse;}		// Get the list of edges that contain the reverse string of the current read.
-		vector<UINT64> * getLocationOnEdgeReverse(void){return locationOnEdgeReverse;}	// Get the list of locations on the edges that contain the reverse string of the current read.
+		string getStringForward(void) const {return read;} 									// Get the forward string of the current read.
+		string getStringReverse(void) const {return readReverse;} 								// Get the reverse string of the current read.
+		UINT16 getReadLength(void) const {return read.length();} 								// Get the length of the string in the current read.
+		UINT64 getReadNumber(void) const {return readNumber;} 								// Get the read number of the current read.
+		UINT32 getFrequency(void) const {return frequency;}									// Get the frequency of the current read.
+		vector<MPlist> * getMatePairList(void) const {return matePairList;} 					// Get the list of matepairs.
+		vector<Edge *> * getListOfEdgesForward(void) const {return listOfEdgesForward;}		// Get the list of edges that contain the forward string of the current read.
+		vector<UINT64> * getLocationOnEdgeForward(void) const {return locationOnEdgeForward;}	// Get the list of locations on the edges that contain the forward string of the current read.
+		vector<Edge *> * getListOfEdgesReverse(void) const {return listOfEdgesReverse;}		// Get the list of edges that contain the reverse string of the current read.
+		vector<UINT64> * getLocationOnEdgeReverse(void) const {return locationOnEdgeReverse;}	// Get the list of locations on the edges that contain the reverse string of the current read.
 		bool addMatePair(UINT64 read, UINT8 orientation, UINT64 datasetNumber);				// Add a matepair in the list.
 
 };

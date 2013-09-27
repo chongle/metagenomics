@@ -366,7 +366,7 @@ bool OverlapGraph::checkOverlapForContainedRead(Read *read1, Read *read2, UINT64
 	Orientation 3 means prefix of reverse of the read2
 	We need to check if the remaining of the stings match to see if read1 and read2 overlap.
 **********************************************************************************************************************/
-bool OverlapGraph::checkOverlap(Read *read1, Read *read2, UINT64 orient, UINT64 start)
+bool OverlapGraph::checkOverlap(const Read *read1, const Read *read2, UINT64 orient, UINT64 start)
 {
 	string string1=read1->getStringForward(); // Get the forward string of read1
 	UINT64 hashStringLength = hashTable->getHashStringLength();
