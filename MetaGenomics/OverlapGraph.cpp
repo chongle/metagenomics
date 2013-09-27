@@ -147,7 +147,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	markContainedReads();
 
 	// CP: why reading the mate pair information here, not when constructing Dataset initially?
-	// BH: We read the matepair information here again. Because some of the reads are contained and will be assegned to their super read ID in the mate-pair.
+	// BH: We read the matepair information here again. Because some of the reads are contained and will be assigned to their super read ID in the mate-pair.
 	this->dataSet->readMatePairsFromFile();
 
 	// CP: find the overlap between reads and remove transitive edges along the way
@@ -307,7 +307,7 @@ void OverlapGraph::markContainedReads(void)
 
 /**********************************************************************************************************************
 	Hash table search found that a proper substring of read1 is a prefix or suffix of read2 or reverse complement of
-	read2 (depents on the orient).
+	read2 (depends on the orient).
 	orient 0 means prefix of forward of the read2
 	orient 1 means suffix of forward of the read2
 	orient 2 means prefix of reverse of the read2
@@ -326,7 +326,7 @@ bool OverlapGraph::checkOverlapForContainedRead(const Read *read1, const Read *r
 									//				OR
 									// orient 2
 									//	 >---*****MMMMMMMMMMMMMMM*******------> read1
-									//		      MMMMMMMMMMMMMMM*******<	    Reverese complement of read2
+									//		      MMMMMMMMMMMMMMM*******<	    Reverse complement of read2
 	{
 		lengthRemaining1 = string1.length() - start - hashStringLength; 	// This is the remaining of read1
 		lengthRemaining2 = string2.length() - hashStringLength; 	// This is the remaining of read2
@@ -675,7 +675,7 @@ bool OverlapGraph::removeTransitiveEdges(UINT64 readNumber)
 {
 	for(UINT64 index = 0; index < graph->at(readNumber)->size(); index++)  		// Go through the list of edges of the current read.
 	{
-		if(graph->at(readNumber)->at(index)->transitiveRemovalFlag == true)		// This edge is marked as transitive. We will first remove the reverese edge.
+		if(graph->at(readNumber)->at(index)->transitiveRemovalFlag == true)		// This edge is marked as transitive. We will first remove the reverse edge.
 		{
 			Edge *twinEdge = graph->at(readNumber)->at(index)->getReverseEdge();
 			UINT64 ID = twinEdge->getSourceRead()->getReadNumber();
