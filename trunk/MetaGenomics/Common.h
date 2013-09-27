@@ -47,8 +47,8 @@ typedef long long INT64;
 								// BH: If we want we can use different thresholds.
 #define loopLimit 15			// Number of time to loop in the main function.
 #define insertSizeRangeSD 2		// 2 means mean +/- 2 SD
-#define	coverageDepthLB 200		// Lower bound of coverage depth for the genome that we want to assemble.
-#define coverageDepthUB 10000	// Upper bound of the coverage depth of teh genome that we want to assemble.
+#define	coverageDepthLB 40		// Lower bound of coverage depth for the genome that we want to assemble.
+#define coverageDepthUB 200	// Upper bound of the coverage depth of teh genome that we want to assemble.
 
 //	Exit code that displays the place of exit and message.
 #define MYEXIT(a) { cout << endl << "Exit from File: " << __FILE__ << " Line: " << __LINE__ << " Function: " << __FUNCTION__ << "()" << endl << "Message: " << a << endl; exit(0);}

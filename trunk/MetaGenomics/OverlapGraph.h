@@ -132,6 +132,7 @@ class OverlapGraph
 		bool calculateFlow2(string inputFileName, string outputFileName);
 		bool calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST); // Calculate bounds and costs of flow for minimum cost flow in the overlap graph.
 		UINT64 removeAllEdgesWithoutFlow();						// Not used. Only for testing.
+		void markEdgeThatWillHaveOneFlow(void);
 		//End of test functions.
 };
 

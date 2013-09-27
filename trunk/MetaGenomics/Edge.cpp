@@ -77,6 +77,7 @@ bool Edge::makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInp
 	destination = to;
 	overlapOrientation = orient;
 	overlapOffset = overlapOffsetInput;
+	hignCoverageAndMatepairFlag = false;
 
 	// Initialize variables.
 	transitiveRemovalFlag = false;
@@ -107,6 +108,7 @@ bool Edge::makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInp
 	overlapOrientation = orient;
 	overlapOffset = overlapOffsetInput;
 	transitiveRemovalFlag = false;
+	hignCoverageAndMatepairFlag = false;
 	flow = 0;
 	coverageDepth = 0;
 	listOfReads = listReads;

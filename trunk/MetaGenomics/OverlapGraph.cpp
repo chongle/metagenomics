@@ -2048,7 +2048,7 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 	ss << "p min " << setw(10) << V << " " << setw(10) << E << endl;  	// Number of nodes and edges in the new graph.
 	ss << "n " << setw(10) << SUPERSOURCE << setw(10) << " 0" << endl;	// Flow in the super source
 	ss << "n " << setw(10) << SUPERSINK << setw(10) << " 0" << endl;	// Flow in the super sink.
-	FLOWLB[0] = 1; FLOWUB[0] = 1000000; COST[0] = 1000000;
+	FLOWLB[0] = 1; FLOWUB[0] = 1000000; COST[0] = 1000000;				// Cost of unit of flow from super sink to super source
 	ss << "a " << setw(10) << SUPERSINK << " " << setw(10) << SUPERSOURCE << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl; // Add an edge from super sink to super source with very high cost.
 
 	// CP: this is a lookup table from the overlap graph node ID to the CS2 graph ID
@@ -2067,7 +2067,7 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 		listOfNodes->push_back(0);
 		listOfNodesReverse->push_back(0);
 	}
-
+	//markEdgeThatWillHaveOneFlow();
 	// This loop set lower bound and upper bound of each node to super source and to super sink. All costs are 0.
 	UINT64 currentIndex = 1;
 	for(UINT64 i = 1; i < graph->size(); i++)
@@ -2255,10 +2255,12 @@ bool OverlapGraph::calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOW
 	{
 		FLOWLB[i] = 0; FLOWUB[i] = 10; COST[i] = 500000;
 	}
+
 	getBaseByBaseCoverage(edge);
 	if(!edge->getListOfReads()->empty()) // Composite Edge
 	{
-		if(edge->coverageDepth >= coverageDepthLB && edge->coverageDepth <=coverageDepthUB)
+		//if(edge->hignCoverageAndMatepairFlag ==  true)
+		if(edge->coverageDepth >=coverageDepthLB && edge->coverageDepth <=coverageDepthUB)
 		{
 			// the first 1 flow must be used and has a cost of 1
 			// each additional flow up to 8 flows has a cost of 100000
@@ -2270,21 +2272,70 @@ bool OverlapGraph::calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOW
 			// this edge provides additional flow after the second flow
 			FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000;
 		}
-		else // Short composite edge containing less than 20 reads. May have zero flow.
+		else if(edge->coverageDepth > coverageDepthUB)
 		{
 			// the first 1 flow may not be required, but has a low cost of 1
 			// each additional flow up to 8 flows has a cost of 100000
 
 			// this edge carries the first 1 flow
-			FLOWLB[0] = 0; FLOWUB[0] = 1; COST[0] = 1;
+			FLOWLB[0] = 0; FLOWUB[0] = 1; COST[0] = 1000 + ( edge->coverageDepth - coverageDepthUB ) * 1;
 			// this edge carries the second unit of flow with high cost
-			FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000;
+			FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000 + ( edge->coverageDepth - coverageDepthUB ) * 50;
 			// this edge provides additional flow after the two units of flow.
-			FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000;
+			FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000 + ( edge->coverageDepth - coverageDepthUB ) * 100;
+		}
+		else
+		{
+			FLOWLB[0] = 0; FLOWUB[0] = 1; COST[0] = 1000 + ( coverageDepthLB - edge->coverageDepth  ) * 1;
+			// this edge carries the second unit of flow with high cost
+			FLOWLB[1] = 0; FLOWUB[1] = 1; COST[1] = 50000 + ( coverageDepthLB - edge->coverageDepth ) * 50;
+			// this edge provides additional flow after the two units of flow.
+			FLOWLB[2] = 0; FLOWUB[2] = 8; COST[2] = 100000 + ( coverageDepthLB - edge->coverageDepth ) * 100;
+
 		}
 	}
 
 	return true;
+}
+
+
+/**********************************************************************************************************************
+	This function will mark all the edges that has coverage depth within the interval [coverageDepthLB, coverageDepthUB]
+	and also the edges that share matepair with these edges.
+**********************************************************************************************************************/
+void OverlapGraph::markEdgeThatWillHaveOneFlow()
+{
+	for(UINT64 i = 1; i < graph->size(); i++) // for each node in the graph
+	{
+		if(!graph->at(i)->empty()) // this node has some edges.
+		{
+			for(UINT64 j = 0; j < graph->at(i)->size(); j++) // for each edge of the current node
+			{
+				Edge *edge1 = graph->at(i)->at(j);	// this is the current edge
+				getBaseByBaseCoverage(edge1);		// calculate the coverage depth of the current edge
+				if(edge1->coverageDepth >=coverageDepthLB && edge1->coverageDepth <=coverageDepthUB)	// if the coverage depth is within the range [coverageDepthLB, coverageDepthUB]
+				{
+					edge1->hignCoverageAndMatepairFlag = true; // Mark this edge. We will set lower bound of flow for these edges to 1
+					for(UINT64 k = 0; k<edge1->getListOfReads()->size(); k++)	// Now talke all the reads in the edge
+					{
+						UINT64 readID = edge1->getListOfReads()->at(k);	// This is the reads ID
+						Read *read = dataSet->getReadFromID(readID);	// get the read object from the dataset
+						for(UINT64 l = 0; l < read->getMatePairList()->size();l++)	// Find all the matepairs of this read.
+						{
+							UINT64 matePairID = read->getMatePairList()->at(l).matePairID;	// Get the matepair ID
+							Read *matePair = dataSet->getReadFromID(matePairID);			// Get the matepair read object.
+							for(UINT64 m = 0; m < matePair->getListOfEdgesForward()->size(); m++)	// List of the edges that contains the matepair.
+							{
+									Edge *edge2 = matePair->getListOfEdgesForward()->at(m);	// Get the edge
+									edge2->hignCoverageAndMatepairFlag = true;			// We also need to set the lower bound of flow to these edges to one since they share edge with edge that has our desired coverage depth
+									edge2->getReverseEdge()->hignCoverageAndMatepairFlag = true; // Mark the reverse edge too. Will set the lower bound of flow to 1
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 
