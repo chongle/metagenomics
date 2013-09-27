@@ -70,7 +70,7 @@ class OverlapGraph
 		// Find support between to reads in the the overlap graph. Find all pathas between two reads in the graph. Only the subpath that are common in all such paths are considered to be supported.
 		bool findPathBetweenMatepairs(const Read * read1, const Read * read2, UINT8 orient, UINT8 datasetNumbe, vector <Edge *> &copyOfPath, vector <UINT64> &copyOfFlags);
 		// Starting from the firstEdge we try to reach lastEdge by distance mean + 3 *sd of the datasetNumber.
-		UINT64 exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags);
+		UINT64 exploreGraph(const Edge* firstEdge, const Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags);
 
 	public:
 		bool flowComputed;											// Flag to check wheather the flow is computed or not.
@@ -110,13 +110,13 @@ class OverlapGraph
 		bool isEdgePresent(UINT64 source, UINT64 destination);		// Check if an edge is present in the overlap graph between source and destination.
 		bool calculateBoundAndCost(const Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST); // Calculate bounds and costs of flow for minimum cost flow in the overlap graph.
 		UINT64 findSupportByMatepairsAndMerge(void);				// Using matepair information find which pair of edges are supported.
-		string getStringInEdge(Edge *edge);							// Get the string in an edge by overlapping the ordered reads in the edge.
+		string getStringInEdge(const Edge *edge);							// Get the string in an edge by overlapping the ordered reads in the edge.
 		UINT64 reduceTrees(void);									// Remove trees in the overlap graph.
 		bool simplifyGraph(void);									// Some simple simplification.
 		UINT64 scaffolder(void);									// Construct scaffolds using matepair information.
 		UINT64 scaffolderTemp(void);									// Construct scaffolds using matepair information.
 		bool mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLength); // Merge to edges that do not share any node.
-		UINT8 mergedEdgeOrientationDisconnected(Edge *edge1, Edge *edge2);		// Orientation of the edge when two disconnected edge are merged.
+		UINT8 mergedEdgeOrientationDisconnected(const Edge *edge1, const Edge *edge2);		// Orientation of the edge when two disconnected edge are merged.
 		bool mergeListDisconnected(Edge *edge1, Edge *edge2, UINT64 overlapOffset, UINT64 gapLength, vector<UINT64> *listReads, vector<UINT16> *listOverlaps, vector<UINT8> * listOrientations);
 		UINT64 removeSimilarEdges(void);							// remove multi-edges with similar strings
 		UINT64 resolveNodes(void);									// Merge edges based on coverage depth

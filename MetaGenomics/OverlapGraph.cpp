@@ -16,7 +16,7 @@
 	edge to match.
 **********************************************************************************************************************/
 
-bool matchEdgeType(Edge *edge1, Edge *edge2)
+bool matchEdgeType(const Edge *edge1, const Edge *edge2)
 {
 	if     ( (edge1->getOrientation() == 1 || edge1->getOrientation() == 3) && (edge2->getOrientation() == 2 || edge2->getOrientation() == 3) ) // *-----> and >------*
 		return true;
@@ -29,7 +29,7 @@ bool matchEdgeType(Edge *edge1, Edge *edge2)
 /**********************************************************************************************************************
 	Function to compare two edges. Used for sorting.
 **********************************************************************************************************************/
-bool compareEdgeID (Edge *edge1, Edge* edge2)
+bool compareEdgeID (const Edge *edge1, const Edge* edge2)
 {
 	return (edge1->getDestinationRead()->getReadNumber() < edge2->getDestinationRead()->getReadNumber());
 }
@@ -39,7 +39,7 @@ bool compareEdgeID (Edge *edge1, Edge* edge2)
 **********************************************************************************************************************/
 // CP: Sort by overlap offset. What for?
 // BH: In the transitive edge removal step, we need the edges to be sorted according to their overlap offset.
-bool compareEdges (Edge *edge1, Edge* edge2)
+bool compareEdges (const Edge *edge1, const Edge* edge2)
 {
 	return (edge1->getOverlapOffset() < edge2->getOverlapOffset());
 }
@@ -2490,7 +2490,7 @@ UINT64 OverlapGraph::calculateEditDistance(const  string & s1, const string & s2
 // BH: when we find the first path we save it and flag is used to indicate that all the edges in the first path are supported.
 //     When we find another path, we unmark the flag for the pair of edges in the first path that are not present in the second path and so on.
 // CP: return the number of paths found
-UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags)
+UINT64 OverlapGraph::exploreGraph(const Edge* firstEdge, const Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags)
 {
 	// CP: use static variables to carry their values through the recursive calls of this function
 	static UINT64 pathFound;					// number of paths found
@@ -2724,7 +2724,7 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 	This function returns the string by overlapping the reads in an edge in the overlap graph
 **********************************************************************************************************************/
 
-string OverlapGraph::getStringInEdge(Edge *edge)
+string OverlapGraph::getStringInEdge(const Edge *edge)
 {
 	string read1, read2, readTemp, returnString;
 	read1 = (edge->getOrientation() == 2 || edge->getOrientation() == 3) ?  edge->getSourceRead()->getStringForward() : edge->getSourceRead()->getStringReverse();
@@ -3462,7 +3462,7 @@ bool OverlapGraph::mergeListDisconnected(Edge *edge1, Edge *edge2, UINT64 overla
 /**********************************************************************************************************************
 	Orientation of the merged edge
 **********************************************************************************************************************/
-UINT8 OverlapGraph::mergedEdgeOrientationDisconnected(Edge *edge1, Edge *edge2)
+UINT8 OverlapGraph::mergedEdgeOrientationDisconnected(const Edge *edge1, const Edge *edge2)
 {
 	UINT8 or1 = edge1->getOrientation(), or2 = edge2->getOrientation(),returnValue;
 	     if( (or1 == 1 || or1 == 0) && (or2 == 0 || or2 == 2) )		// <---------*  and *-----------<
