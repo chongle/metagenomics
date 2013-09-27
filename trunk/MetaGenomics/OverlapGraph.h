@@ -70,7 +70,7 @@ class OverlapGraph
 		// Find support between to reads in the the overlap graph. Find all pathas between two reads in the graph. Only the subpath that are common in all such paths are considered to be supported.
 		bool findPathBetweenMatepairs(const Read * read1, const Read * read2, UINT8 orient, UINT8 datasetNumbe, vector <Edge *> &copyOfPath, vector <UINT64> &copyOfFlags);
 		// Starting from the firstEdge we try to reach lastEdge by distance mean + 3 *sd of the datasetNumber.
-		UINT64 exploreGraph(const Edge* firstEdge, const Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags);
+		UINT64 exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags);
 
 	public:
 		bool flowComputed;											// Flag to check wheather the flow is computed or not.
