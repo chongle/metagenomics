@@ -62,16 +62,14 @@ int main(int argc, char **argv)
 		overlapGraph->saveGraphToFile(allFileName+".unitig");
 	}
 
-	overlapGraph->calculateFlow(allFileName+"_flow.input", allFileName+"_flow.output");
+	overlapGraph->calculateFlow2(allFileName+"_flow.input", allFileName+"_flow.output");
 	cout << "nodes: " << overlapGraph->getNumberOfNodes() << " edges: " << overlapGraph->getNumberOfEdges() << endl;
 	overlapGraph->printGraph(allFileName+"graph1.gdl", allFileName+"contigs1.fasta");
 
 	overlapGraph->removeAllSimpleEdgesWithoutFlow();
-	//overlapGraph->removeAllEdgesWithoutFlow();
+	overlapGraph->removeAllEdgesWithoutFlow();
 
 	overlapGraph->calculateMeanAndSdOfInsertSize();
-
-
 
 	do
 	{

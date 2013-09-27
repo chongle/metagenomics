@@ -2258,7 +2258,7 @@ bool OverlapGraph::calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOW
 	getBaseByBaseCoverage(edge);
 	if(!edge->getListOfReads()->empty()) // Composite Edge
 	{
-		if(edge->coverageDepth > 60)
+		if(edge->coverageDepth >= coverageDepthLB && edge->coverageDepth <=coverageDepthUB)
 		{
 			// the first 1 flow must be used and has a cost of 1
 			// each additional flow up to 8 flows has a cost of 100000
@@ -2397,7 +2397,7 @@ bool OverlapGraph::findPathBetweenMatepairs(const Read * read1, const Read * rea
 				// distance from the beginning of the first read of the edge to the beginning of the read2
 				UINT64 distanceOnLastEdge = locationOnEdgeRead2->at(j);
 				// the two reads can't be too far apart within their own edges
-				if(distanceOnFirstEdge + distanceOnLastEdge < getMean(datasetNumber) + 3 * getSD(datasetNumber))
+				if(distanceOnFirstEdge + distanceOnLastEdge < getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber))
 				{
 					UINT64 newPaths= exploreGraph(firstEdge, lastEdge, distanceOnFirstEdge, distanceOnLastEdge, datasetNumber, 0, firstPath, flags);	// from firs edge  try to find a path to the last edge.
 					if(newPaths > 0)	// If some path found.
@@ -2490,7 +2490,7 @@ UINT64 OverlapGraph::calculateEditDistance(const  string & s1, const string & s2
 // BH: when we find the first path we save it and flag is used to indicate that all the edges in the first path are supported.
 //     When we find another path, we unmark the flag for the pair of edges in the first path that are not present in the second path and so on.
 // CP: return the number of paths found
-UINT64 OverlapGraph::exploreGraph(const Edge* firstEdge, const Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags)
+UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags)
 {
 	// CP: use static variables to carry their values through the recursive calls of this function
 	static UINT64 pathFound;					// number of paths found
@@ -2528,7 +2528,7 @@ UINT64 OverlapGraph::exploreGraph(const Edge* firstEdge, const Edge * lastEdge, 
 		{
 			// If we read our destination read, we check if the distance is within 3 sd of the mean.
 			// mean - 3*sd can be negative. I think we do not have to worry about it.
-			if((INT64)(distanceOnLastEdge + pathLengths.at(level - 1)) >= (INT64)((INT64)(getMean(datasetNumber)) - 3 * (INT64)(getSD(datasetNumber))) && distanceOnLastEdge + pathLengths.at(level - 1) <= getMean(datasetNumber) + 3 * getSD(datasetNumber))
+			if((INT64)(distanceOnLastEdge + pathLengths.at(level - 1)) >= (INT64)((INT64)(getMean(datasetNumber)) - insertSizeRangeSD * (INT64)(getSD(datasetNumber))) && distanceOnLastEdge + pathLengths.at(level - 1) <= getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber))
 			{
 				// CP: the path length is within the insert size range
 				listOfEdges.push_back(firstEdge);
@@ -2589,7 +2589,7 @@ UINT64 OverlapGraph::exploreGraph(const Edge* firstEdge, const Edge * lastEdge, 
 		// CP: going to each edge that the last read of the firstEdge is connected to
 		Edge * nextEdge =  graph->at(firstEdge->getDestinationRead()->getReadNumber())->at(i);
 		// CP: if the two edges are compatible and the current path is not already too long, then call self again
-		if(matchEdgeType(firstEdge, nextEdge) && pathLengths.at(level) < getMean(datasetNumber) + 3 * getSD(datasetNumber))
+		if(matchEdgeType(firstEdge, nextEdge) && pathLengths.at(level) < getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber))
 			exploreGraph(nextEdge, lastEdge, nextEdge->getOverlapOffset(), distanceOnLastEdge, datasetNumber, level+1, firstPath, flags);
 	}
 	return pathFound;
@@ -3029,7 +3029,7 @@ UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2,UINT6
 			listRead2 = (orient == 0 || orient == 2) ? read2->getListOfEdgesForward() : read2->getListOfEdgesReverse();
 			locationOnEdgeRead2 = (orient == 0 || orient == 2) ? read2->getLocationOnEdgeForward() : read2->getLocationOnEdgeReverse();
 			// Only consider uniquely mapped reads and the distance is less than mean+3*SD
-			if( listRead1->size() == 1 && listRead2->size() == 1 && listRead1->at(0) == edge1->getReverseEdge() && listRead2->at(0) == edge2 && locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + 3 * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
+			if( listRead1->size() == 1 && listRead2->size() == 1 && listRead1->at(0) == edge1->getReverseEdge() && listRead2->at(0) == edge2 && locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
 			{
 				dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0);
 				// if there are already in the same edge, don't do anything
@@ -3087,7 +3087,7 @@ UINT64 OverlapGraph::scaffolderTemp(void)
 			locationOnEdgeRead2 = (orient == 0 || orient == 2) ? read2->getLocationOnEdgeForward() : read2->getLocationOnEdgeReverse();
 
 			// Only consider uniquely mapped reads and the distance is less than mean+3*SD
-			if( listRead1->size() == 1 && listRead2->size() == 1 && locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + 3 * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
+			if( listRead1->size() == 1 && listRead2->size() == 1 && locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
 			{
 				dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0);
 				// if there are already in the same edge, don't do anything
@@ -3227,7 +3227,7 @@ UINT64 OverlapGraph::scaffolder(void)
 			dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0);
 
 			// Only consider uniquely mapped reads and the distance is less than mean+3*SD
-			if( listRead1->size() == 1 && listRead2->size() == 1 && dist < (getMean(datasetNumber) + 3 * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
+			if( listRead1->size() == 1 && listRead2->size() == 1 && dist < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
 			{
 				// if there are already in the same edge, don't do anything
 				if(listRead1->at(0) == listRead2->at(0) ||  listRead1->at(0) == listRead2->at(0)->getReverseEdge()) // Not on the same edge

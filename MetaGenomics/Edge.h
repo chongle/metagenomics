@@ -62,7 +62,7 @@ class Edge{
 		~Edge();								// Destructor.
 		bool makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput);		// make a simple edge
 		bool makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput,  vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations);
-		string getStringInEdge(void) const; 			// return the string in the edge // CP: where is the implementation??
+		string getStringInEdge(void) const; 			// return the string in the edge // CP: where is the implementation?? // BH: not used
 		bool setReverseEdge(Edge * edge);		// Set the pointer to the reverse edge.
 		Read * getSourceRead() const {return source;}	// Get the read object of the source node.
 		Read * getDestinationRead() const {return destination; }	// Get the read object of the destination node.
