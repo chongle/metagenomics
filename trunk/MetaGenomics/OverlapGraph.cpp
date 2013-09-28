@@ -67,25 +67,6 @@ OverlapGraph::OverlapGraph(void)
 	flowComputed = false;
 }
 
-
-
-/**********************************************************************************************************************
-	Another Constructor. Build the overlap grpah using the hash table.
-**********************************************************************************************************************/
-/*
-OverlapGraph::OverlapGraph(HashTable *ht)
-{
-	// Initialize the variables.
-	estimatedGenomeSize = 0;
-	numberOfNodes = 0;
-	numberOfEdges = 0;
-	flowComputed = false;
-	buildOverlapGraphFromHashTable(ht);
-}
-*/
-
-
-
 /**********************************************************************************************************************
 	Default destructor.
 **********************************************************************************************************************/
@@ -3989,6 +3970,8 @@ void OverlapGraph::getBaseByBaseCoverage(Edge *edge)
 		coverageBaseByBase->push_back(0);				// At first all the bases are covered 0 times.
 	}
 	UINT64 overlapOffset = 0;
+	// Increment the coverage of the section that each read covers,
+	// NOT counting the source read and destination read because they are shared amony multiple edges
 	for(UINT64 i = 0; i < edge->getListOfReads()->size(); i++)	// For each read in the edge.
 	{
 		Read *read = dataSet->getReadFromID(edge->getListOfReads()->at(i));
@@ -4000,6 +3983,7 @@ void OverlapGraph::getBaseByBaseCoverage(Edge *edge)
 		}
 	}
 
+	// clear the coverage of the section that is covered by non-unique reads that are contained by multiple edges
 	overlapOffset = 0;
 	for(UINT64 i = 0; i < edge->getListOfReads()->size(); i++) // Scan the reads again.
 	{
@@ -4014,12 +3998,13 @@ void OverlapGraph::getBaseByBaseCoverage(Edge *edge)
 			}
 		}
 	}
+	// clear the coverage of the section that is covered by the source read, because source read is present in multiple edges
 	for(UINT64 i = 0; i < edge->getSourceRead()->getReadLength(); i++)
-	// For the source read, clear the bases. Because this read is present in multiple places or not all reads are considered for these bases.
 	{
 		coverageBaseByBase->at(i) = 0;
 	}
 
+	// clear the coverage of the section that is covered by the destination read, because destination read is present in multiple edges
 	for(UINT64 i = 0; i < edge->getDestinationRead()->getReadLength(); i++)	// Similarly clear the bases covered by the destination read.
 	{
 		coverageBaseByBase->at(coverageBaseByBase->size() - 1 - i) = 0;
@@ -4027,6 +4012,7 @@ void OverlapGraph::getBaseByBaseCoverage(Edge *edge)
 
 	UINT64 sum = 0, variance=0, count = 0, mean = 0, sd = 0;
 
+	// calculate mean and standard deviation of coverage of all bases from non-zero counts
 	for(UINT64 i = 0; i < coverageBaseByBase->size(); i++)
 	{
 		if(coverageBaseByBase->at(i) != 0)		// Count only the non-zero values.
@@ -4048,6 +4034,7 @@ void OverlapGraph::getBaseByBaseCoverage(Edge *edge)
 		}
 		sd = sqrt(variance/count);	// Calculate the standard deviation.
 	}
+	// if no base of this edge is covered by unique reads, then the mean and SD are 0
 	edge->coverageDepth = mean;		// Update the mean of the current edge.
 	edge->SD = sd;					// Update the standard deviation of the current edge.
 	delete coverageBaseByBase;
