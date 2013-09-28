@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 		hashTable->insertDataset(dataSet, minimumOverlapLength);
 		//overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
 		overlapGraph = new OverlapGraph();
-		overlapGraph->buildOverlapGraphFromHashTable(hashTable);
+		overlapGraph->buildOverlapGraphFromHashTable(*hashTable);
 		delete hashTable;
 		//dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		overlapGraph->sortEdges();
@@ -145,7 +145,7 @@ void parseArguments(int argc, char **argv, vector<string> & pairedEndFileNames, 
 	startFromUnitigGraph = false;
 	vector<string> argumentsList;
 	cout << "PRINTING ARGUMENTS" << endl;
-	for(UINT64 i = 0; i < argc; i++)
+	for(int i = 0; i < argc; i++)
 	{
 		cout << argv[i] << ' ';
 	}

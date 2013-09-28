@@ -107,15 +107,16 @@ OverlapGraph::~OverlapGraph()
 /**********************************************************************************************************************
 	Build the overlap graph from hash table
 **********************************************************************************************************************/
-bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
+bool OverlapGraph::buildOverlapGraphFromHashTable(const HashTable & hashTable)
 {
 	CLOCKSTART;
 	estimatedGenomeSize = 0;
 	numberOfNodes = 0;
 	numberOfEdges = 0;
 	flowComputed = false;
-	hashTable = ht;
-	dataSet = ht->getDataset();
+//	hashTable = ht;
+	hashStringLength = hashTable.getHashStringLength();
+	dataSet = hashTable.getDataset();
 	UINT64 counter = 0;
 	vector<nodeType> *exploredReads = new vector<nodeType>;
 	exploredReads->reserve(dataSet->getNumberOfUniqueReads()+1);
@@ -144,7 +145,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 		markedNodes->push_back(VACANT);
 	}
 	// CP: assign contained reads to super-reads (populate superReadID in the Read class), but not remove them
-	markContainedReads();
+	markContainedReads(hashTable);
 
 	// CP: why reading the mate pair information here, not when constructing Dataset initially?
 	// BH: We read the matepair information here again. Because some of the reads are contained and will be assigned to their super read ID in the mate-pair.
@@ -164,7 +165,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 				UINT64 read1 = queue->at(start++);
 				if(exploredReads->at(read1) == UNEXPLORED)
 				{
-					insertAllEdgesOfRead(read1, exploredReads);					// Explore current node.
+					insertAllEdgesOfRead(hashTable, read1, exploredReads);					// Explore current node.
 					exploredReads->at(read1) = EXPLORED;
 				}
 				if(graph->at(read1)->size() != 0) 								// Read has some edges (required only for the first read when a new queue starts.
@@ -177,7 +178,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 							if(exploredReads->at(read2) == UNEXPLORED) 			// Not explored.
 							{
 								queue->at(end++) = read2; 						// Put in the queue.
-								insertAllEdgesOfRead(read2, exploredReads);
+								insertAllEdgesOfRead(hashTable, read2, exploredReads);
 								exploredReads->at(read2) = EXPLORED;
 							}
 						}
@@ -197,7 +198,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 									if(exploredReads->at(read3) == UNEXPLORED) 				// Not explored
 									{
 										queue->at(end++) = read3; 					// Put in the queue
-										insertAllEdgesOfRead(read3, exploredReads);
+										insertAllEdgesOfRead(hashTable, read3, exploredReads);
 										exploredReads->at(read3) = EXPLORED;
 									}
 								}
@@ -237,7 +238,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	This function check if a read contains other small reads. If a read is contained in more than one super read
 	then it is assigned to the longest such super read.
 **********************************************************************************************************************/
-void OverlapGraph::markContainedReads(void)
+void OverlapGraph::markContainedReads(const HashTable & hashTable)
 {
 	CLOCKSTART;
 	if(dataSet->longestReadLength == dataSet->shortestReadLength) // If all reads are of same length, then no need to do look for contained reads.
@@ -252,10 +253,10 @@ void OverlapGraph::markContainedReads(void)
 		Read *read1 = dataSet->getReadFromID(i); // Get the read
 		string readString = read1->getStringForward(); // Get the forward of the read
 		string subString;
-		for(UINT64 j = 1; j < read1->getReadLength() - hashTable->getHashStringLength(); j++) // fGr each substring of read1 of length getHashStringLength
+		for(UINT64 j = 1; j < read1->getReadLength() - hashStringLength; j++) // fGr each substring of read1 of length getHashStringLength
 		{
-			subString = readString.substr(j,hashTable->getHashStringLength()); // Get the substring from read1
-			vector<UINT64> * listOfReads=hashTable->getListOfReads(subString); // Search the substring in the hash table
+			subString = readString.substr(j,hashStringLength); // Get the substring from read1
+			vector<UINT64> * listOfReads=hashTable.getListOfReads(subString); // Search the substring in the hash table
 			if(!listOfReads->empty()) // If other reads contain the substring as prefix or suffix
 			{
 				for(UINT64 k = 0; k < listOfReads->size(); k++) // For each read in the list.
@@ -317,7 +318,7 @@ void OverlapGraph::markContainedReads(void)
 bool OverlapGraph::checkOverlapForContainedRead(const Read *read1, const Read *read2, UINT64 orient, UINT64 start)
 {
 	string string1=read1->getStringForward(); // Get the forward of read1
-	UINT64 hashStringLength = hashTable->getHashStringLength(), lengthRemaining1, lengthRemaining2;
+	UINT64 lengthRemaining1, lengthRemaining2;
 	string string2 = (orient == 0 || orient== 1) ? read2->getStringForward() : read2->getStringReverse(); // Get the string in read2 based on the orientation.
 	if(orient == 0 || orient == 2)
 									// orient 0
@@ -369,7 +370,6 @@ bool OverlapGraph::checkOverlapForContainedRead(const Read *read1, const Read *r
 bool OverlapGraph::checkOverlap(const Read *read1, const Read *read2, UINT64 orient, UINT64 start)
 {
 	string string1=read1->getStringForward(); // Get the forward string of read1
-	UINT64 hashStringLength = hashTable->getHashStringLength();
 	string string2 = (orient == 0 || orient== 1) ? read2->getStringForward() : read2->getStringReverse(); // Get the string from read2 according to orient.
 	if(orient == 0 || orient == 2)		// orient 0
 										//   >--------MMMMMMMMMMMMMMM*************> 			read1      M means match found by hash table
@@ -577,15 +577,15 @@ bool OverlapGraph::printGraph(string graphFileName, string contigFileName)
 /**********************************************************************************************************************
 	Insert all edges of a read in the overlap graph
 **********************************************************************************************************************/
-bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * exploredReads)
+bool OverlapGraph::insertAllEdgesOfRead(const HashTable & hashTable, UINT64 readNumber, vector<nodeType> * exploredReads)
 {
 	Read *read1 = dataSet->getReadFromID(readNumber); 	// Get the current read read1.
 	string readString = read1->getStringForward(); 		// Get the forward string of read1.
 	string subString;
-	for(UINT64 j = 1; j < read1->getReadLength()-hashTable->getHashStringLength(); j++) // For each proper substring of length getHashStringLength of read1
+	for(UINT64 j = 1; j < read1->getReadLength()-hashStringLength; j++) // For each proper substring of length getHashStringLength of read1
 	{
-		subString = readString.substr(j,hashTable->getHashStringLength());  // Get the proper substring s of read1.
-		vector<UINT64> * listOfReads=hashTable->getListOfReads(subString); // Search the string in the hash table.
+		subString = readString.substr(j,hashStringLength);  // Get the proper substring s of read1.
+		vector<UINT64> * listOfReads=hashTable.getListOfReads(subString); // Search the string in the hash table.
 		if(!listOfReads->empty()) // If there are some reads that contain s as prefix or suffix of the read or their reverse complement
 		{
 			for(UINT64 k = 0; k < listOfReads->size(); k++) // For each such reads.
@@ -601,9 +601,9 @@ bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * ex
 					switch (data >> 62) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
 					{
 						case 0: orientation = 3; overlapOffset = read1->getReadLength() - j; break; 				// 3 = r1>------->r2
-						case 1: orientation = 0; overlapOffset = hashTable->getHashStringLength() + j; break; 		// 0 = r1<-------<r2
+						case 1: orientation = 0; overlapOffset = hashTable.getHashStringLength() + j; break; 		// 0 = r1<-------<r2
 						case 2: orientation = 2; overlapOffset = read1->getReadLength() - j; break; 				// 2 = r1>-------<r2
-						case 3: orientation = 1; overlapOffset = hashTable->getHashStringLength() + j; break; 		// 1 = r2<------->r2
+						case 3: orientation = 1; overlapOffset = hashTable.getHashStringLength() + j; break; 		// 1 = r2<------->r2
 					}
 					insertEdge(read1,read2,orientation,read1->getStringForward().length()-overlapOffset); 			// Insert the edge in the graph.
 				}

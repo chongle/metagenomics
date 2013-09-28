@@ -132,7 +132,7 @@ void HashTable::setHashTableSize(UINT64 size)
 /**********************************************************************************************************************
 	Returns the hash value of a subString
 **********************************************************************************************************************/
-UINT64 HashTable::hashFunction(const string & subString)
+UINT64 HashTable::hashFunction(const string & subString) const
 {
 	UINT64 sum1 = 1, sum2 = 1, length = subString.length();
 	for(UINT64 i = 0; i < length; i++)			// We take the bit representation of the string. A = 00, C = 01, G = 11 and T = 10
@@ -206,7 +206,7 @@ bool HashTable::insertIntoTable(const Read *read, const string & subString, cons
 /**********************************************************************************************************************
 	Returns a list of read containing the subString as prefix or suffix.
 **********************************************************************************************************************/
-vector<UINT64> * HashTable::getListOfReads(const string & subString)
+vector<UINT64> * HashTable::getListOfReads(const string & subString) const
 {
 
 		UINT64 index = hashFunction(subString);	// Get the index using the hash function.
