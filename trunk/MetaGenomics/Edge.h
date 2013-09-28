@@ -55,8 +55,8 @@ class Edge{
 		bool hignCoverageAndMatepairFlag;
 		bool transitiveRemovalFlag;							// Used to mark transitive edges.
 		UINT16 flow;							// Store the flow in the current edge.
-		UINT64 coverageDepth;					// Estimated depth of coverage.
-		UINT64 SD;
+		UINT64 coverageDepth;					// Average depth of coverage.
+		UINT64 SD;								// Standard deviation of the base-by-base coverage depth
 		Edge(void);								// Default constructor.
 		Edge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput); 	// constructor for simple edge, length is the overlap length (i.e. length = 18 in the example above)
 		Edge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInput, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations);  // constructor for composite edge

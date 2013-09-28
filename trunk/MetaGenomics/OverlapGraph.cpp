@@ -1026,16 +1026,16 @@ UINT64 OverlapGraph::removeAllEdgesWithoutFlow()
 UINT64 OverlapGraph::removeDeadEndNodes(void)
 {
 	CLOCKSTART;
-	vector <UINT64> listOfNodes; // for saving nodes that should be deleted
+	vector <UINT64> listOfNodesToBeRemoved; // for saving nodes that should be deleted
 	UINT64 edgesRemoved = 0;
 	for(UINT64 i = 1; i < graph->size(); i++) // For each read.
 	{
 		if(!graph->at(i)->empty())	// If the read has some edges.
 		{
-			// CP: comment on what's flag, inEdge and outEdge. It's hard to figure them out by reading the functions below
-			// BH: flag is used to check if we need to remove the current node.
-			// Initailly flag is set to 0. If the current node has an edge with more than 10 reads in it, then the flag will be 1 and the node will not be removed.
-			UINT64 flag = 0, inEdge = 0 , outEdge = 0;
+			UINT64 flag = 0; 		// the flag is 1, If the current node has an edge with more than 10 (deadEndLength) reads in it or a loop edge
+			UINT64 inEdge = 0; 		// number of incoming edges to this node
+			UINT64 outEdge = 0; 	// number of outgoing edges from this node
+
 			for(UINT64 j=0; j < graph->at(i)->size(); j++) // For each edge
 			{
 				Edge * edge = graph->at(i)->at(j);
@@ -1061,7 +1061,7 @@ UINT64 OverlapGraph::removeDeadEndNodes(void)
 			{
 				if( (inEdge > 0 && outEdge == 0) || (inEdge == 0 && outEdge > 0)) // only one type of simple edges
 				{
-					listOfNodes.push_back(i);
+					listOfNodesToBeRemoved.push_back(i);
 				}
 			}
 		}
@@ -1069,24 +1069,24 @@ UINT64 OverlapGraph::removeDeadEndNodes(void)
 
 	//  in below actually to remove the marked deadend nodes and all their edges.
 	vector <Edge *> listOfEdges;
-	for(UINT64 i = 0 ; i < listOfNodes.size(); i++)
+	for(UINT64 i = 0 ; i < listOfNodesToBeRemoved.size(); i++)
 	{
 		listOfEdges.clear();
-		if(!graph->at(listOfNodes.at(i))->empty())	// If the read has some edges.
+		if(!graph->at(listOfNodesToBeRemoved.at(i))->empty())	// If the read has some edges.
 		{
-			edgesRemoved += graph->at(listOfNodes.at(i))->size();
-			for(UINT64 j=0; j < graph->at(listOfNodes.at(i))->size(); j++) // For each edge
+			edgesRemoved += graph->at(listOfNodesToBeRemoved.at(i))->size();
+			for(UINT64 j=0; j < graph->at(listOfNodesToBeRemoved.at(i))->size(); j++) // For each edge
 			{
-				listOfEdges.push_back(graph->at(listOfNodes.at(i))->at(j));
+				listOfEdges.push_back(graph->at(listOfNodesToBeRemoved.at(i))->at(j));
 			}
 			for(UINT64 j = 0; j< listOfEdges.size(); j++)
 				removeEdge(listOfEdges.at(j));							// Remove all the edges of the current node.
 		}
 	}
-	cout<< "Dead-end nodes removed: " << listOfNodes.size() << endl;
+	cout<< "Dead-end nodes removed: " << listOfNodesToBeRemoved.size() << endl;
 	cout<<  "Total Edges removed: " << edgesRemoved << endl;
 	CLOCKSTOP;
-	return listOfNodes.size();
+	return listOfNodesToBeRemoved.size();
 }
 
 
@@ -2489,6 +2489,13 @@ bool OverlapGraph::findPathBetweenMatepairs(const Read * read1, const Read * rea
 /**********************************************************************************************************************
 	This function returns the edit distance between two strings.
 	Code downloaded from http://rosettacode.org/wiki/Levenshtein_distance#C.2B.2B
+
+the Levenshtein distance is a metric for measuring the amount of difference between two sequences (i.e. an edit distance).
+The Levenshtein distance between two strings is defined as the minimum number of edits needed to transform one string into the other,
+with the allowable edit operations being insertion, deletion, or substitution of a single character.
+For example, the Levenshtein distance between "kitten" and "sitting" is 3, since the following three edits change one into the other,
+and there is no way to do it with fewer than three edits
+
 **********************************************************************************************************************/
 UINT64 OverlapGraph::calculateEditDistance(const  string & s1, const string & s2)
 {
@@ -2777,18 +2784,26 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 
 string OverlapGraph::getStringInEdge(const Edge *edge)
 {
-	string read1, read2, readTemp, returnString;
-	read1 = (edge->getOrientation() == 2 || edge->getOrientation() == 3) ?  edge->getSourceRead()->getStringForward() : edge->getSourceRead()->getStringReverse();
-	read2 = (edge->getOrientation() == 1 || edge->getOrientation() == 3) ?  edge->getDestinationRead()->getStringForward() : edge->getDestinationRead()->getStringReverse();
-	returnString = read1;
-	UINT64 previousLength = read1.length(), substringLength;
+	// sequence of the source read
+	string sourceRead = (edge->getOrientation() == 2 || edge->getOrientation() == 3) ?  edge->getSourceRead()->getStringForward() : edge->getSourceRead()->getStringReverse();
+	// sequence of the destination read
+	string destinationRead = (edge->getOrientation() == 1 || edge->getOrientation() == 3) ?  edge->getDestinationRead()->getStringForward() : edge->getDestinationRead()->getStringReverse();
+	// sequence of the edge to be returned, starting with the source read
+	string returnString = sourceRead;
+
+	// sequence of the current edge in the middle of an edge
+	string readTemp;
+	// length of the previous read
+	UINT64 previousLength = sourceRead.length();
+	UINT64 substringLength = 0;
 	for(UINT64 i = 0; i < edge->getListOfReads()->size(); i++)
 	{
 		readTemp = (edge->getListOfOrientations()->at(i) == 1) ? dataSet->getReadFromID(edge->getListOfReads()->at(i))->getStringForward(): dataSet->getReadFromID(edge->getListOfReads()->at(i))->getStringReverse();
-
+		// the length of the substring of the current read that is overhang or new from the previous read
 		substringLength =  readTemp.length() + edge->getListOfOverlapOffsets()->at(i) - previousLength;
+		// if the current read has no overlap with the previous read, they are connected by scaffolder and have a gap between them and insert an 'N' between the sequences
 		if( edge->getListOfOverlapOffsets()->at(i) ==  previousLength)
-			returnString = returnString + 'N' + readTemp.substr(readTemp.length() - substringLength, substringLength);
+			returnString = returnString + 'N' + readTemp.substr(readTemp.length() - substringLength, substringLength); // in this case, substringLength == readTemp.length()
 		else
 			returnString = returnString + readTemp.substr(readTemp.length() - substringLength, substringLength);
 		previousLength = readTemp.length();
@@ -2798,13 +2813,15 @@ string OverlapGraph::getStringInEdge(const Edge *edge)
 
 	if(edge->getListOfReads()->empty()) // Simple edge
 	{
-		substringLength =  read2.length() + edge->getOverlapOffset() - read1.length();
-		returnString = returnString + read2.substr(read2.length() - substringLength, substringLength);
+		// if it's a simple edge, get the sequence from the source read and the destination read
+		substringLength =  destinationRead.length() + edge->getOverlapOffset() - sourceRead.length();
+		returnString = returnString + destinationRead.substr(destinationRead.length() - substringLength, substringLength);
 	}
 	else
 	{
+		// CP2: what's done here, if it's composite edge???
 		substringLength = edge->getReverseEdge()->getListOfOverlapOffsets()->at(0);
-		returnString = returnString + read2.substr(read2.length() - substringLength, substringLength);
+		returnString = returnString + destinationRead.substr(destinationRead.length() - substringLength, substringLength);
 	}
 	return returnString;
 }
@@ -3425,6 +3442,8 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 	edgeForward->setReverseEdge(edgeReverse);	// set the pointer of reverse edge
 	edgeReverse->setReverseEdge(edgeForward);	// set the pointer of reverse edge
 
+	// CP2: why are coverage of edges updated here?? We should  re-calculate the coverage of the whole graph when we need this info
+
 	UINT16 flow = min(edge1->flow,edge2->flow);	// Take the minimum of the flow from the two original edges.
 	UINT64 coverage = min(edge1->coverageDepth, edge2->coverageDepth);	// not used
 	edgeForward->flow = flow;	// set the flow in the forward edge.
@@ -3536,13 +3555,18 @@ UINT8 OverlapGraph::mergedEdgeOrientationDisconnected(const Edge *edge1, const E
 
 /**********************************************************************************************************************
 	Remove edges with similar endpoint in the overlap graph
+	CP: Find pairs of edges with the same source and destination and representing similar sequences - 5% edit distance
+	CP: Remove one of them and move its flow to the other edge
 **********************************************************************************************************************/
 
 UINT64 OverlapGraph::removeSimilarEdges(void)
 {
 	CLOCKSTART;
 	UINT64 counter = 0;
-	vector <Edge *> listOfEdges1, listOfEdges2;
+	// pairs of edges that are found, the two lists have the same length, a pair are in the same index
+	vector <Edge *> listOfEdges1; // edges to be kept
+	vector <Edge *> listOfEdges2; // edges to be removed
+
 	vector <UINT64> listOfEditDistance;
 	for(UINT64 i = 1; i < graph->size(); i++)	// For each node.
 	{
@@ -3575,6 +3599,8 @@ UINT64 OverlapGraph::removeSimilarEdges(void)
 									}
 									if(l ==  listOfEdges1.size())				// Not in the list. Add it in the list.
 									{
+										// CP2: this seems to pick a random edge to be removed
+										// CP2: Should change to remove the edge with higher coverage?? since the one with low coveragew will be more likely to be an error
 										listOfEdges1.push_back(e1);				// We will keep this edge.
 										listOfEdges2.push_back(e2);				// This edge will be deleted and the flow will be moved to the first edge.
 										listOfEditDistance.push_back(editDistance);	// Also store the edit distance.
@@ -3587,6 +3613,8 @@ UINT64 OverlapGraph::removeSimilarEdges(void)
 			}
 		}
 	}
+
+	// Remove edges in listOfEdges2 and move their flow to their corresponding edge in listOfEdges1
 	cout << listOfEdges1.size()<< " edges to remove" << endl;
 	for(UINT64 i = 0; i < listOfEdges1.size(); i++)
 	{
@@ -3696,7 +3724,7 @@ UINT64 OverlapGraph::resolveNodes(void)
 }
 
 
-
+// CP2: where are they used? Should they be removed?
 
 struct stackElement
 {
