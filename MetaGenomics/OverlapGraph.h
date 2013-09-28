@@ -52,7 +52,8 @@ class OverlapGraph
 	private:
 		//CP: these two objects are NOT modified here
 		Dataset * dataSet; 											// Pointer to the dataset containing all the reads.
-		HashTable * hashTable;										// Pointer to the hash table.
+//		HashTable * hashTable;										// Pointer to the hash table.
+		UINT16 hashStringLength;
 		// CP: the overlap graph is a vector of nodes (i.e. reads) with their vectors of incident edges
 		// CP: the readNumber of a read is equal to the index of the node in this vector. Because readNumber starts from 1, the
 		vector< vector<Edge *> * > *graph;							// Adjacency list of the graph.
@@ -80,7 +81,7 @@ class OverlapGraph
 		// CP: Need to add const to all these pointers that are not supposed to be changed.
 		// CP: Currently it's hard to tell which parameters are the input and which parameters are return-by-pointer
 		bool markTransitiveEdges(UINT64 readNumber, vector<markType> * markedNodes); // Mark transitive edges of a read.
-		bool buildOverlapGraphFromHashTable(HashTable *ht);			// Build the overlap graph using hashtable.
+		bool buildOverlapGraphFromHashTable(const HashTable & hashTable);			// Build the overlap graph using hashtable.
 		bool insertEdge(Edge * edge); 								// Insert an edge in the overlap graph.
 		bool insertEdge(Read *read1, Read *read2,  UINT8 orient, UINT16 overlapOffset); // Insert an edge in the overlap graph.
 		UINT64 contractCompositePaths(void); 						// Contract composite paths in the overlap graph.
@@ -92,7 +93,7 @@ class OverlapGraph
 		bool checkOverlap(const Read *read1, const Read *read2, UINT64 orient, UINT64 start); // Check overlap between two reads after a match is found using the hash table.
 		bool checkOverlapForContainedRead(const Read *read1, const Read *read2, UINT64 orient, UINT64 start);
 		bool printGraph(string graphFileName, string contigFileName);	// Store the overlap graph for visual display and also store the contigs/scaffods in a file.
-		bool insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * exploredReads);	// Insert into the overlap graph all edges of a read.
+		bool insertAllEdgesOfRead(const HashTable & hashTable, UINT64 readNumber, vector<nodeType> * exploredReads);	// Insert into the overlap graph all edges of a read.
 		bool removeTransitiveEdges(UINT64 readNumber);				// Remove all transitive edges from the overlap graph incident to a given read.
 		bool mergeEdges(Edge *edge1, Edge *edge2);					// Merge two edges in the  overlap graph.
 		UINT64 removeAllSimpleEdgesWithoutFlow();						// Not used. Only for testing.
@@ -120,7 +121,7 @@ class OverlapGraph
 		bool mergeListDisconnected(Edge *edge1, Edge *edge2, UINT64 overlapOffset, UINT64 gapLength, vector<UINT64> *listReads, vector<UINT16> *listOverlaps, vector<UINT8> * listOrientations);
 		UINT64 removeSimilarEdges(void);							// remove multi-edges with similar strings
 		UINT64 resolveNodes(void);									// Merge edges based on coverage depth
-		void markContainedReads(void);								// Find superReads for each read and mark them as contained read.
+		void markContainedReads(const HashTable & hashTable);								// Find superReads for each read and mark them as contained read.
 		void getBaseByBaseCoverage(Edge *edge);						// Get the coverage Mean and SD of an edge. Only considering the unique reads.
 		void sortEdges();											// Sort edges of each read based on ID of the destination read.
 		UINT64 findOverlap(const string & string1, const string & string2);			// Find overlap length between two strings.
