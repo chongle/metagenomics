@@ -26,7 +26,10 @@
 
 /* function 'timer()' for measuring processor time */
 
-#ifdef WINDOWS_TIMER
+// use wintimer.h for Windows systems
+// _WIN32 is defined for both 32-bit and 64-bit environments according to http://sourceforge.net/p/predef/wiki/OperatingSystems/
+#ifdef _WIN32
+//#ifdef WINDOWS_TIMER
 #include "wintimer.h"
 #else
 #include "timer.h"
