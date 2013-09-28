@@ -44,7 +44,6 @@ class Dataset
 		UINT64 getNumberOfReads(void); 						// Get the number of total reads in the database.
 		UINT64 getNumberOfUniqueReads(void); 				// Get the number of unique reads in the database.
 		bool printDataset(void); 							// Print few the reads in the dataset. For debuggin only.
-        // Ted: change it to constant pointer
 		Read * getReadFromString(const string & read); 		// Find a read in the database given the string. Uses binary search in the list of reads.
 		Read * getReadFromID(UINT64 ID); 					// Find a read in the database given the ID in constant time.
 		void readMatePairsFromFile(void);					// Read the matePairs from file

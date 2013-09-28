@@ -15,7 +15,7 @@
 **********************************************************************************************************************/
 class HashTable{
 	private:
-		Dataset *dataSet;							// Pointer of the dataset.
+		Dataset *dataSet;							// Pointer of the dataset. this is NOT modified here
 		UINT64 hashTableSize; 						// Ted: Size of the hash table. This is the prime number of mod operation.
 		vector < vector<UINT64> *> *hashTable; 		// Ted: List of hash keys of read number (ID) and orientation.
 		UINT16 hashStringLength;					// Ted: Length of prefix and suffix of the reads to hash. This is equal to the minumum overlap length.
@@ -26,7 +26,7 @@ class HashTable{
 		void setHashTableSize(UINT64 size); 		// Set the size of the hash table.
 	public:
 		HashTable(void);							// Default constructor.
-		HashTable(Dataset *d);						// Another constructor.
+//		HashTable(Dataset *d);						// Another constructor.
 		~HashTable();								// Destructor.
 		bool insertDataset(Dataset *d, UINT64 minOverlapLength);	// Insert the dataset in the hash table.
 		vector<UINT64> * getListOfReads(const string & subString) const; 			// Get the list of reads that contain subString as prefix or suffix.
