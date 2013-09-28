@@ -18,9 +18,13 @@
 **********************************************************************************************************************/
 
 enum nodeType {
-	UNEXPLORED = 0, // Current node u is not explored yet. Meaning that there is no edge (u,v) in the graph.
-	EXPLORED = 1, //  Current node u is explored. Meaning that all edges (u,v) are inserted in the dataset.
-	EXPLORED_AND_TRANSITIVE_EDGES_MARKED = 2 // Meaning that all transitive edges (u,v) of current node u is marked and its neighbors transitive edges are also marked. Now it is safe to remove any transitive edge (u,v) from node u.
+	// Current node u is not explored yet. Meaning that there is no edge (u,v) in the graph.
+	UNEXPLORED = 0,
+	//  Current node u is explored. Meaning that all edges (u,v) are inserted in the dataset.
+	EXPLORED = 1,
+	// Meaning that all transitive edges (u,v) of current node u is marked and its neighbors transitive edges are also marked.
+	// Now it is safe to remove any transitive edge (u,v) from node u.
+	EXPLORED_AND_TRANSITIVE_EDGES_MARKED = 2
 };
 
 enum markType{
@@ -92,21 +96,24 @@ class OverlapGraph
 		UINT8 twinEdgeOrientation(UINT8 orientation);				// Orientation of the reverse edge.
 		// When we merge two edges, we need to merge the list of ordered reads, their overlap offsets and orientations.
 		bool mergeList(const Edge *edge1, const Edge *edge2, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * ListOrientations);
-		bool removeEdge(Edge *edge); 								// Remove an edge from the overlap graph.
-		bool updateReadLocations(Edge *edge);						// Update the location of all the reads in the current edge. This function is called when a new edge is inserted.
-		bool removeReadLocations(Edge *edge);						// Remove the location of all the reads from the current edge. This function is called when an edge is removed.
+		bool removeEdge(Edge *edge); 						// Remove an edge from the overlap graph.
+		bool updateReadLocations(Edge *edge);				// Update the location of all the reads in the current edge. This function is called when a new edge is inserted.
+		bool removeReadLocations(Edge *edge);				// Remove the location of all the reads from the current edge. This function is called when an edge is removed.
 
 		Edge *findEdge(UINT64 source, UINT64 destination);			// Find an edge from source to destination in the overlap graph.
 		bool isEdgePresent(UINT64 source, UINT64 destination);		// Check if an edge is present in the overlap graph between source and destination.
 		bool mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLength); // Merge to edges that do not share any node.
 		UINT8 mergedEdgeOrientationDisconnected(const Edge *edge1, const Edge *edge2);		// Orientation of the edge when two disconnected edge are merged.
-		bool mergeListDisconnected(Edge *edge1, Edge *edge2, UINT64 overlapOffset, UINT64 gapLength, vector<UINT64> *listReads, vector<UINT16> *listOverlaps, vector<UINT8> * listOrientations);
+		bool mergeListDisconnected(Edge *edge1, Edge *edge2, UINT64 overlapOffset,
+				UINT64 gapLength, vector<UINT64> *listReads, vector<UINT16> *listOverlaps, vector<UINT8> * listOrientations);
 
 		// Use paired end information to merge and scaffold
-		// Find support between to reads in the the overlap graph. Find all pathas between two reads in the graph. Only the subpath that are common in all such paths are considered to be supported.
+		// Find support between to reads in the the overlap graph. Find all pathas between two reads in the graph.
+		// Only the subpath that are common in all such paths are considered to be supported.
 		bool findPathBetweenMatepairs(const Read * read1, const Read * read2, UINT8 orient, UINT8 datasetNumbe, vector <Edge *> &copyOfPath, vector <UINT64> &copyOfFlags);
 		// Starting from the firstEdge we try to reach lastEdge by distance mean + 3 *sd of the datasetNumber.
-		UINT64 exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags);
+		UINT64 exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge,
+				UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags);
 		vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);
 		UINT64 checkForScaffold(const Edge *edge1, const Edge *edge2, UINT64 *distance);
 
@@ -137,9 +144,9 @@ class OverlapGraph
 		bool buildOverlapGraphFromHashTable(const HashTable & hashTable);			// Build the overlap graph using hashtable.
 
 		// Save and reload the overlap graph
-		void sortEdges();											// Sort edges of each read based on ID of the destination read.
-		bool readGraphFromFile(string fileName);					// Read the graph from a file stored before.
-		bool saveGraphToFile(string fileName);						// Save the unitig graph to a file. This file can be used to reproduced the graph. Useful to avoid recomputing the graph.
+		void sortEdges();						 // Sort edges of each read based on ID of the destination read.
+		bool readGraphFromFile(string fileName); // Read the graph from a file stored before.
+		bool saveGraphToFile(string fileName);	 // Save the unitig graph to a file. This file can be used to reproduced the graph. Useful to avoid recomputing the graph.
 		bool printGraph(string graphFileName, string contigFileName);	// Store the overlap graph for visual display and also store the contigs/scaffods in a file.
 
 		bool calculateMeanAndSdOfInsertSize(void); 								// Estimate the mean and standard deviation of insert sizes.

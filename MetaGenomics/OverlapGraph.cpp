@@ -269,8 +269,9 @@ void OverlapGraph::markContainedReads(const HashTable & hashTable)
 																						// Orientation 2 means prefix of reverse of the read
 																						// Orientation 3 means prefix of reverse of the read
 
-					if(readString.length() > read2->getStringForward().length() && checkOverlapForContainedRead(read1,read2,(data >> 62),j)) // read1 need to be longer than read2 in order to contain read2
-																																			 // Check if the remaining of the strings also match
+					// read1 need to be longer than read2 in order to contain read2
+					// Check if the remaining of the strings also match
+					if(readString.length() > read2->getStringForward().length() && checkOverlapForContainedRead(read1,read2,(data >> 62),j))
 					{
 						if(read2->superReadID == 0) // This is the rist super read found. we store the ID of the super read.
 						{
@@ -279,7 +280,8 @@ void OverlapGraph::markContainedReads(const HashTable & hashTable)
 						}
 						else // Already found some previous super read. Now we have another super read.
 						{
-							if(readString.length() > dataSet->getReadFromID(read2->superReadID)->getReadLength()) // This super read is longer than the previous super read. Update the super read ID.
+							// This super read is longer than the previous super read. Update the super read ID.
+							if(readString.length() > dataSet->getReadFromID(read2->superReadID)->getReadLength())
 								read2->superReadID = i;
 						}
 					}
@@ -333,7 +335,8 @@ bool OverlapGraph::checkOverlapForContainedRead(const Read *read1, const Read *r
 		lengthRemaining2 = string2.length() - hashStringLength; 	// This is the remaining of read2
 		if(lengthRemaining1 >= lengthRemaining2)
 		{
-			return string1.substr(start + hashStringLength, lengthRemaining2) == string2.substr(hashStringLength, lengthRemaining2); // If the remaining of the string match, then read2 is contained in read1
+			// If the remaining of the string match, then read2 is contained in read1
+			return string1.substr(start + hashStringLength, lengthRemaining2) == string2.substr(hashStringLength, lengthRemaining2);
 		}
 	}
 	else							// orient 1
@@ -348,7 +351,8 @@ bool OverlapGraph::checkOverlapForContainedRead(const Read *read1, const Read *r
 		lengthRemaining2 = string2.length() - hashStringLength;
 		if(lengthRemaining1 >= lengthRemaining2)
 		{
-			return string1.substr(start - lengthRemaining2, lengthRemaining2) == string2.substr(0, lengthRemaining2); // If the remaining of the string match, then read2 is contained in read1
+			 // If the remaining of the string match, then read2 is contained in read1
+			return string1.substr(start - lengthRemaining2, lengthRemaining2) == string2.substr(0, lengthRemaining2);
 		}
 	}
 	return false;
@@ -381,7 +385,9 @@ bool OverlapGraph::checkOverlap(const Read *read1, const Read *read2, UINT64 ori
 	{
 		if(string1.length()- start - hashStringLength >= string2.length() - hashStringLength) // The overlap must continue till the end.
 			return false;
-		return string1.substr(start + hashStringLength, string1.length()-(start + hashStringLength)) == string2.substr(hashStringLength,  string1.length()-(start + hashStringLength)); // If the remaining strings match.
+		// If the remaining strings match.
+		return string1.substr(start + hashStringLength, string1.length()-(start + hashStringLength)) ==
+				string2.substr(hashStringLength,  string1.length()-(start + hashStringLength));
 	}
 	else								// orient 1
 										//   	>********MMMMMMMMMMMMMMM-------------> 			read1      M means match found by hash table
@@ -421,9 +427,10 @@ bool OverlapGraph::insertEdge(Edge * edge)
 **********************************************************************************************************************/
 bool OverlapGraph::insertEdge(Read *read1, Read *read2, UINT8 orient, UINT16 overlapOffset)
 {
-	Edge * edge1 = new Edge(read1,read2,orient,overlapOffset);								// Create a new edge in the graph to insert.
-	UINT16 overlapOffsetReverse = read2->getReadLength() + overlapOffset - read1->getReadLength();	// Set the overlap offset accordingly for the reverse edge. Note that read lengths are different.
-																						// If read lengths are the same. Then the reverse edge has the same overlap offset.
+	Edge * edge1 = new Edge(read1,read2,orient,overlapOffset);			// Create a new edge in the graph to insert.
+	// Set the overlap offset accordingly for the reverse edge. Note that read lengths are different.
+	UINT16 overlapOffsetReverse = read2->getReadLength() + overlapOffset - read1->getReadLength();
+	// If read lengths are the same. Then the reverse edge has the same overlap offset.
 	Edge * edge2 = new Edge(read2,read1,twinEdgeOrientation(orient),overlapOffsetReverse);		// Create a new edge for the reverses string.
 
 	edge1->setReverseEdge(edge2);		// Set the reverse edge pointer.
@@ -488,7 +495,13 @@ bool OverlapGraph::printGraph(string graphFileName, string contigFileName)
 		MYEXIT("Unable to open file: "+graphFileName);
 	if(contigFilePointer == NULL)
 		MYEXIT("Unable to open file: "+contigFileName);
-	graphFilePointer << "graph: {" << endl <<  "layoutalgorithm :forcedir" << endl <<  "fdmax:704" << endl <<  "tempmax:254" << endl <<  "tempmin:0" << endl <<  "temptreshold:3" << endl <<  "tempscheme:3" << endl <<  "tempfactor:1.08" << endl <<  "randomfactor:100" << endl <<  "gravity:0.0" << endl <<  "repulsion:161" << endl <<  "attraction:43" << endl <<  "ignore_singles:yes" << endl <<  "node.fontname:\"helvB10\"" << endl << "edge.fontname:\"helvB10\"" << endl <<  "node.shape:box" << endl <<  "node.width:80" << endl <<  "node.height:20" << endl <<  "node.borderwidth:1" << endl <<  "node.bordercolor:31" << endl;
+	graphFilePointer << "graph: {"
+			<< endl <<  "layoutalgorithm :forcedir" << endl <<  "fdmax:704" << endl <<  "tempmax:254"
+			<< endl <<  "tempmin:0" << endl <<  "temptreshold:3" << endl <<  "tempscheme:3" << endl <<  "tempfactor:1.08"
+			<< endl <<  "randomfactor:100" << endl <<  "gravity:0.0" << endl <<  "repulsion:161" << endl <<  "attraction:43"
+			<< endl <<  "ignore_singles:yes" << endl <<  "node.fontname:\"helvB10\"" << endl << "edge.fontname:\"helvB10\""
+			<< endl <<  "node.shape:box" << endl <<  "node.width:80" << endl <<  "node.height:20" << endl <<  "node.borderwidth:1"
+			<< endl <<  "node.bordercolor:31" << endl;
 	for(UINT64 i = 1; i<= dataSet->getNumberOfUniqueReads(); i++)
 		if(!graph->at(i)->empty())
 			graphFilePointer << "node: { title:\""<<i<<"\" label: \"" << i << "\" }" << endl;
@@ -513,13 +526,25 @@ bool OverlapGraph::printGraph(string graphFileName, string contigFileName)
 						contigEdges.push_back(e); // List of contigs.
 						thickness = e->getListOfReads()->empty() ? 1: 3;
 						if(e->getOrientation() == 0)
-							graphFilePointer << "edge: { source:\"" << source << "\" target:\"" << destination << "\" thickness: " << thickness << " arrowstyle: none backarrowstyle: solid color: red label: \"(" << e->flow << "," << e->coverageDepth << "x," << e->getOverlapOffset() << "," << e->getListOfReads()->size() << ")\" }" << endl;
+							graphFilePointer << "edge: { source:\"" << source << "\" target:\"" << destination
+							<< "\" thickness: " << thickness << " arrowstyle: none backarrowstyle: solid color: red label: \"("
+							<< e->flow << "," << e->coverageDepth << "x," << e->getOverlapOffset() << "," << e->getListOfReads()->size()
+							<< ")\" }" << endl;
 						else if(e->getOrientation() == 1)
-							graphFilePointer << "edge: { source:\"" << source << "\" target:\"" << destination << "\" thickness: " << thickness << " backarrowstyle:solid arrowstyle:solid color: green label: \"(" << e->flow << "," << e->coverageDepth <<  "x," << e->getOverlapOffset() << "," << e->getListOfReads()->size() << ")\" }" << endl;
+							graphFilePointer << "edge: { source:\"" << source << "\" target:\"" << destination << "\" thickness: "
+							<< thickness << " backarrowstyle:solid arrowstyle:solid color: green label: \"(" << e->flow << ","
+							<< e->coverageDepth <<  "x," << e->getOverlapOffset() << "," << e->getListOfReads()->size()
+							<< ")\" }" << endl;
 						else if(e->getOrientation() == 2)
-							graphFilePointer << "edge: { source:\"" << source << "\" target:\"" << destination << "\" thickness: " << thickness << " arrowstyle: none color: blue label: \"(" << e->flow << "," << e->coverageDepth << "x," << e->getOverlapOffset() << "," << e->getListOfReads()->size() << ")\" }" << endl;
+							graphFilePointer << "edge: { source:\"" << source << "\" target:\"" << destination << "\" thickness: "
+							<< thickness << " arrowstyle: none color: blue label: \"(" << e->flow << "," << e->coverageDepth << "x,"
+							<< e->getOverlapOffset() << "," << e->getListOfReads()->size()
+							<< ")\" }" << endl;
 						else if(e->getOrientation() == 3)
-							graphFilePointer << "edge: { source:\"" << source << "\" target:\"" << destination << "\" thickness: " << thickness << " arrowstyle:solid color: red label: \"(" << e->flow << "," << e->coverageDepth <<  "x," << e->getOverlapOffset() << "," << e->getListOfReads()->size() << ")\" }" << endl;
+							graphFilePointer << "edge: { source:\"" << source << "\" target:\"" << destination << "\" thickness: "
+							<< thickness << " arrowstyle:solid color: red label: \"(" << e->flow << "," << e->coverageDepth <<  "x,"
+							<< e->getOverlapOffset() << "," << e->getListOfReads()->size()
+							<< ")\" }" << endl;
 					}
 				}
 			}
@@ -532,7 +557,10 @@ bool OverlapGraph::printGraph(string graphFileName, string contigFileName)
 	for(UINT64 i = 0; i < contigEdges.size(); i++) // Store the contigs in a file.
 	{
 		string s = getStringInEdge(contigEdges.at(i)); // get the string in the edge.
-		contigFilePointer << ">contig_"<< i+1 << " Flow: " << setw(10) << contigEdges.at(i)->flow <<  " Edge  (" << setw(10) << contigEdges.at(i)->getSourceRead()->getReadNumber() << ", " << setw(10) << contigEdges.at(i)->getDestinationRead()->getReadNumber() << ") String Length: " << setw(10) << s.length() << " Coverage: " << setw(10) << contigEdges.at(i)->coverageDepth << endl;
+		contigFilePointer << ">contig_"<< i+1 << " Flow: " << setw(10) << contigEdges.at(i)->flow <<  " Edge  ("
+				<< setw(10) << contigEdges.at(i)->getSourceRead()->getReadNumber() << ", " << setw(10)
+				<< contigEdges.at(i)->getDestinationRead()->getReadNumber() << ") String Length: " << setw(10)
+				<< s.length() << " Coverage: " << setw(10) << contigEdges.at(i)->coverageDepth << endl;
 		sum += s.length();
 		UINT64 start=0;
 		do
@@ -590,11 +618,13 @@ bool OverlapGraph::insertAllEdgesOfRead(const HashTable & hashTable, UINT64 read
 		{
 			for(UINT64 k = 0; k < listOfReads->size(); k++) // For each such reads.
 			{
-				UINT64 data = listOfReads->at(k);			// We used bit operations in the hash table. Most significant 2 bits store orientation and least significant 62 bits store read ID.
+				// We used bit operations in the hash table. Most significant 2 bits store orientation and least significant 62 bits store read ID.
+				UINT64 data = listOfReads->at(k);
 				UINT16 overlapOffset;
 				UINT8 orientation;
 				Read *read2 = dataSet->getReadFromID(data & 0X3FFFFFFFFFFFFFFF); 	// Least significant 62 bits store the read number.
-				if(exploredReads->at(read2->getReadNumber())!= UNEXPLORED) 			// No need to discover the same edge again. All edges of read2 is already inserted in the graph.
+				// No need to discover the same edge again. All edges of read2 is already inserted in the graph.
+				if(exploredReads->at(read2->getReadNumber())!= UNEXPLORED)
 						continue;
 				if(read1->superReadID == 0 && read2->superReadID == 0 && checkOverlap(read1,read2,(data >> 62),j)) // Both read need to be non contained.
 				{
@@ -610,8 +640,9 @@ bool OverlapGraph::insertAllEdgesOfRead(const HashTable & hashTable, UINT64 read
 			}
 		}
 	}
+	// Sort the list of edges of the current node according to the overlap offset (ascending).
 	if(graph->at(readNumber)->size() != 0)
-		sort(graph->at(readNumber)->begin(),graph->at(readNumber)->end(), compareEdges); // Sort the list of edges of the current node according to the overlap offset (ascending).
+		sort(graph->at(readNumber)->begin(),graph->at(readNumber)->end(), compareEdges);
 	return true;
 }
 
@@ -658,8 +689,9 @@ bool OverlapGraph::markTransitiveEdges(UINT64 readNumber, vector<markType> * mar
 		}
 	}
 
+	// Change back all the variables modified in this function to VACANT
 	for(UINT64 i = 0; i < graph->at(readNumber)->size(); i++)
-		markedNodes->at(graph->at(readNumber)->at(i)->getDestinationRead()->getReadNumber()) = VACANT; 	// Change back all the variables modified in this function to VACANT
+		markedNodes->at(graph->at(readNumber)->at(i)->getDestinationRead()->getReadNumber()) = VACANT;
 
 	markedNodes->at(readNumber) = VACANT; 		// Mark as vacant.
 	return true;
@@ -728,8 +760,8 @@ UINT64 OverlapGraph::contractCompositePaths(void)
 			Edge *edge1 = graph->at(index)->at(0);  // First edge.
 			Edge *edge2 = graph->at(index)->at(1);  // Second Edge.
 			if(flowComputed == true || !isEdgePresent(edge1->getDestinationRead()->getReadNumber(), edge2->getDestinationRead()->getReadNumber()))
-																						// Before flow is computed we do not insert multiple edges between the same endpoints.
-				// CP: Before flow is computed (flowComputed == false), why checking if there is an edge between the two destination reads? why don't you need to do this after flow is calculated?
+							// Before flow is computed we do not insert multiple edges between the same endpoints.
+				// CP: Before flow is computed (flowComputed == false), why checking if there is an edge between the two destination reads?
 				// BH: Before the flow is computed we do not want to insert multiple edges between the same nodes. This condition is required for CS2 minimum Cost flow algorithm
 				// CP: Why the destination reads, not the source reads??
 				// BH: We do not want to remove loops (a,a).o you remove
@@ -772,16 +804,19 @@ bool OverlapGraph::mergeEdges(Edge *edge1, Edge *edge2)
 	vector<UINT8> * listOrientationsForward = new vector<UINT8>;			// List of orientations in the forward edge.
 
 	mergeList(edge1, edge2, listReadsForward, listOverlapOffsetsForward, listOrientationsForward); // Merge the lists from the two edges.
-
-	edgeForward->makeEdge(read1,read2,orientationForward, edge1->getOverlapOffset() + edge2->getOverlapOffset(), listReadsForward, listOverlapOffsetsForward, listOrientationsForward); // Make the forward edge
+	// Make the forward edge
+	edgeForward->makeEdge(read1,read2,orientationForward, edge1->getOverlapOffset() + edge2->getOverlapOffset(),
+			listReadsForward, listOverlapOffsetsForward, listOrientationsForward);
 
 	vector<UINT64> * listReadsReverse = new vector<UINT64>;					// List of reads in the reverse edge.
 	vector<UINT16> * listOverlapOffsetsReverse= new vector<UINT16>;				// List of overlaps in the reverse edge.
 	vector<UINT8> * listOrientationsReverse = new vector<UINT8>;			// List of orientations in the reverse edge.
 
-	mergeList(edge2->getReverseEdge(),edge1->getReverseEdge(), listReadsReverse, listOverlapOffsetsReverse,listOrientationsReverse);	// Merge the lists from the two reverse edges.
-
-	edgeReverse->makeEdge(read2, read1, orientationReverse, edge2->getReverseEdge()->getOverlapOffset() + edge1->getReverseEdge()->getOverlapOffset(), listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse); // Make the reverse edge
+	// Merge the lists from the two reverse edges.
+	mergeList(edge2->getReverseEdge(),edge1->getReverseEdge(), listReadsReverse, listOverlapOffsetsReverse,listOrientationsReverse);
+	// Make the reverse edge
+	edgeReverse->makeEdge(read2, read1, orientationReverse, edge2->getReverseEdge()->getOverlapOffset() +
+			edge1->getReverseEdge()->getOverlapOffset(), listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
 
 	edgeForward->setReverseEdge(edgeReverse);		// Update the reverse edge pointer.
 	edgeReverse->setReverseEdge(edgeForward);		// Update the reverse edge pointer.
@@ -828,7 +863,7 @@ bool OverlapGraph::mergeList(const Edge *edge1, const Edge *edge2, vector<UINT64
 	}
 	listReads->push_back(edge1->getDestinationRead()->getReadNumber()); 		// Insert the common node of the two edges
 
-	listOverlapOffsets->push_back(edge1->getOverlapOffset() - sum);					// Get the overlap offset.
+	listOverlapOffsets->push_back(edge1->getOverlapOffset() - sum);				// Get the overlap offset.
 
 	if(edge1->getOrientation() == 1 || edge1->getOrientation() == 3)			// Orientation of the common node. Depends on the orientation of the edges.
 		listOrientations->push_back(1);
@@ -971,7 +1006,9 @@ UINT64 OverlapGraph::removeAllSimpleEdgesWithoutFlow()
 			for(UINT64 j=0; j < graph->at(i)->size(); j++) // For each edge
 			{
 				Edge * edge = graph->at(i)->at(j);
-			if(edge->getSourceRead()->getReadNumber() < edge->getDestinationRead()->getReadNumber() && edge->getListOfReads()->empty() && edge->flow == 0) // The edge is simple edge with no flow.
+			if(edge->getSourceRead()->getReadNumber() < edge->getDestinationRead()->getReadNumber()
+					&& edge->getListOfReads()->empty()
+					&& edge->flow == 0) // The edge is simple edge with no flow.
 				{
 					listOfEdges.push_back(edge); // Put in the list of edges to be removed.
 				}
@@ -1001,7 +1038,8 @@ UINT64 OverlapGraph::removeAllEdgesWithoutFlow()
 			for(UINT64 j=0; j < graph->at(i)->size(); j++) // For each edge
 			{
 				Edge * edge = graph->at(i)->at(j);
-			if(edge->getSourceRead()->getReadNumber() < edge->getDestinationRead()->getReadNumber() && edge->flow == 0) // The edge is simple edge with no flow.
+			// The edge is simple edge with no flow.
+			if(edge->getSourceRead()->getReadNumber() < edge->getDestinationRead()->getReadNumber() && edge->flow == 0)
 				{
 					listOfEdges.push_back(edge); // Put in the list of edges to be removed.
 				}
@@ -1247,30 +1285,43 @@ bool OverlapGraph::calculateMeanAndSdOfInsertSize(void)
 				if(read1->getMatePairList()->at(j).datasetNumber == d)		// if it is in the current dataset.
 				{
 					listOfEdgesRead1.clear();  locationOnEdgeRead1.clear();
-					listOfEdgesRead1.insert(listOfEdgesRead1.end(), read1->getListOfEdgesForward()->begin(), read1->getListOfEdgesForward()->end());				// All the edges that contain forward string of read1
-					listOfEdgesRead1.insert(listOfEdgesRead1.end(), read1->getListOfEdgesReverse()->begin(), read1->getListOfEdgesReverse()->end());				// All the edges that contain reverse string of read1
+					// All the edges that contain forward string of read1
+					listOfEdgesRead1.insert(listOfEdgesRead1.end(), read1->getListOfEdgesForward()->begin(), read1->getListOfEdgesForward()->end());
+					// All the edges that contain reverse string of read1
+					listOfEdgesRead1.insert(listOfEdgesRead1.end(), read1->getListOfEdgesReverse()->begin(), read1->getListOfEdgesReverse()->end());
 
-					locationOnEdgeRead1.insert(locationOnEdgeRead1.end(), read1->getLocationOnEdgeForward()->begin(), read1->getLocationOnEdgeForward()->end());  	// Location on the corresponding edge.
-					locationOnEdgeRead1.insert(locationOnEdgeRead1.end(), read1->getLocationOnEdgeReverse()->begin(), read1->getLocationOnEdgeReverse()->end());	// Location on the corresponding edge.
+					// Location on the corresponding edge.
+					locationOnEdgeRead1.insert(locationOnEdgeRead1.end(), read1->getLocationOnEdgeForward()->begin(), read1->getLocationOnEdgeForward()->end());
+					// Location on the corresponding edge.
+					locationOnEdgeRead1.insert(locationOnEdgeRead1.end(), read1->getLocationOnEdgeReverse()->begin(), read1->getLocationOnEdgeReverse()->end());
 
 					read2 = dataSet->getReadFromID(read1->getMatePairList()->at(j).matePairID);	// Get the read2 object.
 					listOfEdgesRead2.clear();  locationOnEdgeRead2.clear();
 
-					listOfEdgesRead2.insert(listOfEdgesRead2.end(), read2->getListOfEdgesForward()->begin(), read2->getListOfEdgesForward()->end());				// All the edges that contain forward string of read2
-					listOfEdgesRead2.insert(listOfEdgesRead2.end(), read2->getListOfEdgesReverse()->begin(), read2->getListOfEdgesReverse()->end());				// All the edges that contain reverse string of read1
+					// All the edges that contain forward string of read2
+					listOfEdgesRead2.insert(listOfEdgesRead2.end(), read2->getListOfEdgesForward()->begin(), read2->getListOfEdgesForward()->end());
+					// All the edges that contain reverse string of read1
+					listOfEdgesRead2.insert(listOfEdgesRead2.end(), read2->getListOfEdgesReverse()->begin(), read2->getListOfEdgesReverse()->end());
 
-					locationOnEdgeRead2.insert(locationOnEdgeRead2.end(), read2->getLocationOnEdgeForward()->begin(), read2->getLocationOnEdgeForward()->end());	// Location on the corresponding edge.
-					locationOnEdgeRead2.insert(locationOnEdgeRead2.end(), read2->getLocationOnEdgeReverse()->begin(), read2->getLocationOnEdgeReverse()->end());	// Location on the corresponding edge.
+					// Location on the corresponding edge.
+					locationOnEdgeRead2.insert(locationOnEdgeRead2.end(), read2->getLocationOnEdgeForward()->begin(), read2->getLocationOnEdgeForward()->end());
+					// Location on the corresponding edge.
+					locationOnEdgeRead2.insert(locationOnEdgeRead2.end(), read2->getLocationOnEdgeReverse()->begin(), read2->getLocationOnEdgeReverse()->end());
 
 					for(UINT64 k = 0; k < listOfEdgesRead1.size(); k++)				// For each edge containing read1
 					{
 						for(UINT64 l = 0; l < listOfEdgesRead2.size(); l++)			// For each edge containing read2
 						{
-							if(listOfEdgesRead1.at(k) == listOfEdgesRead2.at(l) && locationOnEdgeRead1.at(k) > locationOnEdgeRead2.at(l))		// Both reads are on the same edge
+								// Both reads are on the same edge
+							if(listOfEdgesRead1.at(k) == listOfEdgesRead2.at(l) && locationOnEdgeRead1.at(k) > locationOnEdgeRead2.at(l))
 							{
-									if(locationOnEdgeRead1.at(k) - locationOnEdgeRead2.at(l) < 1000)					// Distance between the two edges is less than 1000. Some times some mate pairs are far off the actual value. This upper bound is used to get only good mate pairs. We may need to change the threshold for datasets with longer insert size.
+								// Distance between the two edges is less than 1000. Some times some mate pairs are far off the actual value.
+								// This upper bound is used to get only good mate pairs.
+								// We may need to change the threshold for datasets with longer insert size.
+									if(locationOnEdgeRead1.at(k) - locationOnEdgeRead2.at(l) < 1000)
 									{
-										insertSizes->push_back(locationOnEdgeRead1.at(k) - locationOnEdgeRead2.at(l));	// Insert the distance between the  reads in the list.
+										// Insert the distance between the  reads in the list.
+										insertSizes->push_back(locationOnEdgeRead1.at(k) - locationOnEdgeRead2.at(l));
 									}
 							}
 						}
@@ -1322,7 +1373,8 @@ bool OverlapGraph::calculateMeanAndSdOfInsertSize(void)
 
 /**********************************************************************************************************************
 	Save the unitig graph in a text file
-	Only stores the edges, there are two copies of each edge (forward and reverse). Only store one copy from smaller ID to larger ID here. when retrieve information, make two copies
+	Only stores the edges, there are two copies of each edge (forward and reverse). Only store one copy from smaller ID to larger ID here.
+	 when retrieve information, make two copies
 	Sample:
 12				// source read
 14115			// destination read
@@ -1548,7 +1600,8 @@ bool OverlapGraph::saveGraphToFile(string fileName)
 		UINT64 revereseOverlapOffset =  overlapOffset + read2->getReadLength() - read1->getReadLength();
 
 		edgeForward->makeEdge(read1, read2, orientation, overlapOffset, listReads, listOverlapOffsets, listOrientations); // make the forward edge.
-		edgeReverse->makeEdge(read2, read1, twinEdgeOrientation(orientation), revereseOverlapOffset, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);	// make the reverse edge.
+		edgeReverse->makeEdge(read2, read1, twinEdgeOrientation(orientation), revereseOverlapOffset, listReadsReverse,
+		listOverlapOffsetsReverse, listOrientationsReverse);	// make the reverse edge.
 
 		edgeForward->setReverseEdge(edgeReverse); // set the reverse edge pointer
 		edgeReverse->setReverseEdge(edgeForward); // set the reverse edge pinter.
@@ -1664,7 +1717,8 @@ bool OverlapGraph::readGraphFromFile(string fileName)
 
 		UINT64 length1, length2, overlapOffsetForward, revereseOverlap;
 
-		for(UINT64 j = 0; j < size; j++)	// creat the list of reads, overlap offsets and orientations for the reverse edge based on the number in the forward edge.
+			// creat the list of reads, overlap offsets and orientations for the reverse edge based on the number in the forward edge.
+		for(UINT64 j = 0; j < size; j++)
 		{
 			listReadsReverse->push_back(listReads->at(size-j-1));
 
@@ -1686,8 +1740,11 @@ bool OverlapGraph::readGraphFromFile(string fileName)
 		}
 		UINT64 revereseOverlapOffset =  overlapOffset + read2->getReadLength() - read1->getReadLength();
 
-		edgeForward->makeEdge(read1, read2, orientation, overlapOffset, listReads, listOverlapOffsets, listOrientations); // make the forward edge.
-		edgeReverse->makeEdge(read2, read1, twinEdgeOrientation(orientation), revereseOverlapOffset, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);	// make the reverse edge.
+		// make the forward edge.
+		edgeForward->makeEdge(read1, read2, orientation, overlapOffset, listReads, listOverlapOffsets, listOrientations);
+		// make the reverse edge.
+		edgeReverse->makeEdge(read2, read1, twinEdgeOrientation(orientation), revereseOverlapOffset, listReadsReverse,
+				listOverlapOffsetsReverse, listOrientationsReverse);
 
 		edgeForward->setReverseEdge(edgeReverse); // set the reverse edge pointer
 		edgeForward->flow = flow;				// Add the flow in the forward edge.
@@ -1758,14 +1815,17 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 	ss << "n " << setw(10) << SUPERSOURCE << setw(10) << " 0" << endl;	// Flow in the super source
 	ss << "n " << setw(10) << SUPERSINK << setw(10) << " 0" << endl;	// Flow in the super sink.
 	FLOWLB[0] = 1; FLOWUB[0] = 1000000; COST[0] = 1000000;
-	ss << "a " << setw(10) << SUPERSINK << " " << setw(10) << SUPERSOURCE << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl; // Add an edge from super sink to super source with very high cost.
+	// Add an edge from super sink to super source with very high cost.
+	ss << "a " << setw(10) << SUPERSINK << " " << setw(10) << SUPERSOURCE << " "
+			<< setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
 	// CP: this is a lookup table from the overlap graph node ID to the CS2 graph ID
 	vector<UINT64> *listOfNodes = new vector<UINT64>;
 	// CP: this is a lookup table from the CS2 graph ID to the overlap graph node ID
 	vector<UINT64> *listOfNodesReverse = new vector<UINT64>;
 
-	// For n nodes in the graph, CS2 requires that the nodes are numbered from 1 to n. In the overlap graph, the nodes does not have sequencinal ID. We need to convert them to 1 - n
+	// For n nodes in the graph, CS2 requires that the nodes are numbered from 1 to n. In the overlap graph,
+	// the nodes does not have sequencinal ID. We need to convert them to 1 - n
 
 	// If the ID of a node in the original graph is 100 and directed graph is 5
 	// Then listOfNodes->at(100) is equal to 5
@@ -1788,10 +1848,14 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 			// CP: don't you create two CS2 node for each original node? where is the second CS2 node ID?
 			// BH: Yes I created two nodes for CS2. For a node u in the listOfNodes. We created 2*u and 2*u+1 in for the cs2
 			FLOWLB[0] = 0; FLOWUB[0] = 1000000; COST[0] = 0;
-			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-			ss << "a " << setw(10) << 2 * currentIndex << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-			ss << "a " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex << " " << setw(10) << FLOWLB[0]
+			                  << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << FLOWLB[0]
+			                  << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << 2 * currentIndex << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0]
+			                  << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0]
+			                  << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 			currentIndex++;
 		}
 	}
@@ -1841,51 +1905,75 @@ bool OverlapGraph::calculateFlow(string inputFileName, string outputFileName)
 					if(edge->getOrientation() == 0)
 					{
 						// first edge in the cost function, forward and reverse
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0] << " " << setw(10)
+								<< FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0] << " " << setw(10)
+								<< FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
 						// second edge in the cost function, forward and reverse
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1] << " " << setw(10)
+								<< FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1] << " " << setw(10)
+								<< FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
 						// third edge in the cost function, forward and reverse
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2] << " " << setw(10)
+								<< FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2] << " " << setw(10)
+								<< FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 					}
 					else if(edge->getOrientation() == 1)
 					{
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0] << " " << setw(10)
+								<< FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0] << " " << setw(10)
+								<< FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1] << " " << setw(10)
+								<< FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1] << " " << setw(10)
+								<< FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2] << " " << setw(10)
+								<< FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2] << " " << setw(10)
+								<< FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 
 					}
 					else if(edge->getOrientation() == 2)
 					{
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0] << " " << setw(10)
+								<< FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0] << " " << setw(10)
+								<< FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1] << " " << setw(10)
+								<< FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1] << " " << setw(10)
+								<< FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2] << " " << setw(10)
+								<< FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2] << " " << setw(10)
+								<< FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 
 					}
 					else if(edge->getOrientation() == 3)
 					{
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0] << " " << setw(10)
+								<< FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0] << " " << setw(10)
+								<< FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1] << " " << setw(10)
+								<< FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1] << " " << setw(10)
+								<< FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2] << " " << setw(10)
+								<< FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2] << " " << setw(10)
+								<< FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 
 					}
 				}
@@ -2049,14 +2137,17 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 	ss << "n " << setw(10) << SUPERSOURCE << setw(10) << " 0" << endl;	// Flow in the super source
 	ss << "n " << setw(10) << SUPERSINK << setw(10) << " 0" << endl;	// Flow in the super sink.
 	FLOWLB[0] = 1; FLOWUB[0] = 1000000; COST[0] = 1000000;				// Cost of unit of flow from super sink to super source
-	ss << "a " << setw(10) << SUPERSINK << " " << setw(10) << SUPERSOURCE << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl; // Add an edge from super sink to super source with very high cost.
+	// Add an edge from super sink to super source with very high cost.
+	ss << "a " << setw(10) << SUPERSINK << " " << setw(10) << SUPERSOURCE << " " << setw(10) << FLOWLB[0]
+	   << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
 	// CP: this is a lookup table from the overlap graph node ID to the CS2 graph ID
 	vector<UINT64> *listOfNodes = new vector<UINT64>;
 	// CP: this is a lookup table from the CS2 graph ID to the overlap graph node ID
 	vector<UINT64> *listOfNodesReverse = new vector<UINT64>;
 
-	// For n nodes in the graph, CS2 requires that the nodes are numbered from 1 to n. In the overlap graph, the nodes does not have sequencinal ID. We need to convert them to 1 - n
+	// For n nodes in the graph, CS2 requires that the nodes are numbered from 1 to n.
+	// In the overlap graph, the nodes does not have sequencinal ID. We need to convert them to 1 - n
 
 	// If the ID of a node in the original graph is 100 and directed graph is 5
 	// Then listOfNodes->at(100) is equal to 5
@@ -2079,10 +2170,14 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 			// CP: don't you create two CS2 node for each original node? where is the second CS2 node ID?
 			// BH: Yes I created two nodes for CS2. For a node u in the listOfNodes. We created 2*u and 2*u+1 in for the cs2
 			FLOWLB[0] = 0; FLOWUB[0] = 1000000; COST[0] = 0;
-			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-			ss << "a " << setw(10) << 2 * currentIndex << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-			ss << "a " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex << " " << setw(10) << FLOWLB[0] << " "
+					<< setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << SUPERSOURCE << " " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << FLOWLB[0] << " "
+					<< setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << 2 * currentIndex << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0] << " "
+					<< setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+			ss << "a " << setw(10) << 2 * currentIndex + 1 << " " << setw(10) << SUPERSINK << " " << setw(10) << FLOWLB[0] << " "
+					<< setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 			currentIndex++;
 		}
 	}
@@ -2132,51 +2227,75 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 					if(edge->getOrientation() == 0)
 					{
 						// first edge in the cost function, forward and reverse
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0]
+						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0]
+						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
 						// second edge in the cost function, forward and reverse
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1]
+						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1]
+						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
 						// third edge in the cost function, forward and reverse
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2]
+						           << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2]
+						           << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 					}
 					else if(edge->getOrientation() == 1)
 					{
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0]
+						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0]
+						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1]
+						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1]
+						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
-						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2]
+						           << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2]
+						           << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 
 					}
 					else if(edge->getOrientation() == 2)
 					{
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0]
+						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0]
+						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1]
+						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1]
+						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
-						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2]
+						           << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2]
+						           << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 
 					}
 					else if(edge->getOrientation() == 3)
 					{
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0] << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0]
+						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0]
+						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1] << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[1]
+						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[1]
+						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
-						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
-						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2] << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[2]
+						           << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
+						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[2]
+						           << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 
 					}
 				}
@@ -2313,7 +2432,8 @@ void OverlapGraph::markEdgeThatWillHaveOneFlow()
 			{
 				Edge *edge1 = graph->at(i)->at(j);	// this is the current edge
 				getBaseByBaseCoverage(edge1);		// calculate the coverage depth of the current edge
-				if(edge1->coverageDepth >=coverageDepthLB && edge1->coverageDepth <=coverageDepthUB)	// if the coverage depth is within the range [coverageDepthLB, coverageDepthUB]
+					// if the coverage depth is within the range [coverageDepthLB, coverageDepthUB]
+				if(edge1->coverageDepth >=coverageDepthLB && edge1->coverageDepth <=coverageDepthUB)
 				{
 					edge1->hignCoverageAndMatepairFlag = true; // Mark this edge. We will set lower bound of flow for these edges to 1
 					for(UINT64 k = 0; k<edge1->getListOfReads()->size(); k++)	// Now talke all the reads in the edge
@@ -2327,8 +2447,10 @@ void OverlapGraph::markEdgeThatWillHaveOneFlow()
 							for(UINT64 m = 0; m < matePair->getListOfEdgesForward()->size(); m++)	// List of the edges that contains the matepair.
 							{
 									Edge *edge2 = matePair->getListOfEdgesForward()->at(m);	// Get the edge
-									edge2->hignCoverageAndMatepairFlag = true;			// We also need to set the lower bound of flow to these edges to one since they share edge with edge that has our desired coverage depth
-									edge2->getReverseEdge()->hignCoverageAndMatepairFlag = true; // Mark the reverse edge too. Will set the lower bound of flow to 1
+					// We also need to set the lower bound of flow to these edges to one since they share edge with edge that has our desired coverage depth
+									edge2->hignCoverageAndMatepairFlag = true;
+									// Mark the reverse edge too. Will set the lower bound of flow to 1
+									edge2->getReverseEdge()->hignCoverageAndMatepairFlag = true;
 							}
 						}
 					}
@@ -2377,9 +2499,11 @@ bool OverlapGraph::isEdgePresent(UINT64 source, UINT64 destination)
 **********************************************************************************************************************/
 
 // CP: inputs: read1 and read2 are the pair, orient of the pair is defined in the MPlist struct, datasetNumber retrievs the mean and SD of insert size of the dataset
-// CP: outputs: copyOfPath is a path between the two reads and copyOfFlags indicates whether the connection between this edge to the next edge is supported by all possible paths or not
+// CP: outputs: copyOfPath is a path between the two reads and copyOfFlags indicates whether the connection between this edge
+// to the next edge is supported by all possible paths or not
 // CP: return true if valid paths are found between them.
-bool OverlapGraph::findPathBetweenMatepairs(const Read * read1, const Read * read2, UINT8 orient, UINT8 datasetNumber, vector <Edge *> &copyOfPath, vector <UINT64> &copyOfFlags)
+bool OverlapGraph::findPathBetweenMatepairs(const Read * read1, const Read * read2,
+		UINT8 orient, UINT8 datasetNumber, vector <Edge *> &copyOfPath, vector <UINT64> &copyOfFlags)
 {
 	UINT64 pathFound = 0;			// CP: the total number of paths found between the two reads
 	// CP: two variables passed to the exploreGraph function for return values
@@ -2403,7 +2527,8 @@ bool OverlapGraph::findPathBetweenMatepairs(const Read * read1, const Read * rea
 	locationOnEdgeRead1 = (orient == 2 || orient == 3) ? read1->getLocationOnEdgeForward() : read1->getLocationOnEdgeReverse();
 
 	// CP: Explain how this forward-forward/forward-reverse is related to mate-pair orientation listed above?
-	// BH: if the first read is a forward read and the second read is a reverse read then we have to look for the forward read in the first edge and the reverse read in the second edge.
+	// BH: if the first read is a forward read and the second read is a reverse read then we have to look for the forward read
+	// in the first edge and the reverse read in the second edge.
 
 	// CP: use this, if the matepairs are forward - forward
 	// CP: Ted, we need to add this to the config file, instead of hard-coding it here
@@ -2450,7 +2575,8 @@ bool OverlapGraph::findPathBetweenMatepairs(const Read * read1, const Read * rea
 				// the two reads can't be too far apart within their own edges
 				if(distanceOnFirstEdge + distanceOnLastEdge < getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber))
 				{
-					UINT64 newPaths= exploreGraph(firstEdge, lastEdge, distanceOnFirstEdge, distanceOnLastEdge, datasetNumber, 0, firstPath, flags);	// from firs edge  try to find a path to the last edge.
+					// from firs edge  try to find a path to the last edge.
+					UINT64 newPaths= exploreGraph(firstEdge, lastEdge, distanceOnFirstEdge, distanceOnLastEdge, datasetNumber, 0, firstPath, flags);
 					if(newPaths > 0)	// If some path found.
 					{
 						pathFound+=newPaths;	// How many paths found.
@@ -2467,7 +2593,8 @@ bool OverlapGraph::findPathBetweenMatepairs(const Read * read1, const Read * rea
 							// CP: if this supported pair of edge in copyOfPath is still supported by a pair in firstPath, it remains supported.
 							// CP: if this supported pair of edge in copyOfPath is not supported by any pair in firstPath, it is changed to not supported.
 							UINT64 k , l;
-							for( k = 0; k< copyOfPath.size() - 1; k++)	// Check if the previous path contains the same pair of edges adjacent to the new path and has flag 1.
+							// Check if the previous path contains the same pair of edges adjacent to the new path and has flag 1.
+							for( k = 0; k< copyOfPath.size() - 1; k++)
 							{
 								for( l = 0; l < firstPath.size() - 1; l++)
 								{
@@ -2548,12 +2675,14 @@ UINT64 OverlapGraph::calculateEditDistance(const  string & s1, const string & s2
 // BH: when we find the first path we save it and flag is used to indicate that all the edges in the first path are supported.
 //     When we find another path, we unmark the flag for the pair of edges in the first path that are not present in the second path and so on.
 // CP: return the number of paths found
-UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags)
+UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge,
+		UINT64 distanceOnLastEdge, UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags)
 {
 	// CP: use static variables to carry their values through the recursive calls of this function
 	static UINT64 pathFound;					// number of paths found
 	static vector <Edge *> listOfEdges;			// list of edges in the current path
-	static vector <UINT64> pathLengths;			// length of the path from the beginning of the source read of the first edge to the current edge's source read's beginning
+	// length of the path from the beginning of the source read of the first edge to the current edge's source read's beginning
+	static vector <UINT64> pathLengths;
 	if(level == 0)
 	{
 		// clear the variables and resize their capacity to free memory
@@ -2586,7 +2715,8 @@ UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 dista
 		{
 			// If we read our destination read, we check if the distance is within 3 sd of the mean.
 			// mean - 3*sd can be negative. I think we do not have to worry about it.
-			if((INT64)(distanceOnLastEdge + pathLengths.at(level - 1)) >= (INT64)((INT64)(getMean(datasetNumber)) - insertSizeRangeSD * (INT64)(getSD(datasetNumber))) && distanceOnLastEdge + pathLengths.at(level - 1) <= getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber))
+			if((INT64)(distanceOnLastEdge + pathLengths.at(level - 1)) >= (INT64)((INT64)(getMean(datasetNumber)) - insertSizeRangeSD * (INT64)(getSD(datasetNumber)))
+					&& distanceOnLastEdge + pathLengths.at(level - 1) <= getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber))
 			{
 				// CP: the path length is within the insert size range
 				listOfEdges.push_back(firstEdge);
@@ -2608,10 +2738,12 @@ UINT64 OverlapGraph::exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 dista
 					{
 						for( j = 0; j < listOfEdges.size() - 1; j++)
 						{
-							if(firstPath.at(i) == listOfEdges.at(j) &&  firstPath.at(i+1) == listOfEdges.at(j+1)) // A pair of edges adjacent in the first path is also adjacent in this path. We keep the support.
+							// A pair of edges adjacent in the first path is also adjacent in this path. We keep the support.
+							if(firstPath.at(i) == listOfEdges.at(j) &&  firstPath.at(i+1) == listOfEdges.at(j+1))
 								break;
 						}
-						if(j == listOfEdges.size() - 1)		// A pair of adjacent edge in the first path is not adjacent in this path. So this pair is not supported anymore. So we clear the flag.
+						// A pair of adjacent edge in the first path is not adjacent in this path. So this pair is not supported anymore. So we clear the flag.
+						if(j == listOfEdges.size() - 1)
 							flags.at(i) = 0;
 					}
 				}
@@ -2688,7 +2820,8 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 			if(meanOfInsertSizes.at(read1->getMatePairList()->at(j).datasetNumber) == 0)
 				continue;
 
-			if( findPathBetweenMatepairs(read1, read2, read1->getMatePairList()->at(j).matePairOrientation, read1->getMatePairList()->at(j).datasetNumber, copyOfPath, copyOfFlags) == true)
+			if( findPathBetweenMatepairs(read1, read2, read1->getMatePairList()->at(j).matePairOrientation,
+					read1->getMatePairList()->at(j).datasetNumber, copyOfPath, copyOfFlags) == true)
 			{
 				// Matepair on different edge
 				if(copyOfPath.size() == 0)
@@ -2705,17 +2838,21 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 			{
 				for(UINT64 k = 0; k < copyOfFlags.size(); k++)
 				{
-					if(copyOfFlags.at(k) == 1)	// edge at k and k+1 is supported. We need to add it in the list if not present. If already the pair of edges present then increase the support
+				// edge at k and k+1 is supported. We need to add it in the list if not present. If already the pair of edges present then increase the support
+					if(copyOfFlags.at(k) == 1)
 					{
 						UINT64 l;
 						for(l = 0; l < listOfPairedEdges.size(); l++)
 						{
-							if(listOfPairedEdges.at(l).edge1 == copyOfPath.at(k) && listOfPairedEdges.at(l).edge2 == copyOfPath.at(k+1)) // already present in the list
+							// already present in the list
+							if(listOfPairedEdges.at(l).edge1 == copyOfPath.at(k) && listOfPairedEdges.at(l).edge2 == copyOfPath.at(k+1))
 							{
 								listOfPairedEdges.at(l).support = listOfPairedEdges.at(l).support + 1;	// only increase the support
 								break;
 							}
-							else if(listOfPairedEdges.at(l).edge2->getReverseEdge() == copyOfPath.at(k) && listOfPairedEdges.at(l).edge1->getReverseEdge() == copyOfPath.at(k+1)) // already present in the list
+							// already present in the list
+							else if(listOfPairedEdges.at(l).edge2->getReverseEdge() == copyOfPath.at(k)
+									&& listOfPairedEdges.at(l).edge1->getReverseEdge() == copyOfPath.at(k+1))
 							{
 								listOfPairedEdges.at(l).support = listOfPairedEdges.at(l).support + 1;	// only increase the support
 								break;
@@ -2723,8 +2860,11 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 						}
 						if(l == listOfPairedEdges.size()) // not present in the list
 						{
-							if(copyOfPath.at(k)->getSourceRead()->getReadNumber() != copyOfPath.at(k)->getDestinationRead()->getReadNumber() || copyOfPath.at(k+1)->getSourceRead()->getReadNumber() != copyOfPath.at(k+1)->getDestinationRead()->getReadNumber()) // add in the list with support 1
-							//if(copyOfPath.at(k)!=copyOfPath.at(k+1) && copyOfPath.at(k)!=copyOfPath.at(k+1)->getReverseEdge()) // do not want to add support between edge (a,a) and (a,a)
+								// add in the list with support 1
+							if(copyOfPath.at(k)->getSourceRead()->getReadNumber() != copyOfPath.at(k)->getDestinationRead()->getReadNumber()
+									|| copyOfPath.at(k+1)->getSourceRead()->getReadNumber() != copyOfPath.at(k+1)->getDestinationRead()->getReadNumber())
+								// do not want to add support between edge (a,a) and (a,a)
+							//if(copyOfPath.at(k)!=copyOfPath.at(k+1) && copyOfPath.at(k)!=copyOfPath.at(k+1)->getReverseEdge())
 							{
 								pairedEdges newPair;
 								newPair.edge1 = copyOfPath.at(k);
@@ -2746,22 +2886,32 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 
 	for(UINT64 i = 0; i<listOfPairedEdges.size(); i++)
 	{
-		if(listOfPairedEdges.at(i).isFreed == false && listOfPairedEdges.at(i).support >= minimumSupport)// && listOfPairedEdges.at(i).edge1->flow > 0 && listOfPairedEdges.at(i).edge2->flow > 0)
+		if(listOfPairedEdges.at(i).isFreed == false && listOfPairedEdges.at(i).support >= minimumSupport)
+			// && listOfPairedEdges.at(i).edge1->flow > 0 && listOfPairedEdges.at(i).edge2->flow > 0)
 		{
 			pairsOfEdgesMerged++;
-			cout << setw(4) << i + 1 << " Merging (" << setw(10) << listOfPairedEdges.at(i).edge1->getSourceRead()->getReadNumber() << "," << setw(10) <<listOfPairedEdges.at(i).edge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge1->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge1->flow << " and (" << setw(10) << listOfPairedEdges.at(i).edge2->getSourceRead()->getReadNumber() << "," << setw(10) << listOfPairedEdges.at(i).edge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge2->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge2->flow << " are supported " << setw(4) << listOfPairedEdges.at(i).support<<" times"<< endl;
+			cout << setw(4) << i + 1 << " Merging (" << setw(10) << listOfPairedEdges.at(i).edge1->getSourceRead()->getReadNumber()
+					<< "," << setw(10) <<listOfPairedEdges.at(i).edge1->getDestinationRead()->getReadNumber() << ") Length: "
+					<< setw(8) << listOfPairedEdges.at(i).edge1->getOverlapOffset() << " Flow: " << setw(3)
+					<< listOfPairedEdges.at(i).edge1->flow << " and (" << setw(10) << listOfPairedEdges.at(i).edge2->getSourceRead()->getReadNumber()
+					<< "," << setw(10) << listOfPairedEdges.at(i).edge2->getDestinationRead()->getReadNumber() << ") Length: "
+					<< setw(8) << listOfPairedEdges.at(i).edge2->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge2->flow
+					<< " are supported " << setw(4) << listOfPairedEdges.at(i).support<<" times"<< endl;
 
 			Edge * e1f = listOfPairedEdges.at(i).edge1, *e1r = listOfPairedEdges.at(i).edge1->getReverseEdge();
 			Edge * e2f = listOfPairedEdges.at(i).edge2, *e2r = listOfPairedEdges.at(i).edge2->getReverseEdge();
 
 			mergeEdges(listOfPairedEdges.at(i).edge1, listOfPairedEdges.at(i).edge2);
 
-			// BH: once we merge edge1 and edge2. We make sure that we do not try to merge these edges again. We mark all the pair of edes that contains edge1 and edge2 or their reverse edges.
+			// BH: once we merge edge1 and edge2. We make sure that we do not try to merge these edges again.
+			// We mark all the pair of edes that contains edge1 and edge2 or their reverse edges.
 			for(UINT64 j = i + 1; j<listOfPairedEdges.size(); j++)
 			{
-				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r || listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
+				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r
+						|| listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
 					listOfPairedEdges.at(j).isFreed = true;
-				if( listOfPairedEdges.at(j).edge2 == e1f || listOfPairedEdges.at(j).edge2 == e1r || listOfPairedEdges.at(j).edge2 == e2f || listOfPairedEdges.at(j).edge2 == e2r )
+				if( listOfPairedEdges.at(j).edge2 == e1f || listOfPairedEdges.at(j).edge2 == e1r
+						|| listOfPairedEdges.at(j).edge2 == e2f || listOfPairedEdges.at(j).edge2 == e2r )
 					listOfPairedEdges.at(j).isFreed = true;
 			}
 		}
@@ -2785,9 +2935,11 @@ UINT64 OverlapGraph::findSupportByMatepairsAndMerge(void)
 string OverlapGraph::getStringInEdge(const Edge *edge)
 {
 	// sequence of the source read
-	string sourceRead = (edge->getOrientation() == 2 || edge->getOrientation() == 3) ?  edge->getSourceRead()->getStringForward() : edge->getSourceRead()->getStringReverse();
+	string sourceRead = (edge->getOrientation() == 2 || edge->getOrientation() == 3)
+			?  edge->getSourceRead()->getStringForward() : edge->getSourceRead()->getStringReverse();
 	// sequence of the destination read
-	string destinationRead = (edge->getOrientation() == 1 || edge->getOrientation() == 3) ?  edge->getDestinationRead()->getStringForward() : edge->getDestinationRead()->getStringReverse();
+	string destinationRead = (edge->getOrientation() == 1 || edge->getOrientation() == 3)
+			?  edge->getDestinationRead()->getStringForward() : edge->getDestinationRead()->getStringReverse();
 	// sequence of the edge to be returned, starting with the source read
 	string returnString = sourceRead;
 
@@ -2798,7 +2950,9 @@ string OverlapGraph::getStringInEdge(const Edge *edge)
 	UINT64 substringLength = 0;
 	for(UINT64 i = 0; i < edge->getListOfReads()->size(); i++)
 	{
-		readTemp = (edge->getListOfOrientations()->at(i) == 1) ? dataSet->getReadFromID(edge->getListOfReads()->at(i))->getStringForward(): dataSet->getReadFromID(edge->getListOfReads()->at(i))->getStringReverse();
+		readTemp = (edge->getListOfOrientations()->at(i) == 1)
+				? dataSet->getReadFromID(edge->getListOfReads()->at(i))->getStringForward()
+						: dataSet->getReadFromID(edge->getListOfReads()->at(i))->getStringReverse();
 		// the length of the substring of the current read that is overhang or new from the previous read
 		substringLength =  readTemp.length() + edge->getListOfOverlapOffsets()->at(i) - previousLength;
 		// if the current read has no overlap with the previous read, they are connected by scaffolder and have a gap between them and insert an 'N' between the sequences
@@ -2843,7 +2997,9 @@ UINT64 OverlapGraph::reduceTrees(void)
 		listOfInEdges.clear(); listOfOutEdges.clear();
 		for(UINT64 j = 0; j< graph->at(i)->size(); j++)
 		{
-			if(graph->at(i)->at(j)->flow == 0 || graph->at(i)->at(j)->flow != graph->at(i)->at(j)->getReverseEdge()->flow || graph->at(i)->at(j)->getSourceRead()->getReadNumber() == graph->at(i)->at(j)->getDestinationRead()->getReadNumber() )  // Some conditions for not being considered as a tree
+				// Some conditions for not being considered as a tree
+			if(graph->at(i)->at(j)->flow == 0 || graph->at(i)->at(j)->flow != graph->at(i)->at(j)->getReverseEdge()->flow
+					|| graph->at(i)->at(j)->getSourceRead()->getReadNumber() == graph->at(i)->at(j)->getDestinationRead()->getReadNumber() )
 					break;
 			if(graph->at(i)->at(j)->getOrientation() == 0 || graph->at(i)->at(j)->getOrientation() == 1 )		// It is an in-edge
 			{
@@ -2926,7 +3082,8 @@ UINT64 OverlapGraph::scaffolder(void)
 	for(UINT64 i = 0 ; i < listOfCompositeEdges->size(); i++) // For each composite edge in the graph
 	{
 		Edge *edge1 = listOfCompositeEdges->at(i);
-		vector<Edge *> *listOfFeasibleEdges = getListOfFeasibleEdges(listOfCompositeEdges->at(i)); // Find the list of other edges that share unique matepairs with the current edge. Only check one of the endpoints of the current edge.
+		// Find the list of other edges that share unique matepairs with the current edge. Only check one of the endpoints of the current edge.
+		vector<Edge *> *listOfFeasibleEdges = getListOfFeasibleEdges(listOfCompositeEdges->at(i));
 		for(UINT64 j = 0; j < listOfFeasibleEdges->size(); j++ ) // Check the current edge vs the list of edges for suppor for scaffolder
 		{
 			Edge *edge2 =listOfFeasibleEdges->at(j);
@@ -2956,16 +3113,24 @@ UINT64 OverlapGraph::scaffolder(void)
 		{
 			pairsOfEdgesMerged++;
 			listOfPairedEdges.at(i).distance = listOfPairedEdges.at(i).distance / listOfPairedEdges.at(i).support;
-			cout << setw(4) << i + 1 << " (" << setw(10) << listOfPairedEdges.at(i).edge1->getSourceRead()->getReadNumber() << "," << setw(10) <<listOfPairedEdges.at(i).edge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge1->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge1->flow << " and (" << setw(10) << listOfPairedEdges.at(i).edge2->getSourceRead()->getReadNumber() << "," << setw(10) << listOfPairedEdges.at(i).edge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge2->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge2->flow << " are supported " << setw(4) << listOfPairedEdges.at(i).support << " times. Average distance: "<< setw(4) << listOfPairedEdges.at(i).distance << endl;
+			cout << setw(4) << i + 1 << " (" << setw(10) << listOfPairedEdges.at(i).edge1->getSourceRead()->getReadNumber()
+					<< "," << setw(10) <<listOfPairedEdges.at(i).edge1->getDestinationRead()->getReadNumber() << ") Length: "
+					<< setw(8) << listOfPairedEdges.at(i).edge1->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge1->flow
+					<< " and (" << setw(10) << listOfPairedEdges.at(i).edge2->getSourceRead()->getReadNumber() << "," << setw(10)
+					<< listOfPairedEdges.at(i).edge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(8)
+					<< listOfPairedEdges.at(i).edge2->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge2->flow << " are supported "
+					<< setw(4) << listOfPairedEdges.at(i).support << " times. Average distance: "<< setw(4) << listOfPairedEdges.at(i).distance << endl;
 			Edge * e1f = listOfPairedEdges.at(i).edge1, *e1r = listOfPairedEdges.at(i).edge1->getReverseEdge();
 			Edge * e2f = listOfPairedEdges.at(i).edge2, *e2r = listOfPairedEdges.at(i).edge2->getReverseEdge();
 			mergeEdgesDisconnected(listOfPairedEdges.at(i).edge1, listOfPairedEdges.at(i).edge2,listOfPairedEdges.at(i).distance);		// Merge the edges.
 			// BH: if an edge is merged already, I make sure that I will not try to merge it again with other edges.
 			for(UINT64 j = i + 1; j<listOfPairedEdges.size(); j++)
 			{
-				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r || listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
+				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r
+						|| listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
 					listOfPairedEdges.at(j).isFreed = true;
-				if( listOfPairedEdges.at(j).edge2 == e1f || listOfPairedEdges.at(j).edge2 == e1r || listOfPairedEdges.at(j).edge2 == e2f || listOfPairedEdges.at(j).edge2 == e2r )
+				if( listOfPairedEdges.at(j).edge2 == e1f || listOfPairedEdges.at(j).edge2 == e1r
+						|| listOfPairedEdges.at(j).edge2 == e2f || listOfPairedEdges.at(j).edge2 == e2r )
 					listOfPairedEdges.at(j).isFreed = true;
 			}
 		}
@@ -2983,10 +3148,11 @@ UINT64 OverlapGraph::scaffolder(void)
 vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(const Edge *edge)
 {
 
-	Edge * rEdge=edge->getReverseEdge(); // We want to find if there are other edges that share matepairs. current edge (u,v) we check the matepairs near the node v. That's why we took the reverse edge.
-										// CP: why do you only check near v, not u?
-										// BH: Here we are checkin if we can merge (u,v) followed by another edge. That why we only take the reads near v.
-										// BH: At some point we will call this function with the reverse edge (v,u) as well. In that case we will look at the reads near vertex u.
+	// We want to find if there are other edges that share matepairs. current edge (u,v) we check the matepairs near the node v. That's why we took the reverse edge.
+	// CP: why do you only check near v, not u?
+	// BH: Here we are checkin if we can merge (u,v) followed by another edge. That why we only take the reads near v.
+	// BH: At some point we will call this function with the reverse edge (v,u) as well. In that case we will look at the reads near vertex u.
+	Edge * rEdge=edge->getReverseEdge();
 	vector<Edge *> * feasibleListOfEdges = new vector<Edge *>;
 	UINT64 dist = 0;
 	for(UINT64 i = 0; i <rEdge->getListOfReads()->size(); i++) // for each read in the edge
@@ -3011,7 +3177,9 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(const Edge *edge)
 				Read* r2 = dataSet->getReadFromID(mp2); // read2
 				vector<Edge *> *list = r2->getListOfEdgesForward(); // location of read2
 				// CP: use read2 if it's on one and only one edge and it's not on the input forward/reverse edge and its distance is adequate
-				if(list->empty() || list->size() > 1 || list->at(0) == edge || list->at(0) == edge->getReverseEdge() || r2->getLocationOnEdgeForward()->at(0) > 2*longestMeanOfInsertSize) // Must be present uniquly on the edge and withing the distance of longest insert size.
+				if(list->empty() || list->size() > 1 || list->at(0) == edge ||
+						list->at(0) == edge->getReverseEdge() || r2->getLocationOnEdgeForward()->at(0) > 2*longestMeanOfInsertSize)
+					// Must be present uniquly on the edge and withing the distance of longest insert size.
 					continue;
 				UINT64 k;
 				for(k = 0; k<feasibleListOfEdges->size();k++)		// add in the list of feasible edges. This list is expected to be small.
@@ -3031,7 +3199,8 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(const Edge *edge)
 				UINT64 mp2 = r1->getMatePairList()->at(j).matePairID;
 				Read* r2 = dataSet->getReadFromID(mp2);
 				vector<Edge *> *list = r2->getListOfEdgesReverse();
-				if(list->empty() || list->size() > 1 || list->at(0) == edge || list->at(0) == edge->getReverseEdge() || r2->getLocationOnEdgeReverse()->at(0) > 2*longestMeanOfInsertSize)
+				if(list->empty() || list->size() > 1 || list->at(0) == edge || list->at(0) == edge->getReverseEdge()
+						|| r2->getLocationOnEdgeReverse()->at(0) > 2*longestMeanOfInsertSize)
 					continue;
 				UINT64 k;
 				for(k = 0; k<feasibleListOfEdges->size();k++)
@@ -3097,7 +3266,10 @@ UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2,UINT6
 			listRead2 = (orient == 0 || orient == 2) ? read2->getListOfEdgesForward() : read2->getListOfEdgesReverse();
 			locationOnEdgeRead2 = (orient == 0 || orient == 2) ? read2->getLocationOnEdgeForward() : read2->getLocationOnEdgeReverse();
 			// Only consider uniquely mapped reads and the distance is less than mean+3*SD
-			if( listRead1->size() == 1 && listRead2->size() == 1 && listRead1->at(0) == edge1->getReverseEdge() && listRead2->at(0) == edge2 && locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
+			if( listRead1->size() == 1 && listRead2->size() == 1 && listRead1->at(0) == edge1->getReverseEdge()
+					&& listRead2->at(0) == edge2
+					&& locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )
+				// Both the reads are present on only on edge and the distance is less that mean+3*sd
 			{
 				dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0);
 				// if there are already in the same edge, don't do anything
@@ -3155,7 +3327,9 @@ UINT64 OverlapGraph::scaffolderTemp(void)
 			locationOnEdgeRead2 = (orient == 0 || orient == 2) ? read2->getLocationOnEdgeForward() : read2->getLocationOnEdgeReverse();
 
 			// Only consider uniquely mapped reads and the distance is less than mean+3*SD
-			if( listRead1->size() == 1 && listRead2->size() == 1 && locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
+			if( listRead1->size() == 1 && listRead2->size() == 1 &&
+					locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )
+				// Both the reads are present on only on edge and the distance is less that mean+3*sd
 			{
 				dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0);
 				// if there are already in the same edge, don't do anything
@@ -3166,13 +3340,15 @@ UINT64 OverlapGraph::scaffolderTemp(void)
 
 				for(k = 0; k < listOfPairedEdges.size(); k++)
 				{
-					if(listOfPairedEdges.at(k).edge1 == listRead1->at(0)->getReverseEdge() && listOfPairedEdges.at(k).edge2 == listRead2->at(0))		// This pair of edge was supported previously by another mate-pair. Only increase the support.
+					if(listOfPairedEdges.at(k).edge1 == listRead1->at(0)->getReverseEdge() && listOfPairedEdges.at(k).edge2 == listRead2->at(0))
+						// This pair of edge was supported previously by another mate-pair. Only increase the support.
 					{
 						listOfPairedEdges.at(k).support += 1;
 						listOfPairedEdges.at(k).distance += dist;
 						break;
 					}
-					if(listOfPairedEdges.at(k).edge1 == listRead2->at(0)->getReverseEdge() && listOfPairedEdges.at(k).edge2 == listRead1->at(0))			// This pair of edge was supported previously by another mate-pair. Only increase the support.
+					if(listOfPairedEdges.at(k).edge1 == listRead2->at(0)->getReverseEdge() && listOfPairedEdges.at(k).edge2 == listRead1->at(0))
+						// This pair of edge was supported previously by another mate-pair. Only increase the support.
 					{
 						listOfPairedEdges.at(k).support += 1;
 						listOfPairedEdges.at(k).distance += dist;
@@ -3180,7 +3356,8 @@ UINT64 OverlapGraph::scaffolderTemp(void)
 					}
 				}
 
-				if(k == listOfPairedEdges.size())				// This mate pair is the first reads to support the pair of edges. Add the new pair of edges in the list with support 1.
+				if(k == listOfPairedEdges.size())
+					// This mate pair is the first reads to support the pair of edges. Add the new pair of edges in the list with support 1.
 				{
 					pairedEdges newPair;
 					newPair.edge1 = listRead1->at(0)->getReverseEdge();
@@ -3203,7 +3380,14 @@ UINT64 OverlapGraph::scaffolderTemp(void)
 		{
 			pairsOfEdgesMerged++;
 			listOfPairedEdges.at(i).distance = listOfPairedEdges.at(i).distance / listOfPairedEdges.at(i).support;
-			cout << setw(4) << i + 1 << " (" << setw(10) << listOfPairedEdges.at(i).edge1->getSourceRead()->getReadNumber() << "," << setw(10) <<listOfPairedEdges.at(i).edge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge1->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge1->flow << " and (" << setw(10) << listOfPairedEdges.at(i).edge2->getSourceRead()->getReadNumber() << "," << setw(10) << listOfPairedEdges.at(i).edge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge2->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge2->flow << " are supported " << setw(4) << listOfPairedEdges.at(i).support << " times. Average distance: "<< setw(4) << listOfPairedEdges.at(i).distance << endl;
+			cout << setw(4) << i + 1 << " (" << setw(10) << listOfPairedEdges.at(i).edge1->getSourceRead()->getReadNumber()
+					<< "," << setw(10) <<listOfPairedEdges.at(i).edge1->getDestinationRead()->getReadNumber() << ") Length: "
+					<< setw(8) << listOfPairedEdges.at(i).edge1->getOverlapOffset() << " Flow: " << setw(3)
+					<< listOfPairedEdges.at(i).edge1->flow << " and (" << setw(10) << listOfPairedEdges.at(i).edge2->getSourceRead()->getReadNumber()
+					<< "," << setw(10) << listOfPairedEdges.at(i).edge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(8)
+					<< listOfPairedEdges.at(i).edge2->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge2->flow
+					<< " are supported " << setw(4) << listOfPairedEdges.at(i).support << " times. Average distance: "<< setw(4)
+					<< listOfPairedEdges.at(i).distance << endl;
 			Edge * e1f = listOfPairedEdges.at(i).edge1, *e1r = listOfPairedEdges.at(i).edge1->getReverseEdge();
 			Edge * e2f = listOfPairedEdges.at(i).edge2, *e2r = listOfPairedEdges.at(i).edge2->getReverseEdge();
 
@@ -3211,9 +3395,11 @@ UINT64 OverlapGraph::scaffolderTemp(void)
 
 			for(UINT64 j = i + 1; j<listOfPairedEdges.size(); j++)
 			{
-				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r || listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
+				if( listOfPairedEdges.at(j).edge1 == e1f || listOfPairedEdges.at(j).edge1 == e1r
+						|| listOfPairedEdges.at(j).edge1 == e2f || listOfPairedEdges.at(j).edge1 == e2r )
 					listOfPairedEdges.at(j).isFreed = true;
-				if( listOfPairedEdges.at(j).edge2 == e1f || listOfPairedEdges.at(j).edge2 == e1r || listOfPairedEdges.at(j).edge2 == e2f || listOfPairedEdges.at(j).edge2 == e2r )
+				if( listOfPairedEdges.at(j).edge2 == e1f || listOfPairedEdges.at(j).edge2 == e1r
+						|| listOfPairedEdges.at(j).edge2 == e2f || listOfPairedEdges.at(j).edge2 == e2r )
 					listOfPairedEdges.at(j).isFreed = true;
 			}
 		}
@@ -3295,7 +3481,8 @@ UINT64 OverlapGraph::scaffolder(void)
 			dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0);
 
 			// Only consider uniquely mapped reads and the distance is less than mean+3*SD
-			if( listRead1->size() == 1 && listRead2->size() == 1 && dist < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )  // Both the reads are present on only on edge and the distance is less that mean+3*sd
+			if( listRead1->size() == 1 && listRead2->size() == 1 && dist < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )
+			// Both the reads are present on only on edge and the distance is less that mean+3*sd
 			{
 				// if there are already in the same edge, don't do anything
 				if(listRead1->at(0) == listRead2->at(0) ||  listRead1->at(0) == listRead2->at(0)->getReverseEdge()) // Not on the same edge
@@ -3340,7 +3527,14 @@ UINT64 OverlapGraph::scaffolder(void)
 		{
 			pairsOfEdgesMerged++;
 			listOfPairedEdges.at(i).distance = listOfPairedEdges.at(i).distance / listOfPairedEdges.at(i).support;
-			cout << setw(4) << i + 1 << " (" << setw(10) << listOfPairedEdges.at(i).edge1->getSourceRead()->getReadNumber() << "," << setw(10) <<listOfPairedEdges.at(i).edge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge1->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge1->flow << " and (" << setw(10) << listOfPairedEdges.at(i).edge2->getSourceRead()->getReadNumber() << "," << setw(10) << listOfPairedEdges.at(i).edge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(8) << listOfPairedEdges.at(i).edge2->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge2->flow << " are supported " << setw(4) << listOfPairedEdges.at(i).support << " times. Average distance: "<< setw(4) << listOfPairedEdges.at(i).distance << endl;
+			cout << setw(4) << i + 1 << " (" << setw(10) << listOfPairedEdges.at(i).edge1->getSourceRead()->getReadNumber()
+			<< "," << setw(10) <<listOfPairedEdges.at(i).edge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(8)
+			<< listOfPairedEdges.at(i).edge1->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge1->flow
+			<< " and (" << setw(10) << listOfPairedEdges.at(i).edge2->getSourceRead()->getReadNumber() << "," << setw(10)
+			<< listOfPairedEdges.at(i).edge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(8)
+			<< listOfPairedEdges.at(i).edge2->getOverlapOffset() << " Flow: " << setw(3) << listOfPairedEdges.at(i).edge2->flow
+			<< " are supported " << setw(4) << listOfPairedEdges.at(i).support << " times. Average distance: "<< setw(4)
+			<< listOfPairedEdges.at(i).distance << endl;
 			Edge * e1f = listOfPairedEdges.at(i).edge1, *e1r = listOfPairedEdges.at(i).edge1->getReverseEdge();
 			Edge * e2f = listOfPairedEdges.at(i).edge2, *e2r = listOfPairedEdges.at(i).edge2->getReverseEdge();
 
@@ -3387,7 +3581,8 @@ UINT64 OverlapGraph::findOverlap(const string & string1, const string & string2)
 **********************************************************************************************************************/
 bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLength)
 {
-	if(edge1->getDestinationRead()->getReadNumber() == edge2->getSourceRead()->getReadNumber() && matchEdgeType (edge1, edge2)) // If the two edges are already connected. A --->B and B---->C. They share a common node
+	if(edge1->getDestinationRead()->getReadNumber() == edge2->getSourceRead()->getReadNumber() && matchEdgeType (edge1, edge2))
+		// If the two edges are already connected. A --->B and B---->C. They share a common node
 	{
 		mergeEdges(edge1,edge2); // Merge the edges.
 		return true;
@@ -3395,10 +3590,13 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 
 	// A------>B and C------>D. We need to check if the nodes B and C overlaps or not
 	string string1, string2;
-	string1 = ( edge1->getOrientation() == 1 || edge1->getOrientation() == 3 ) ? edge1->getDestinationRead()->getStringForward() : edge1->getDestinationRead()->getStringReverse(); // We will check if the two nodes overlap or not
-	string2 = ( edge2->getOrientation() == 2 || edge2->getOrientation() == 3 ) ? edge2->getSourceRead()->getStringForward() : edge2->getSourceRead()->getStringReverse();
+	string1 = ( edge1->getOrientation() == 1 || edge1->getOrientation() == 3 )
+			? edge1->getDestinationRead()->getStringForward() : edge1->getDestinationRead()->getStringReverse(); // We will check if the two nodes overlap or not
+	string2 = ( edge2->getOrientation() == 2 || edge2->getOrientation() == 3 )
+			? edge2->getSourceRead()->getStringForward() : edge2->getSourceRead()->getStringReverse();
 
-	UINT64 overlapLength = findOverlap(string1,string2); // Find the overlap between B and C. If they do not overlap then the return will be zero. We check for at least 10 bp overlap
+	// Find the overlap between B and C. If they do not overlap then the return will be zero. We check for at least 10 bp overlap
+	UINT64 overlapLength = findOverlap(string1,string2);
 
 	UINT64 overlapOffset1, overlapOffset2;
 	Edge *edgeForward = new Edge();		// Forward edge
@@ -3424,20 +3622,28 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 	// CP: merge the forward edge
 	vector<UINT64> * listReadsForward = new vector<UINT64>;		// List of reads in the forward edge.
 	vector<UINT16> * listOverlapOffsetsForward= new vector<UINT16>;	// List of overlap offsets in the reads of the forward edge.
-	vector<UINT8> * listOrientationsForward = new vector<UINT8>;	// List of orientations of the reads of the forward edge. 1 means forward string of the reads, 0 means reverse string of the read
-	mergeListDisconnected(edge1, edge2, overlapOffset1, gapLength, listReadsForward, listOverlapOffsetsForward, listOrientationsForward);	// Merge the list of reads, overlaps etc for the forward edge
-	edgeForward->makeEdge(read1,read2,orientationForward, edge1->getOverlapOffset() + edge2->getOverlapOffset() + overlapOffset1, listReadsForward, listOverlapOffsetsForward, listOrientationsForward);
+	// List of orientations of the reads of the forward edge. 1 means forward string of the reads, 0 means reverse string of the read
+	vector<UINT8> * listOrientationsForward = new vector<UINT8>;
+	// Merge the list of reads, overlaps etc for the forward edge
+	mergeListDisconnected(edge1, edge2, overlapOffset1, gapLength, listReadsForward,
+			listOverlapOffsetsForward, listOrientationsForward);
+	edgeForward->makeEdge(read1,read2,orientationForward, edge1->getOverlapOffset() + edge2->getOverlapOffset() + overlapOffset1,
+			listReadsForward, listOverlapOffsetsForward, listOrientationsForward);
 
 	// CP: merge the reverse edge
 	vector<UINT64> * listReadsReverse = new vector<UINT64>;			// List of reads in the reverse edge.
 	vector<UINT16> * listOverlapOffsetsReverse= new vector<UINT16>;	// List of overlap offsets in the reads of the reverse edge.
-	vector<UINT8> * listOrientationsReverse = new vector<UINT8>;	// List of orientations of the reads of the reverse edge. 1 means forward string of the reads, 0 means reverse string of the read
-	mergeListDisconnected(edge2->getReverseEdge(),edge1->getReverseEdge(), overlapOffset2, gapLength, listReadsReverse, listOverlapOffsetsReverse,listOrientationsReverse); // Merge the list of reads, overlaps etc for the reverse edge
+	// List of orientations of the reads of the reverse edge. 1 means forward string of the reads, 0 means reverse string of the read
+	vector<UINT8> * listOrientationsReverse = new vector<UINT8>;
+	// Merge the list of reads, overlaps etc for the reverse edge
+	mergeListDisconnected(edge2->getReverseEdge(),edge1->getReverseEdge(), overlapOffset2,
+			gapLength, listReadsReverse, listOverlapOffsetsReverse,listOrientationsReverse);
 	// BH: lengthReverseEdge is the overlap offset of the new edge.
 	UINT64 lengthReverseEdge = edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2;
 	edgeReverse->makeEdge(read2, read1, orientationReverse, lengthReverseEdge, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
 
-//	edgeReverse->makeEdge(read2, read1, orientationReverse, edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2, listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
+//	edgeReverse->makeEdge(read2, read1, orientationReverse, edge1->getReverseEdge()->getOverlapOffset() + edge2->getReverseEdge()->getOverlapOffset() + overlapOffset2,
+//	listReadsReverse, listOverlapOffsetsReverse, listOrientationsReverse);
 
 	edgeForward->setReverseEdge(edgeReverse);	// set the pointer of reverse edge
 	edgeReverse->setReverseEdge(edgeForward);	// set the pointer of reverse edge
@@ -3454,7 +3660,8 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 
 	//if(flowComputed && flow == 0 && edgeForward->getOverlapOffset() > 1000)
 	//{
-	//	cout << "Check for error inserting edge between " << edgeForward->getSourceRead()->getReadNumber() << " and " << edgeForward->getDestinationRead()->getReadNumber() << " Length: " << edgeForward->getOverlapOffset() << endl;
+	//	cout << "Check for error inserting edge between " << edgeForward->getSourceRead()->getReadNumber() << " and
+	// " << edgeForward->getDestinationRead()->getReadNumber() << " Length: " << edgeForward->getOverlapOffset() << endl;
 	//}
 	insertEdge(edgeForward); // insert forward the edge in the graph.
 	insertEdge(edgeReverse); // insert the reverse edge in the graph.
@@ -3482,12 +3689,14 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 /**********************************************************************************************************************
 	Merge the list of reads, list of overlap offsets and list of orientations of two edges.
 	CP: input: edge1 and edge2, NOT modified. All these pointers need to be changed to const Edge *edge1
-	CP: the overlapOffset is the overlapOffset of the new edge, which is from the beginning of source read of the old edge1 to the beginning of the destination read of the old edge2.
+	CP: the overlapOffset is the overlapOffset of the new edge, which is from the beginning of source read of the old edge1
+	to the beginning of the destination read of the old edge2.
 	gapLength is not used here, but it's pairedEdges's distance
 	CP: return-by-pointer: *listReads,  *listOverlapOffsets, *listOrientations
 **********************************************************************************************************************/
 
-bool OverlapGraph::mergeListDisconnected(Edge *edge1, Edge *edge2, UINT64 overlapOffset, UINT64 gapLength, vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations)
+bool OverlapGraph::mergeListDisconnected(Edge *edge1, Edge *edge2, UINT64 overlapOffset, UINT64 gapLength,
+		vector<UINT64> *listReads, vector<UINT16> *listOverlapOffsets, vector<UINT8> * listOrientations)
 {
 	UINT64 sum = 0;
 
@@ -3589,7 +3798,8 @@ UINT64 OverlapGraph::removeSimilarEdges(void)
 								string s1 = getStringInEdge(e1);		// Get the string on the first edge.
 								string s2 = getStringInEdge(e2);		// Get the string on the second edge.
 								UINT64 editDistance = calculateEditDistance(s1,s2);		// Calculate the edit distance between the strings.
-								if( editDistance < min(e1->getOverlapOffset(), e2->getOverlapOffset())/20 )	// If the edit distance is less than 5% of the length of the shortest string.
+									// If the edit distance is less than 5% of the length of the shortest string.
+								if( editDistance < min(e1->getOverlapOffset(), e2->getOverlapOffset())/20 )
 								{
 									UINT64 l;
 									for(l= 0; l <  listOfEdges1.size(); l++)	// Already in the list.
@@ -3618,7 +3828,12 @@ UINT64 OverlapGraph::removeSimilarEdges(void)
 	cout << listOfEdges1.size()<< " edges to remove" << endl;
 	for(UINT64 i = 0; i < listOfEdges1.size(); i++)
 	{
-		cout << setw(10) << ++ counter << " removing edge ("<< setw(10) << listOfEdges1.at(i)->getSourceRead()->getReadNumber()<<"," << setw(10) << listOfEdges1.at(i)->getDestinationRead()->getReadNumber()<<") Lengths : " << setw(10) << listOfEdges1.at(i)->getOverlapOffset() << " and " << setw(10) << listOfEdges2.at(i)->getOverlapOffset() << " Flows: " << setw(3) << listOfEdges1.at(i)->flow << " and " << setw(3) << listOfEdges2.at(i)->flow << " Edit Distance: " << setw(5) << listOfEditDistance.at(i) << " Reads: " << listOfEdges1.at(i)->getListOfReads()->size() << " and " << listOfEdges2.at(i)->getListOfReads()->size() << endl;
+		cout << setw(10) << ++ counter << " removing edge ("<< setw(10) << listOfEdges1.at(i)->getSourceRead()->getReadNumber()<<","
+				<< setw(10) << listOfEdges1.at(i)->getDestinationRead()->getReadNumber()<<") Lengths : " << setw(10)
+				<< listOfEdges1.at(i)->getOverlapOffset() << " and " << setw(10) << listOfEdges2.at(i)->getOverlapOffset()
+				<< " Flows: " << setw(3) << listOfEdges1.at(i)->flow << " and " << setw(3) << listOfEdges2.at(i)->flow
+				<< " Edit Distance: " << setw(5) << listOfEditDistance.at(i) << " Reads: " << listOfEdges1.at(i)->getListOfReads()->size()
+				<< " and " << listOfEdges2.at(i)->getListOfReads()->size() << endl;
 		listOfEdges1.at(i)->flow += listOfEdges2.at(i)->flow;			// Move the flow of the delete edge to this edge.
 		listOfEdges1.at(i)->getReverseEdge()->flow += listOfEdges2.at(i)->getReverseEdge()->flow;	// Same for the reverse edge.
 		removeEdge(listOfEdges2.at(i));	// Then remove the edge with similar string.
@@ -3695,24 +3910,42 @@ UINT64 OverlapGraph::resolveNodes(void)
 				}
 
 				UINT64 flag1 = 0, flag2 = 0;
-				if(isOverlappintInterval(inEdge1->coverageDepth, inEdge1->SD, outEdge1->coverageDepth, outEdge1->SD) && !isOverlappintInterval(inEdge1->coverageDepth, inEdge1->SD, outEdge2->coverageDepth, outEdge2->SD) && !isOverlappintInterval(inEdge2->coverageDepth, inEdge2->SD, outEdge1->coverageDepth, outEdge1->SD))
+				if(isOverlappintInterval(inEdge1->coverageDepth, inEdge1->SD, outEdge1->coverageDepth, outEdge1->SD)
+						&& !isOverlappintInterval(inEdge1->coverageDepth, inEdge1->SD, outEdge2->coverageDepth, outEdge2->SD)
+						&& !isOverlappintInterval(inEdge2->coverageDepth, inEdge2->SD, outEdge1->coverageDepth, outEdge1->SD))
 				{
 					flag1 = 1;
 				}
-				if(isOverlappintInterval(inEdge2->coverageDepth, inEdge2->SD, outEdge2->coverageDepth, outEdge2->SD) && !isOverlappintInterval(inEdge2->coverageDepth, inEdge2->SD, outEdge1->coverageDepth, outEdge1->SD) && !isOverlappintInterval(inEdge1->coverageDepth, inEdge1->SD, outEdge2->coverageDepth, outEdge2->SD))
+				if(isOverlappintInterval(inEdge2->coverageDepth, inEdge2->SD, outEdge2->coverageDepth, outEdge2->SD)
+						&& !isOverlappintInterval(inEdge2->coverageDepth, inEdge2->SD, outEdge1->coverageDepth, outEdge1->SD)
+						&& !isOverlappintInterval(inEdge1->coverageDepth, inEdge1->SD, outEdge2->coverageDepth, outEdge2->SD))
 				{
 					flag2 = 1;
 				}
 				if(flag1 == 1 )
 				{
 					counter++;
-					cout << setw(10) << counter << " Merging edges (" << setw(10) << inEdge1->getSourceRead()->getReadNumber() << "," << setw(10) <<inEdge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(6) << inEdge1->getOverlapOffset() << " Flow: " << setw(3) << inEdge1->flow << " Coverage: " << setw(4) << inEdge1->coverageDepth << " SD: " << setw(3) << inEdge1->SD << " and (" << setw(10) << outEdge1->getSourceRead()->getReadNumber() << "," << setw(10) << outEdge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(6) << outEdge1->getOverlapOffset() << " Flow: " << setw(3) << outEdge1->flow << " Coverage: " << setw(4) << outEdge1->coverageDepth << " SD: " << setw(3) << outEdge1->SD << endl;
+					cout << setw(10) << counter << " Merging edges (" << setw(10) << inEdge1->getSourceRead()->getReadNumber()
+							<< "," << setw(10) <<inEdge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(6)
+							<< inEdge1->getOverlapOffset() << " Flow: " << setw(3) << inEdge1->flow << " Coverage: " << setw(4)
+							<< inEdge1->coverageDepth << " SD: " << setw(3) << inEdge1->SD << " and (" << setw(10)
+							<< outEdge1->getSourceRead()->getReadNumber() << "," << setw(10)
+							<< outEdge1->getDestinationRead()->getReadNumber() << ") Length: " << setw(6)
+							<< outEdge1->getOverlapOffset() << " Flow: " << setw(3) << outEdge1->flow << " Coverage: "
+							<< setw(4) << outEdge1->coverageDepth << " SD: " << setw(3) << outEdge1->SD << endl;
 					mergeEdges(inEdge1,outEdge1);		// Merge the edges.
 				}
 				if(flag2 == 1)
 				{
 					counter++;
-					cout << setw(10) << counter << " Merging edges (" << setw(10) << inEdge2->getSourceRead()->getReadNumber() << "," << setw(10) <<inEdge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(6) << inEdge2->getOverlapOffset() << " Flow: " << setw(3) << inEdge2->flow << " Coverage: " << setw(4) << inEdge2->coverageDepth << " SD: " << setw(3) << inEdge2->SD << " and (" << setw(10) << outEdge2->getSourceRead()->getReadNumber() << "," << setw(10) << outEdge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(6) << outEdge2->getOverlapOffset() << " Flow: " << setw(3) << outEdge2->flow << " Coverage: " << setw(4) << outEdge2->coverageDepth << " SD: " << setw(3) << outEdge2->SD << endl;
+					cout << setw(10) << counter << " Merging edges (" << setw(10) << inEdge2->getSourceRead()->getReadNumber()
+							<< "," << setw(10) <<inEdge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(6)
+							<< inEdge2->getOverlapOffset() << " Flow: " << setw(3) << inEdge2->flow << " Coverage: "
+							<< setw(4) << inEdge2->coverageDepth << " SD: " << setw(3) << inEdge2->SD << " and ("
+							<< setw(10) << outEdge2->getSourceRead()->getReadNumber() << "," << setw(10)
+							<< outEdge2->getDestinationRead()->getReadNumber() << ") Length: " << setw(6)
+							<< outEdge2->getOverlapOffset() << " Flow: " << setw(3) << outEdge2->flow << " Coverage: "
+							<< setw(4) << outEdge2->coverageDepth << " SD: " << setw(3) << outEdge2->SD << endl;
 					mergeEdges(inEdge2,outEdge2);			// Merge the edges.
 				}
 			}
@@ -3749,7 +3982,8 @@ struct overlappingReads
 void OverlapGraph::getBaseByBaseCoverage(Edge *edge)
 {
 	vector<UINT64> * coverageBaseByBase = new vector<UINT64>;
-	UINT64 length = edge->getOverlapOffset() + edge->getDestinationRead()->getReadLength();		// Array lenght same as the string length in the edge.
+	// Array lenght same as the string length in the edge.
+	UINT64 length = edge->getOverlapOffset() + edge->getDestinationRead()->getReadLength();
 	for(UINT64 i = 0; i <=length; i++)
 	{
 		coverageBaseByBase->push_back(0);				// At first all the bases are covered 0 times.
@@ -3780,7 +4014,8 @@ void OverlapGraph::getBaseByBaseCoverage(Edge *edge)
 			}
 		}
 	}
-	for(UINT64 i = 0; i < edge->getSourceRead()->getReadLength(); i++)		// For the source read, clear the bases. Because this read is present in multiple places or not all reads are considered for these bases.
+	for(UINT64 i = 0; i < edge->getSourceRead()->getReadLength(); i++)
+	// For the source read, clear the bases. Because this read is present in multiple places or not all reads are considered for these bases.
 	{
 		coverageBaseByBase->at(i) = 0;
 	}
@@ -3871,7 +4106,8 @@ UINT64 OverlapGraph::reduceLoops(void)
 			}
 			if(loopCount==2 && incomingEdgeCount == 1 && outgoingEdgeCount == 1)  // two in the loop and one incoming and one outgoing
 			{
-				cout<<"Loop found at node: " << i <<  " loop edge length: " << bb->getOverlapOffset() << " flow: " << bb->flow << " Other edge lengths: " << ab->getOverlapOffset() << " and " << bc->getOverlapOffset() << endl;
+				cout<<"Loop found at node: " << i <<  " loop edge length: " << bb->getOverlapOffset()
+						<< " flow: " << bb->flow << " Other edge lengths: " << ab->getOverlapOffset() << " and " << bc->getOverlapOffset() << endl;
 				//cout << getStringInEdge(bb) << endl;
 				if(bb->getOrientation() == 0)
 				{
