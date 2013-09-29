@@ -12,6 +12,13 @@
 #include "Read.h"
 #include "Edge.h"
 
+enum MatePairOrientationType{
+	RevRev = 0,		// source<-----------<destination		reverse of source to reverse of destination
+	RevFwd = 1,		// source<----------->destination		reverse of source to forward of destination
+	FwdRev = 2,		// source>-----------<destination		forward of source to reverse of destination
+	FwdFwd = 3		// source>----------->destination		forward of source to forward of destination
+};
+
 class LinkedEdgePair{
 	private:
 		/*
@@ -22,21 +29,28 @@ class LinkedEdgePair{
 		 *   revEdgeB is in front of revEdgeA in sequence
 		 *   u-----fwdEdgeA----v	+	x-----fwdEdgeB----y
 		 *   u-----revEdgeA----v	+	x-----revEdgeB----y
+		 *
 		 *   gapDistance are from the end of read v to the beginning of read x
 		 *   it's possible that gapDistance is negative, meaning the two edges overlap
 		 */
-		Edge * fwdEdgeA;
-		Edge * revEdgeA;
-		Edge * fwdEdgeB;
-		Edge * revEdgeB;
+
+		// Not sure if source read ID are unique, we need an edge ID.
+		// source and destination are the mate pair. The edge with smaller source ID is designated as the source
+		Edge * source;
+		Edge * destination;
+		MatePairOrientationType orientation;
 		INT32 gapDistance;
+		// source and revSource are twin edges. The edge with source read ID < destination read ID is designated as the source edge.
+		Edge * revSource;
+		// destination and revDestination are twin edges. The edge with source read ID < destination read ID is designated as the destination edge
+		Edge * revDestination;
 		/*
-		 *   readsEdgeA[i] and readsEdgeB[i] are a pair of reads in edge A and edge B, respectively
+		 *   pairedReadsInSource[i] and pairedReadsInDestination[i] are a pair of reads in source edge and destination edge, respectively
 		 *   matePairCount are the number of matepairs linking the two edges
-		 *   matePairCount == readsEdgeA.size() == readsEdgeB.size()
+		 *   matePairCount == pairedReadsInSource.size() == pairedReadsInDestination.size()
 		 */
-		vector<Read *> readsEdgeA;
-		vector<Read *> readsEdgeB;
+		vector<Read *> pairedReadsInSource;
+		vector<Read *> pairedReadsInDestination;
 		UINT64 matePairCount;
 
 	public:
@@ -47,6 +61,15 @@ class LinkedEdgePair{
 class MatePairGraph{
 	private:
 		vector<LinkedEdgePair> edgePairList;
+
+		// expand the coverage
+		// change EdgeMarkType of edges from Unvisited to UpstreamStop or DownstreamStop
+		// return the number of edges with changed EdgeMarkType
+		int expand();
+		// confirm the coverage
+		// change EdgeMarkType of edges from UpstreamStop to UpstreamGo or from DownstreamStop to DownstreamGo
+		// return the number of edges with changed EdgeMarkType
+		int lookBack();
 
 	public:
 		MatePairGraph();
@@ -61,7 +84,15 @@ class MatePairGraph{
 		 *   Mark all the Uncovered edges linked to Covered edges as Terminal
 		 *   Mark all the Terminal edge
 		 */
-		void expandCoveredEdges();
+		void iterativelyExpandCoverage()
+			{
+			// expand until no edge's EdgeMarkType is changed by lookBack()
+				do
+				{
+					expand();
+				}
+				while( lookBack() > 0 );
+			}
 
 };
 
