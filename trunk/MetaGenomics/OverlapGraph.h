@@ -11,6 +11,7 @@
 #include "Common.h"
 #include "Dataset.h"
 #include "HashTable.h"
+#include "MatePairGraph.h"
 #include "Edge.h"
 
 /**********************************************************************************************************************
@@ -38,7 +39,13 @@ enum markType{
 // This structure is used to store list of pair of edges and their support. Used in two function: 1. when we find path by mate-pairs 2. scaffolder.
 struct pairedEdges
 {
-		// edge 1 is in front of edge 2 in the sequence
+
+		/*
+		 *  edge 1 is in front of edge 2 in the sequence
+		 *  CP2: is this right? the reverse of edge2 are in the same orientation as edge1??
+		 *  -----edge1----		-------------
+		 *  --------------		-----edge2---
+		 */
 		Edge * edge1;
 		Edge * edge2;
 		UINT64 support;			// number of matepairs supporting these two edges
@@ -60,6 +67,7 @@ class OverlapGraph
 
 		// CP: the overlap graph is a vector of nodes (i.e. reads) with their vectors of incident edges
 		// CP: the readNumber of a read is equal to the index of the node in this vector. Because readNumber starts from 1, the
+		// CP2: how to iterate through all edges??
 		vector< vector<Edge *> * > *graph;							// Adjacency list of the graph.
 		UINT64 numberOfNodes;										// Number of nodes in the overlap graph.
 		UINT64 numberOfEdges;										// Number of edges in the overlap graph.

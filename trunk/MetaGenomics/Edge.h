@@ -10,6 +10,26 @@
 #include "Common.h"
 #include "Read.h"
 
+// This type is used in MatePairGraph to explore the mate pair graph.
+		/*
+		 *   Mate pairs are in forward - reverse orientation
+		 *   fwdEdgeA and revEdgeA are twin edges from read u to read v
+		 *   fwdEdgeB and revEdgeB are twin edges from read x to read y
+		 *   fwdEdgeA is upstream of fwdEdgeB in sequence
+		 *   revEdgeB is upstream of revEdgeA in sequence
+		 *   u-----fwdEdgeA----v	+	x-----fwdEdgeB----y
+		 *   u-----revEdgeA----v	+	x-----revEdgeB----y
+		 *
+		 */
+enum EdgeMarkType{
+	Seed = 0,
+	UpstreamStop = 1,		//
+	DownstreamStop = 2,
+	UpstreamGo = 3,
+	DownstreamGo = 4,
+	Unvisited = 5
+};
+
 /**********************************************************************************************************************
 	Class to store an edge.
 **********************************************************************************************************************/
@@ -52,6 +72,7 @@ class Edge{
 
 
 	public:
+		EdgeMarkType exploreMatePairGraphStatus;
 		bool hignCoverageAndMatepairFlag;
 		bool transitiveRemovalFlag;							// Used to mark transitive edges.
 		UINT16 flow;							// Store the flow in the current edge.
