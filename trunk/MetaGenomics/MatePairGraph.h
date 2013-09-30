@@ -11,6 +11,10 @@
 #include "Common.h"
 #include "Read.h"
 #include "Edge.h"
+#include "OverlapGraph.h"
+
+//forward declaration
+class OverlapGraph;
 
 enum MatePairOrientationType{
 	RevRev = 0,		// source<-----------<destination		reverse of source to reverse of destination
@@ -19,7 +23,7 @@ enum MatePairOrientationType{
 	FwdFwd = 3		// source>----------->destination		forward of source to forward of destination
 };
 
-class LinkedEdgePair{
+class MatePairLinks{
 	private:
 		/*
 		 *   Mate pairs are in forward - reverse orientation
@@ -39,60 +43,59 @@ class LinkedEdgePair{
 		Edge * source;
 		Edge * destination;
 		MatePairOrientationType orientation;
-		INT32 gapDistance;
+		long averageGapDistance;
 		// source and revSource are twin edges. The edge with source read ID < destination read ID is designated as the source edge.
 		Edge * revSource;
 		// destination and revDestination are twin edges. The edge with source read ID < destination read ID is designated as the destination edge
 		Edge * revDestination;
+
 		/*
 		 *   pairedReadsInSource[i] and pairedReadsInDestination[i] are a pair of reads in source edge and destination edge, respectively
 		 *   matePairCount are the number of matepairs linking the two edges
 		 *   matePairCount == pairedReadsInSource.size() == pairedReadsInDestination.size()
 		 */
+		UINT64 matePairCount;
 		vector<Read *> pairedReadsInSource;
 		vector<Read *> pairedReadsInDestination;
-		UINT64 matePairCount;
+		vector<long> gapDistance;		// gap distance according to this pair of reads
+		vector<bool> areUniqueReads;	// are both reads in this pair unique to their respective edges
+
+		// the two linked edges have a feasible path between them within the range of gap distance
+		// Not sure if we need to check this or not.
+		// can use the exploreGraph function in the Overlap graph. Simply give the last read
+		// UINT64 exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge,
+		//			UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags);
+		bool hasFeasiblePath;
+
+		// If the two edges have a small overlap and a small gap distance, then true
+		// this is similar to a step in scaffolding
+		// not sure if this is needed
+		bool canBeMerged;
 
 	public:
-		LinkedEdgePair();
-		~LinkedEdgePair();
+		MatePairLinks();
+		~MatePairLinks();
 };
 
 class MatePairGraph{
 	private:
-		vector<LinkedEdgePair> edgePairList;
+		vector<MatePairLinks> linkList;
 
-		// expand the coverage
-		// change EdgeMarkType of edges from Unvisited to UpstreamStop or DownstreamStop
-		// return the number of edges with changed EdgeMarkType
-		int expand();
-		// confirm the coverage
-		// change EdgeMarkType of edges from UpstreamStop to UpstreamGo or from DownstreamStop to DownstreamGo
-		// return the number of edges with changed EdgeMarkType
-		int lookBack();
+
+	//	vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);
+
 
 	public:
 		MatePairGraph();
 		~MatePairGraph();
 
-		// Populate edgePairList
-		void buildMatePairGraph();
+		// Populate linkList
+		// Ideally this should work for both unitig graph and contig graph
+		void buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlapGraph);
 
-		/*
-		 *   An edge has three mark types: Covered, Terminal, and Uncovered
-		 *   Start from a set of edges marked as Covered and all the other edges marked as Uncovered
-		 *   Mark all the Uncovered edges linked to Covered edges as Terminal
-		 *   Mark all the Terminal edge
-		 */
-		void iterativelyExpandCoverage()
-			{
-			// expand until no edge's EdgeMarkType is changed by lookBack()
-				do
-				{
-					expand();
-				}
-				while( lookBack() > 0 );
-			}
+		// Mark additional edges linked to already marked edges
+		int markEdgesByMatePairs();
+
 
 };
 
