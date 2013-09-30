@@ -122,8 +122,8 @@ class OverlapGraph
 		// Starting from the firstEdge we try to reach lastEdge by distance mean + 3 *sd of the datasetNumber.
 		UINT64 exploreGraph(Edge* firstEdge, Edge * lastEdge, UINT64 distanceOnFirstEdge, UINT64 distanceOnLastEdge,
 				UINT64 datasetNumber, UINT64 level, vector <Edge *> &firstPath, vector <UINT64> &flags);
-		vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);
-		UINT64 checkForScaffold(const Edge *edge1, const Edge *edge2, UINT64 *distance);
+
+
 
 		// Functions related to flow analysis
 		bool calculateBoundAndCost(const Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST); // Calculate bounds and costs of flow for minimum cost flow in the overlap graph.
@@ -170,8 +170,14 @@ class OverlapGraph
 		bool calculateFlow(string inputFileName, string outputFileName);									// Calculate the minimum cost flow of the overlap graph.
 		bool calculateFlow2(string inputFileName, string outputFileName);
 
+
+		vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);
+		UINT64 checkForScaffold(const Edge *edge1, const Edge *edge2, UINT64 *distance);
+
 		UINT64 removeAllSimpleEdgesWithoutFlow();						// Not used. Only for testing.
 		UINT64 removeAllEdgesWithoutFlow();						// Not used. Only for testing.
+		vector< vector<Edge *> * > * getGraph() {return graph;};
+
 };
 
 

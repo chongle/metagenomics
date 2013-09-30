@@ -38,8 +38,7 @@ class MatePairLinks{
 		 *   it's possible that gapDistance is negative, meaning the two edges overlap
 		 */
 
-		// Not sure if source read ID are unique, we need an edge ID.
-		// source and destination are the mate pair. The edge with smaller source ID is designated as the source
+		// source and destination are the linked edges.
 		Edge * source;
 		Edge * destination;
 		MatePairOrientationType orientation;
@@ -72,16 +71,26 @@ class MatePairLinks{
 		// not sure if this is needed
 		bool canBeMerged;
 
+
 	public:
-		MatePairLinks();
-		~MatePairLinks();
+		bool isTransitive;
+		MatePairLinks(){isTransitive = false;};
+		~MatePairLinks(){};
+		void setVariables(Edge *edge1, Edge *edge2, MatePairOrientationType orient, UINT64 support)
+		{source = edge1; revSource = edge1->getReverseEdge() ; destination = edge2; revDestination = edge2->getReverseEdge(); orientation = orient; matePairCount=support;}
+		Edge * getSourceEdge(){return source;}
+		Edge * getDestinationEdge(){return destination;}
+		MatePairOrientationType getOrient() {return orientation;}
+		UINT64 getSupport(){return matePairCount;}
+
 };
 
 class MatePairGraph{
 	private:
-		vector<MatePairLinks> linkList;
+		vector< vector<MatePairLinks> > *linkList;
+		vector< Edge *> listOfCompositeEdges;
 
-
+		void addLink(MatePairLinks mpLink);
 	//	vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);
 
 
@@ -93,10 +102,10 @@ class MatePairGraph{
 		// Ideally this should work for both unitig graph and contig graph
 		void buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlapGraph);
 
+
 		// Mark additional edges linked to already marked edges
-		int markEdgesByMatePairs();
-
-
+		void markEdgesByMatePairs();
+		void printGraph();
 };
 
 #endif /* MATEPAIRGRAPH_H_ */
