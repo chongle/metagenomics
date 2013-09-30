@@ -2139,7 +2139,7 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 		listOfNodes->push_back(0);
 		listOfNodesReverse->push_back(0);
 	}
-	//markEdgeThatWillHaveOneFlow();
+	markEdgeThatWillHaveOneFlow();
 	// This loop set lower bound and upper bound of each node to super source and to super sink. All costs are 0.
 	UINT64 currentIndex = 1;
 	for(UINT64 i = 1; i < graph->size(); i++)
@@ -2356,11 +2356,11 @@ bool OverlapGraph::calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOW
 		FLOWLB[i] = 0; FLOWUB[i] = 10; COST[i] = 500000;
 	}
 
-	getBaseByBaseCoverage(edge);
+	//getBaseByBaseCoverage(edge);
 	if(!edge->getListOfReads()->empty()) // Composite Edge
 	{
-		//if(edge->hignCoverageAndMatepairFlag ==  true)
-		if(edge->coverageDepth >=coverageDepthLB && edge->coverageDepth <=coverageDepthUB)
+		if(edge->hignCoverageAndMatepairFlag ==  true)
+		//if(edge->coverageDepth >=coverageDepthLB && edge->coverageDepth <=coverageDepthUB)
 		{
 			// the first 1 flow must be used and has a cost of 1
 			// each additional flow up to 8 flows has a cost of 100000
@@ -2405,6 +2405,9 @@ bool OverlapGraph::calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOW
 **********************************************************************************************************************/
 void OverlapGraph::markEdgeThatWillHaveOneFlow()
 {
+
+	// Mark the edges with our desired coverage detph.
+
 	for(UINT64 i = 1; i < graph->size(); i++) // for each node in the graph
 	{
 		if(!graph->at(i)->empty()) // this node has some edges.
@@ -2417,28 +2420,18 @@ void OverlapGraph::markEdgeThatWillHaveOneFlow()
 				if(edge1->coverageDepth >=coverageDepthLB && edge1->coverageDepth <=coverageDepthUB)
 				{
 					edge1->hignCoverageAndMatepairFlag = true; // Mark this edge. We will set lower bound of flow for these edges to 1
-					for(UINT64 k = 0; k<edge1->getListOfReads()->size(); k++)	// Now talke all the reads in the edge
-					{
-						UINT64 readID = edge1->getListOfReads()->at(k);	// This is the reads ID
-						Read *read = dataSet->getReadFromID(readID);	// get the read object from the dataset
-						for(UINT64 l = 0; l < read->getMatePairList()->size();l++)	// Find all the matepairs of this read.
-						{
-							UINT64 matePairID = read->getMatePairList()->at(l).matePairID;	// Get the matepair ID
-							Read *matePair = dataSet->getReadFromID(matePairID);			// Get the matepair read object.
-							for(UINT64 m = 0; m < matePair->getListOfEdgesForward()->size(); m++)	// List of the edges that contains the matepair.
-							{
-									Edge *edge2 = matePair->getListOfEdgesForward()->at(m);	// Get the edge
-					// We also need to set the lower bound of flow to these edges to one since they share edge with edge that has our desired coverage depth
-									edge2->hignCoverageAndMatepairFlag = true;
-									// Mark the reverse edge too. Will set the lower bound of flow to 1
-									edge2->getReverseEdge()->hignCoverageAndMatepairFlag = true;
-							}
-						}
-					}
+					edge1->getReverseEdge()->hignCoverageAndMatepairFlag = true;
 				}
 			}
 		}
 	}
+
+	// Now mark nontransitive unambiguous linked edges (one in each side of the edges)
+	MatePairGraph *mpGraph = new MatePairGraph;
+	mpGraph->buildMatePairGraph(dataSet, this);
+	mpGraph->markEdgesByMatePairs();
+	//mpGraph->printGraph();
+	delete mpGraph;
 }
 
 
@@ -3064,7 +3057,7 @@ UINT64 OverlapGraph::scaffolder(void)
 	{
 		Edge *edge1 = listOfCompositeEdges->at(i);
 		// Find the list of other edges that share unique matepairs with the current edge. Only check one of the endpoints of the current edge.
-		vector<Edge *> *listOfFeasibleEdges = getListOfFeasibleEdges(listOfCompositeEdges->at(i));
+		vector<Edge *> *listOfFeasibleEdges = getListOfFeasibleEdges(edge1);
 		for(UINT64 j = 0; j < listOfFeasibleEdges->size(); j++ ) // Check the current edge vs the list of edges for suppor for scaffolder
 		{
 			Edge *edge2 =listOfFeasibleEdges->at(j);
@@ -3156,10 +3149,23 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(const Edge *edge)
 				// CP: r2 is the paired read of r1
 				UINT64 mp2 = r1->getMatePairList()->at(j).matePairID; // matepair 2
 				Read* r2 = dataSet->getReadFromID(mp2); // read2
-				vector<Edge *> *list = r2->getListOfEdgesForward(); // location of read2
+				UINT8 orient = r1->getMatePairList()->at(j).matePairOrientation;
+				vector<Edge *> *list;
+				vector<UINT64> *distOnEdge;
+				if(orient == 0  || orient == 2)
+				{
+					list = r2->getListOfEdgesForward(); // edge contain read forward
+					distOnEdge = r2->getLocationOnEdgeForward(); // location on the edge
+				}
+				else
+				{
+					list = r2->getListOfEdgesReverse(); // edge contain read forward
+					distOnEdge = r2->getLocationOnEdgeReverse(); // location on the edge
+
+				}
 				// CP: use read2 if it's on one and only one edge and it's not on the input forward/reverse edge and its distance is adequate
 				if(list->empty() || list->size() > 1 || list->at(0) == edge ||
-						list->at(0) == edge->getReverseEdge() || r2->getLocationOnEdgeForward()->at(0) > 2*longestMeanOfInsertSize)
+						list->at(0) == edge->getReverseEdge() || distOnEdge->at(0) > 2*longestMeanOfInsertSize)
 					// Must be present uniquly on the edge and withing the distance of longest insert size.
 					continue;
 				UINT64 k;
@@ -3175,7 +3181,7 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(const Edge *edge)
 			}
 			// CP: this for loop considers r1 and reverse edges of r2: r1->.......r2<-
 			// CP: what if the same read are on a forward edge or another reverse edge? Is this read still unique?
-			for(UINT64 j = 0; j < r1->getMatePairList()->size(); j++)		// Same thing we do for the revese edges.
+			/*for(UINT64 j = 0; j < r1->getMatePairList()->size(); j++)		// Same thing we do for the revese edges.
 			{
 				UINT64 mp2 = r1->getMatePairList()->at(j).matePairID;
 				Read* r2 = dataSet->getReadFromID(mp2);
@@ -3193,7 +3199,7 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(const Edge *edge)
 				{
 					feasibleListOfEdges->push_back(list->at(0));
 				}
-			}
+			}*/
 		}
 	}
 

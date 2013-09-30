@@ -69,6 +69,7 @@ class Edge{
 												// the reverseEdge always have the same flow as the forward Edge
 												// the listOfReads of the reverse edge is the same reads in reverse order as the forward edge
 												// the listOfOrientations of the reverse edge is reverse complement
+		INT64 edgeID;							// ID of the edge;
 
 
 	public:
@@ -94,6 +95,8 @@ class Edge{
 		vector<UINT16> * getListOfOverlapOffsets() const {return listOfOverlapOffsets;} // Get the list of ordered offset.
 		vector<UINT8> * getListOfOrientations() const {return listOfOrientations;}	// Get the ordered orientation of the reads. 1 means forward. 0 means reverse.
 		Edge * getReverseEdge() const {return reverseEdge;}	// Return the pointer to the reverse edge.
+		void setEdgeID(UINT64 n) {edgeID = n;}
+		INT64 getEdgeID (void) {return edgeID;}
 };
 
 #endif /* EDGE_H_ */
