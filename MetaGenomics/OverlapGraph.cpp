@@ -2205,21 +2205,26 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 
 					// Connect the edges of the original graph
 					// for each orignal edge, we add six edges
+					// See Bahlul's thesis Page 84, Figure 4.13
+
 					if(edge->getOrientation() == 0)
 					{
-						// first edge in the cost function, forward and reverse
+						// first edge in the cost function
+						// 0 = u<-----------<v		reverse of u to reverse of v
+						// v1 ----> u1
+						// u2 ----> v2
 						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0]
 						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0]
 						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 
-						// second edge in the cost function, forward and reverse
+						// second edge in the cost function
 						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[1]
 						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[1]
 						           << " " << setw(10) << FLOWUB[1] << " " << setw(10) << COST[1] << endl;
 
-						// third edge in the cost function, forward and reverse
+						// third edge in the cost function
 						ss << "a " << setw(10) << v1 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[2]
 						           << " " << setw(10) << FLOWUB[2] << " " << setw(10) << COST[2] << endl;
 						ss << "a " << setw(10) << u2 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[2]
@@ -2227,6 +2232,9 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 					}
 					else if(edge->getOrientation() == 1)
 					{
+						// 1 = u<----------->v		reverse of u to forward of v
+						// v2 ----> u1
+						// u2 ----> v1
 						ss << "a " << setw(10) << v2 << " " << setw(10) << u1 << " " << setw(10) << FLOWLB[0]
 						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 						ss << "a " << setw(10) << u2 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0]
@@ -2245,6 +2253,9 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 					}
 					else if(edge->getOrientation() == 2)
 					{
+						// 2 = u>-----------<v		forward of u to reverse of v
+						// u1 ----> v2
+						// v1 ----> u2
 						ss << "a " << setw(10) << u1 << " " << setw(10) << v2 << " " << setw(10) << FLOWLB[0]
 						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 						ss << "a " << setw(10) << v1 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0]
@@ -2263,6 +2274,9 @@ bool OverlapGraph::calculateFlow2(string inputFileName, string outputFileName)
 					}
 					else if(edge->getOrientation() == 3)
 					{
+						// 3 = u>----------->v		forward of u to forware of v
+						// u1 ----> v1
+						// v2 ----> u2
 						ss << "a " << setw(10) << u1 << " " << setw(10) << v1 << " " << setw(10) << FLOWLB[0]
 						           << " " << setw(10) << FLOWUB[0] << " " << setw(10) << COST[0] << endl;
 						ss << "a " << setw(10) << v2 << " " << setw(10) << u2 << " " << setw(10) << FLOWLB[0]
