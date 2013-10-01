@@ -60,9 +60,9 @@ void MatePairGraph::buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlap
 
 
 			Edge *edge2 =listOfFeasibleEdges->at(j);
-			UINT64 distance;
+			INT64 gapDistance;
 			UINT64 support = 0;
-			support = overlapGraph->checkForScaffold(edge1,edge2,&distance); // check the support and distance of the forward edge
+			support = overlapGraph->checkForScaffold(edge1,edge2,&gapDistance); // check the support and distance of the forward edge
 			if(support > 0)
 			{
 				INT64 ID2 = edge2->getEdgeID();
@@ -78,7 +78,7 @@ void MatePairGraph::buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlap
 				}
 				if(edge2->getEdgeID() < 0)
 					edge2=edge2->getReverseEdge();
-				mpLinke1e2.setVariables(edge1, edge2, oriente1e2, support);
+				mpLinke1e2.setVariables(edge1, edge2, oriente1e2, support, gapDistance);
 				addLink(mpLinke1e2);
 			}
 		}
@@ -90,9 +90,9 @@ void MatePairGraph::buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlap
 		for(UINT64 j = 0; j < listOfFeasibleEdgesReverse->size(); j++ ) // Check the current edge vs the list of edges for suppor for scaffolder
 		{
 			Edge *edge2 =listOfFeasibleEdgesReverse->at(j);
-			UINT64 distance;
+			INT64 gapDistance;
 			UINT64 support = 0;
-			support = overlapGraph->checkForScaffold(edge1Reverse,edge2,&distance); // check the support and distance of the reverse edge
+			support = overlapGraph->checkForScaffold(edge1Reverse,edge2,&gapDistance); // check the support and distance of the reverse edge
 			if(support > 0)
 			{
 				INT64 ID2 = edge2->getEdgeID();
@@ -108,7 +108,7 @@ void MatePairGraph::buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlap
 				}
 				if(edge2->getEdgeID() < 0)
 					edge2=edge2->getReverseEdge();
-				mpLinke1e2.setVariables(edge1Reverse->getReverseEdge(), edge2, oriente1e2, support);
+				mpLinke1e2.setVariables(edge1Reverse->getReverseEdge(), edge2, oriente1e2, support, gapDistance);
 				addLink(mpLinke1e2);
 			}
 		}
@@ -234,7 +234,7 @@ void MatePairGraph::markEdgesByMatePairs()
 	CLOCKSTOP;
 }
 
-void MatePairGraph::printGraph()
+void MatePairGraph::printMatePairLinkageGraph()
 {
 	CLOCKSTART;
 	for(UINT64 i = 1; i < linkList->size(); i++)
@@ -254,6 +254,7 @@ void MatePairGraph::printGraph()
 			cout << "Reads in Edge2: " << currentLink.getDestinationEdge()->getListOfReads()->size() << endl;
 			cout << "Support: " << currentLink.getSupport() << endl;
 			cout << "isTransitie: " << currentLink.isTransitive << endl;
+			cout << "Average gap distance: " << currentLink.getAverageGapDistance() << endl;
 			cout << "Type:" << currentLink.getOrient() << endl << endl;
 		}
 	}

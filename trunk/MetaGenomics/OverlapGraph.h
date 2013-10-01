@@ -49,7 +49,7 @@ struct pairedEdges
 		Edge * edge1;
 		Edge * edge2;
 		UINT64 support;			// number of matepairs supporting these two edges
-		UINT64 distance;		// sum of the end of read1 to the end of edge 1 and the beginning of read2 to the beginning of edge2
+		INT64 distance;		// sum of the end of read1 to the end of edge 1 and the beginning of read2 to the beginning of edge2
 		bool isFreed;
 		bool operator < (const pairedEdges& rhs) const
 		{
@@ -172,7 +172,7 @@ class OverlapGraph
 
 
 		vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);
-		UINT64 checkForScaffold(const Edge *edge1, const Edge *edge2, UINT64 *distance);
+		UINT64 checkForScaffold(const Edge *edge1, const Edge *edge2, INT64 *gapDistance);
 
 		UINT64 removeAllSimpleEdgesWithoutFlow();						// Not used. Only for testing.
 		UINT64 removeAllEdgesWithoutFlow();						// Not used. Only for testing.

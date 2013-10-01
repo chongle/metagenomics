@@ -42,7 +42,7 @@ class MatePairLinks{
 		Edge * source;
 		Edge * destination;
 		MatePairOrientationType orientation;
-		long averageGapDistance;
+		INT64 averageGapDistance;
 		// source and revSource are twin edges. The edge with source read ID < destination read ID is designated as the source edge.
 		Edge * revSource;
 		// destination and revDestination are twin edges. The edge with source read ID < destination read ID is designated as the destination edge
@@ -76,12 +76,13 @@ class MatePairLinks{
 		bool isTransitive;
 		MatePairLinks(){isTransitive = false;};
 		~MatePairLinks(){};
-		void setVariables(Edge *edge1, Edge *edge2, MatePairOrientationType orient, UINT64 support)
-		{source = edge1; revSource = edge1->getReverseEdge() ; destination = edge2; revDestination = edge2->getReverseEdge(); orientation = orient; matePairCount=support;}
+		void setVariables(Edge *edge1, Edge *edge2, MatePairOrientationType orient, UINT64 support, INT64 gapDistance)
+		{source = edge1; revSource = edge1->getReverseEdge() ; destination = edge2; revDestination = edge2->getReverseEdge(); orientation = orient; matePairCount=support;averageGapDistance=gapDistance;}
 		Edge * getSourceEdge(){return source;}
 		Edge * getDestinationEdge(){return destination;}
 		MatePairOrientationType getOrient() {return orientation;}
 		UINT64 getSupport(){return matePairCount;}
+		INT64 getAverageGapDistance(){return averageGapDistance;}
 
 };
 
@@ -106,7 +107,7 @@ class MatePairGraph{
 
 		// Mark additional edges linked to already marked edges
 		void markEdgesByMatePairs();
-		void printGraph();
+		void printMatePairLinkageGraph();
 };
 
 #endif /* MATEPAIRGRAPH_H_ */
