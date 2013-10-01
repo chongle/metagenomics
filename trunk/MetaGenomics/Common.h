@@ -46,7 +46,7 @@ typedef long long INT64;
 								// CP: should we consider using different thresholds for matepair paths and scaffolding?
 								// BH: If we want we can use different thresholds.
 #define loopLimit 15			// Number of time to loop in the main function.
-#define insertSizeRangeSD 2		// 2 means mean +/- 2 SD
+#define insertSizeRangeSD 3		// 3 means mean +/- 3 SD
 #define	coverageDepthLB 40		// Lower bound of coverage depth for the genome that we want to assemble.
 #define coverageDepthUB 200	// Upper bound of the coverage depth of teh genome that we want to assemble.
 

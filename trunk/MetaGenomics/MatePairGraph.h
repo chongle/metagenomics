@@ -93,6 +93,7 @@ class MatePairGraph{
 		void addLink(MatePairLinks mpLink);
 	//	vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);
 
+		void markTransitiveEdge();
 
 	public:
 		MatePairGraph();
