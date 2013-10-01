@@ -2444,7 +2444,7 @@ void OverlapGraph::markEdgeThatWillHaveOneFlow()
 	MatePairGraph *mpGraph = new MatePairGraph;
 	mpGraph->buildMatePairGraph(dataSet, this);
 	mpGraph->markEdgesByMatePairs();
-	//mpGraph->printGraph();
+	//mpGraph->printMatePairLinkageGraph();
 	delete mpGraph;
 }
 
@@ -3075,15 +3075,15 @@ UINT64 OverlapGraph::scaffolder(void)
 		for(UINT64 j = 0; j < listOfFeasibleEdges->size(); j++ ) // Check the current edge vs the list of edges for suppor for scaffolder
 		{
 			Edge *edge2 =listOfFeasibleEdges->at(j);
-			UINT64 distance;
-			UINT64 support = checkForScaffold(edge1,edge2,&distance); // check the support and distance
+			INT64 gapDistance;
+			UINT64 support = checkForScaffold(edge1,edge2,&gapDistance); // check the support and distance
 			if(support>0)	// If there are support then add the current pair in the list.
 			{
 				pairedEdges newPair;
 				newPair.edge1 = edge1;
 				newPair.edge2 = edge2;
 				newPair.support = support;
-				newPair.distance = distance;
+				newPair.distance = gapDistance;
 				newPair.isFreed = false;
 				listOfPairedEdges.push_back(newPair);
 
@@ -3229,10 +3229,10 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(const Edge *edge)
  	 CP: *distance is actually the sum of the distances measured by all matepairs. this would be easier to understand if it's the average distance
 ***********************************************************************************************************************/
 
-UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2,UINT64 *distance)
+UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2, INT64 *gapDistance)
 {
 	UINT64 support = 0,dist = 0;
-	*distance = 0;
+	*gapDistance = 0;
 	Edge *rEdge1 = edge1->getReverseEdge();
 	vector<Edge *> *listRead1, *listRead2;		//  This is the lists of edges that contain read1 and read2
 	vector<UINT64> *locationOnEdgeRead1, *locationOnEdgeRead2;
@@ -3272,15 +3272,17 @@ UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2,UINT6
 					&& locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )
 				// Both the reads are present on only on edge and the distance is less that mean+3*sd
 			{
-				dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0);
+				dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) + read1->getReadLength() ;
 				// if there are already in the same edge, don't do anything
 				if(listRead1->at(0) == listRead2->at(0) ||  listRead1->at(0) == listRead2->at(0)->getReverseEdge()) // Not on the same edge
 					continue;
-				*distance +=dist;
+				*gapDistance += (INT64)((INT64)(getMean(datasetNumber))- (INT64)(dist));
 				support++;
 			}
 		}
 	}
+	if(support)
+		*gapDistance = (INT64)(*gapDistance/(INT64)(support));
 	return support;
 }
 
