@@ -16,6 +16,15 @@ MatePairGraph::MatePairGraph()
 }
 MatePairGraph::~MatePairGraph()
 {
+	for(UINT64 i = 1; i < linkList->size(); i++)
+	{
+		for(UINT64 j = 0 ; j < linkList->at(i).size(); j++)
+		{
+			delete linkList->at(i).at(j).getPairedReadsInSource();
+			delete linkList->at(i).at(j).getPairedReadsInDestination();
+			delete linkList->at(i).at(j).getGapDistance();
+		}
+	}
 	delete linkList;
 }
 
@@ -60,11 +69,17 @@ void MatePairGraph::buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlap
 
 
 			Edge *edge2 =listOfFeasibleEdges->at(j);
-			INT64 gapDistance;
+			INT64 averageGapDistance;
 			UINT64 support = 0;
-			support = overlapGraph->checkForScaffold(edge1,edge2,&gapDistance); // check the support and distance of the forward edge
+			vector<Read *> *pairedReadsInSource = new vector<Read *>;
+			vector<Read *> *pairedReadsInDestination = new vector<Read *>;;
+			vector<INT64> *gapDistance= new vector<INT64>;
+
+			support = overlapGraph->checkForScaffold(edge1,edge2,&averageGapDistance, pairedReadsInSource, pairedReadsInDestination, gapDistance); // check the support and distance of the forward edge
+
 			if(support > 0)
 			{
+
 				INT64 ID2 = edge2->getEdgeID();
 				MatePairLinks mpLinke1e2, mpLinke2e1;
 				MatePairOrientationType oriente1e2;
@@ -78,7 +93,7 @@ void MatePairGraph::buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlap
 				}
 				if(edge2->getEdgeID() < 0)
 					edge2=edge2->getReverseEdge();
-				mpLinke1e2.setVariables(edge1, edge2, oriente1e2, support, gapDistance);
+				mpLinke1e2.setVariables(edge1, edge2, oriente1e2, support, averageGapDistance, pairedReadsInSource, pairedReadsInDestination, gapDistance);
 				addLink(mpLinke1e2);
 			}
 		}
@@ -87,12 +102,15 @@ void MatePairGraph::buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlap
 		Edge *edge1Reverse = listOfCompositeEdges.at(i)->getReverseEdge();
 		// Find the list of other edges that share unique matepairs with the current edge. Only check one of the endpoints of the current edge.
 		vector<Edge *> *listOfFeasibleEdgesReverse = overlapGraph->getListOfFeasibleEdges(edge1Reverse);
-		for(UINT64 j = 0; j < listOfFeasibleEdgesReverse->size(); j++ ) // Check the current edge vs the list of edges for suppor for scaffolder
+		for(UINT64 j = 0; j < listOfFeasibleEdgesReverse->size(); j++ ) // Check the current edge vs the list of edges for support for scaffolder
 		{
 			Edge *edge2 =listOfFeasibleEdgesReverse->at(j);
-			INT64 gapDistance;
+			INT64 averageGapDistance;
 			UINT64 support = 0;
-			support = overlapGraph->checkForScaffold(edge1Reverse,edge2,&gapDistance); // check the support and distance of the reverse edge
+			vector<Read *> *pairedReadsInSource = new vector<Read *>;
+			vector<Read *> *pairedReadsInDestination = new vector<Read *>;;
+			vector<INT64> *gapDistance= new vector<INT64>;
+			support = overlapGraph->checkForScaffold(edge1Reverse,edge2,&averageGapDistance, pairedReadsInSource, pairedReadsInDestination, gapDistance); // check the support and distance of the reverse edge
 			if(support > 0)
 			{
 				INT64 ID2 = edge2->getEdgeID();
@@ -108,7 +126,7 @@ void MatePairGraph::buildMatePairGraph(Dataset * dataSet, OverlapGraph * overlap
 				}
 				if(edge2->getEdgeID() < 0)
 					edge2=edge2->getReverseEdge();
-				mpLinke1e2.setVariables(edge1Reverse->getReverseEdge(), edge2, oriente1e2, support, gapDistance);
+				mpLinke1e2.setVariables(edge1Reverse->getReverseEdge(), edge2, oriente1e2, support, averageGapDistance, pairedReadsInSource, pairedReadsInDestination, gapDistance);
 				addLink(mpLinke1e2);
 			}
 		}
@@ -152,7 +170,7 @@ void MatePairGraph::markTransitiveEdge()
 						INT64 destinationEdge3ID = destinationEdge3->getEdgeID();
 						MatePairOrientationType orient3 = linkList->at(destinationEdge1ID).at(l).getOrient();
 						if(destinationEdge2ID == destinationEdge3ID) // we can go to same edge from another path;
-						// TODO: We need to also check if we can to to that edge by following a node in the overlap graph.
+						//TODO: We need to also check if we can to to that edge by following a node in the overlap graph.
 						{
 							// (orient1 & 1) == ((orient2&2)>>1) checks if
 							// e->e1    e->e2
@@ -170,7 +188,6 @@ void MatePairGraph::markTransitiveEdge()
 								linkList->at(destinationEdge1ID).at(l).isTransitive = true;
 								//cout << "Transitive Edge Found" << endl;
 							}
-
 						}
 					}
 				}
@@ -255,6 +272,10 @@ void MatePairGraph::printMatePairLinkageGraph()
 			cout << "Support: " << currentLink.getSupport() << endl;
 			cout << "isTransitie: " << currentLink.isTransitive << endl;
 			cout << "Average gap distance: " << currentLink.getAverageGapDistance() << endl;
+			for(UINT64 k = 0; k < currentLink.getPairedReadsInSource()->size(); k++)
+			{
+				cout << "MatePair:  " << k+1 <<" "<< currentLink.getPairedReadsInSource()->at(k)->getReadNumber() << " " <<currentLink.getPairedReadsInDestination()->at(k)->getReadNumber() << " " << currentLink.getGapDistance()->at(k) << endl;
+			}
 			cout << "Type:" << currentLink.getOrient() << endl << endl;
 		}
 	}
