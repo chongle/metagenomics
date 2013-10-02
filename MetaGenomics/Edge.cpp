@@ -21,7 +21,7 @@ Edge::Edge(void)
 	transitiveRemovalFlag = false;
 	flow = 0;
 	coverageDepth = 0;
-	edgeID = 0xFFFFFFFFFFFFFFFF;
+	edgeID = 0;
 /*
 	listOfReads = new vector<UINT64>;
 	listOfReads->resize(listOfReads->size());						// Resize to reduce space.
@@ -79,7 +79,7 @@ bool Edge::makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInp
 	overlapOrientation = orient;
 	overlapOffset = overlapOffsetInput;
 	hignCoverageAndMatepairFlag = false;
-	edgeID = 0xFFFFFFFFFFFFFFFF;
+	edgeID = 0;
 
 	// Initialize variables.
 	transitiveRemovalFlag = false;
@@ -111,7 +111,7 @@ bool Edge::makeEdge(Read *from, Read *to, UINT64 orient, UINT64 overlapOffsetInp
 	overlapOffset = overlapOffsetInput;
 	transitiveRemovalFlag = false;
 	hignCoverageAndMatepairFlag = false;
-	edgeID = 0xFFFFFFFFFFFFFFFF;
+	edgeID = 0;
 	flow = 0;
 	coverageDepth = 0;
 	listOfReads = listReads;

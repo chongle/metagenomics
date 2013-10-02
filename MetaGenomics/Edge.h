@@ -70,6 +70,9 @@ class Edge{
 												// the listOfReads of the reverse edge is the same reads in reverse order as the forward edge
 												// the listOfOrientations of the reverse edge is reverse complement
 		INT64 edgeID;							// ID of the edge;
+												// this is initialized to 0 for all edges and is assigned in the MatePairGraph's buildMatePairGraph
+												// It's 1, 2, 3 for forward edges and -1, -2, -3 for the corresponding reverse edges
+												// the forward edge is defined to have source read ID < destination read ID; and if the same, compare their memory address (non-deterministic)
 
 
 	public:

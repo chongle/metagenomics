@@ -133,8 +133,12 @@ class OverlapGraph
 
 
 		// Functions related to flow analysis
-		bool calculateBoundAndCost(const Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST); // Calculate bounds and costs of flow for minimum cost flow in the overlap graph.
-		bool calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST); // Calculate bounds and costs of flow for minimum cost flow in the overlap graph.
+		// Calculate bounds and costs of flow for minimum cost flow in the overlap graph.
+		// Set the lower bound of flow to 1 for composite edges containing more than 20 unique reads
+		bool calculateBoundAndCost(const Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST);
+		// set the lower bound of flow to 1 for composite edges with the desired coverage depth and edges with unambiguous mate pair linked to the previous edges
+		bool calculateBoundAndCost2(Edge *edge, INT64* FLOWLB, INT64* FLOWUB, INT64* COST);
+		// this is used by calculateBoundAndCost2 to mark edges that should have minimum flow of 1
 		void markEdgeThatWillHaveOneFlow(void);
 
 		// functions for simplifying the graph. Used in simplifyGraph()
@@ -159,7 +163,7 @@ class OverlapGraph
 		bool buildOverlapGraphFromHashTable(const HashTable & hashTable);			// Build the overlap graph using hashtable.
 
 		// Save and reload the overlap graph
-		void sortEdges();						 // Sort edges of each read based on ID of the destination read.
+		void sortEdges();						 // Sort edges of each read based on ID of the destination read. this is only for ordering edges for convenience in the output file
 		bool readGraphFromFile(string fileName); // Read the graph from a file stored before.
 		bool saveGraphToFile(string fileName);	 // Save the unitig graph to a file. This file can be used to reproduced the graph. Useful to avoid recomputing the graph.
 		bool printGraph(string graphFileName, string contigFileName);	// Store the overlap graph for visual display and also store the contigs/scaffods in a file.
@@ -171,11 +175,11 @@ class OverlapGraph
 		bool simplifyGraph(void);									// Some simple simplification.
 		UINT64 findSupportByMatepairsAndMerge(void);				// Using matepair information find which pair of edges are supported.
 		UINT64 scaffolder(void);									// Construct scaffolds using matepair information.
-		UINT64 scaffolderTemp(void);									// Construct scaffolds using matepair information.
 		UINT64 resolveNodes(void);									// Merge edges based on coverage depth
 
-		bool calculateFlow(string inputFileName, string outputFileName);									// Calculate the minimum cost flow of the overlap graph.
-		bool calculateFlow2(string inputFileName, string outputFileName);
+		// Calculate the minimum cost flow of the overlap graph.
+		bool calculateFlow(string inputFileName, string outputFileName);	// uses calculateBoundAndCost() to set lower bounds
+		bool calculateFlow2(string inputFileName, string outputFileName);	// uses calculateBoundAndCost2() to set lower bounds
 
 
 		vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);

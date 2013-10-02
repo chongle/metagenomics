@@ -49,6 +49,7 @@ typedef long long INT64;
 #define insertSizeRangeSD 3		// 3 means mean +/- 3 SD
 #define	coverageDepthLB 40		// Lower bound of coverage depth for the genome that we want to assemble.
 #define coverageDepthUB 200	// Upper bound of the coverage depth of teh genome that we want to assemble.
+#define minimumReadCountInEdgeWith1MinFlow 20
 
 //	Exit code that displays the place of exit and message.
 #define MYEXIT(a) { cout << endl << "Exit from File: " << __FILE__ << " Line: " << __LINE__ << " Function: " << __FUNCTION__ << "()" << endl << "Message: " << a << endl; exit(0);}
