@@ -54,9 +54,9 @@ class MatePairLinks{
 		 *   matePairCount == pairedReadsInSource.size() == pairedReadsInDestination.size()
 		 */
 		UINT64 matePairCount;
-		vector<Read *> *pairedReadsInSource;
-		vector<Read *> *pairedReadsInDestination;
-		vector<INT64> *gapDistance;		// gap distance according to this pair of reads
+		vector<Read *> pairedReadsInSource;
+		vector<Read *> pairedReadsInDestination;
+		vector<INT64> gapDistance;		// gap distance according to this pair of reads
 		vector<bool> areUniqueReads;	// are both reads in this pair unique to their respective edges
 
 		// the two linked edges have a feasible path between them within the range of gap distance
@@ -76,16 +76,16 @@ class MatePairLinks{
 		bool isTransitive;
 		MatePairLinks(){isTransitive = false;};
 		~MatePairLinks(){}
-		void setVariables(Edge *edge1, Edge *edge2, MatePairOrientationType orient, UINT64 support, INT64 averageGapDistance, vector<Read *> *pairedReadsInSource, vector<Read *> *pairedReadsInDestination, vector<INT64> *gapDistance)
+		void setVariables(Edge *edge1, Edge *edge2, MatePairOrientationType orient, UINT64 support, INT64 averageGapDistance, vector<Read *> pairedReadsInSource, vector<Read *> pairedReadsInDestination, vector<INT64> gapDistance)
 		{source = edge1; revSource = edge1->getReverseEdge() ; destination = edge2; revDestination = edge2->getReverseEdge(); orientation = orient; matePairCount=support;this->averageGapDistance=averageGapDistance; this->pairedReadsInSource = pairedReadsInSource; this->pairedReadsInDestination = pairedReadsInDestination; this->gapDistance = gapDistance;}
 		Edge * getSourceEdge(){return source;}
 		Edge * getDestinationEdge(){return destination;}
 		MatePairOrientationType getOrient() {return orientation;}
 		UINT64 getSupport(){return matePairCount;}
 		INT64 getAverageGapDistance(){return averageGapDistance;}
-		vector<Read *> * getPairedReadsInSource() {return pairedReadsInSource;}
-		vector<Read *> * getPairedReadsInDestination() {return pairedReadsInDestination;}
-		vector<INT64> * getGapDistance() {return gapDistance;}
+		vector<Read *> getPairedReadsInSource() {return pairedReadsInSource;}
+		vector<Read *> getPairedReadsInDestination() {return pairedReadsInDestination;}
+		vector<INT64> getGapDistance() {return gapDistance;}
 
 };
 
