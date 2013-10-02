@@ -65,11 +65,19 @@ int main(int argc, char **argv)
 	overlapGraph->calculateMeanAndSdOfInsertSize();
 	overlapGraph->simplifyGraph(); // NEW: Simplify the graph before the flow.
 
+	// Use this to mark edges of minimum flow 1 based on desired coverage
 	overlapGraph->calculateFlow2(allFileName+"_flow.input", allFileName+"_flow.output");
+
+	// Use this to mark edges of minimum flow 1 based on edge length
+//	overlapGraph->calculateFlow(allFileName+"_flow.input", allFileName+"_flow.output");
+
 	cout << "nodes: " << overlapGraph->getNumberOfNodes() << " edges: " << overlapGraph->getNumberOfEdges() << endl;
 	overlapGraph->printGraph(allFileName+"graph1.gdl", allFileName+"contigs1.fasta");
 
+
 	overlapGraph->removeAllSimpleEdgesWithoutFlow();
+
+	// Remove both simply and composite edge without any flow.
 	overlapGraph->removeAllEdgesWithoutFlow();
 
 

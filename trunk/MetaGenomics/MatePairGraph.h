@@ -92,7 +92,7 @@ class MatePairLinks{
 class MatePairGraph{
 	private:
 		vector< vector<MatePairLinks> > *linkList;
-		vector< Edge *> listOfCompositeEdges;
+		vector< Edge *> listOfEdges;
 
 		void addLink(MatePairLinks mpLink);
 	//	vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);
