@@ -37,14 +37,15 @@ enum markType{
 };
 
 // This structure is used to store list of pair of edges and their support. Used in two function: 1. when we find path by mate-pairs 2. scaffolder.
+// When it's used in the findSupportByMatePairs function, these two edges are adjacent edges supported by all paths between several matepairs
+// When it's used in the scaffolder function, these two edges are linked by multiple matepairs and they are not necesarrily adjacent edges, but they can be
 struct pairedEdges
 {
 
 		/*
 		 *  edge 1 is in front of edge 2 in the sequence
-		 *  CP2: is this right? the reverse of edge2 are in the same orientation as edge1??
-		 *  -----edge1----		-------------
-		 *  --------------		-----edge2---
+		 *  -----edge1----		-----edge2---
+		 *  --------------		-------------
 		 */
 		Edge * edge1;
 		Edge * edge2;
@@ -65,9 +66,15 @@ class OverlapGraph
 
 		UINT16 hashStringLength;									// length of hash string, got it from hashTable.getHashStringLength()
 
-		// CP: the overlap graph is a vector of nodes (i.e. reads) with their vectors of incident edges
-		// CP: the readNumber of a read is equal to the index of the node in this vector. Because readNumber starts from 1, the
-		// CP2: how to iterate through all edges??
+		/*
+		 *  the overlap graph is a vector of nodes (i.e. reads) with their vectors of incident edges
+		 *  the readNumber of a read is equal to the index of the node in this vector. Because readNumber starts from 1, the
+		 *  to iterate through all edges
+		 *		for(UINT64 i = 1; i < graph->size(); i++) // For each read.
+		 *			for(UINT64 j=0; j < graph->at(i)->size(); j++) // For each edge
+		 *				Edge * edge = graph->at(i)->at(j);
+		 */
+
 		vector< vector<Edge *> * > *graph;							// Adjacency list of the graph.
 		UINT64 numberOfNodes;										// Number of nodes in the overlap graph.
 		UINT64 numberOfEdges;										// Number of edges in the overlap graph.
@@ -172,7 +179,8 @@ class OverlapGraph
 
 
 		vector<Edge *> * getListOfFeasibleEdges(const Edge *edge);
-		UINT64 checkForScaffold(const Edge *edge1, const Edge *edge2, INT64 *gapDistance);
+		UINT64 checkForScaffold(const Edge *edge1, const Edge *edge2, INT64 *averageGapDistance);
+		UINT64 checkForScaffold(const Edge *edge1, const Edge *edge2, INT64 *averageGapDistance, vector<Read *> * pairedReadsInSource, vector <Read *> *pairedReadsInDestination, vector<INT64> *gapDistance);
 
 		UINT64 removeAllSimpleEdgesWithoutFlow();						// Not used. Only for testing.
 		UINT64 removeAllEdgesWithoutFlow();						// Not used. Only for testing.

@@ -61,7 +61,9 @@ int main(int argc, char **argv)
 		overlapGraph->sortEdges();
 		overlapGraph->saveGraphToFile(allFileName+".unitig");
 	}
+
 	overlapGraph->calculateMeanAndSdOfInsertSize();
+	overlapGraph->simplifyGraph(); // NEW: Simplify the graph before the flow.
 
 	overlapGraph->calculateFlow2(allFileName+"_flow.input", allFileName+"_flow.output");
 	cout << "nodes: " << overlapGraph->getNumberOfNodes() << " edges: " << overlapGraph->getNumberOfEdges() << endl;

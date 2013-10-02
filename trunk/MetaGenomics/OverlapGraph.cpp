@@ -740,8 +740,9 @@ UINT64 OverlapGraph::contractCompositePaths(void)
 		{
 			Edge *edge1 = graph->at(index)->at(0);  // First edge.
 			Edge *edge2 = graph->at(index)->at(1);  // Second Edge.
-			if(flowComputed == true || !isEdgePresent(edge1->getDestinationRead()->getReadNumber(), edge2->getDestinationRead()->getReadNumber()))
-							// Before flow is computed we do not insert multiple edges between the same endpoints.
+			// NEW: Will allow multiple edges between two nodes even before the flow.
+			//if(flowComputed == true || !isEdgePresent(edge1->getDestinationRead()->getReadNumber(), edge2->getDestinationRead()->getReadNumber()))
+				// Before flow is computed we do not insert multiple edges between the same endpoints.
 				// CP: Before flow is computed (flowComputed == false), why checking if there is an edge between the two destination reads?
 				// BH: Before the flow is computed we do not want to insert multiple edges between the same nodes. This condition is required for CS2 minimum Cost flow algorithm
 				// CP: Why the destination reads, not the source reads??
@@ -2961,7 +2962,7 @@ string OverlapGraph::getStringInEdge(const Edge *edge)
 	}
 	else
 	{
-		// CP2: what's done here, if it's composite edge???
+		// if it's a composite edge, add the string of the destination read
 		substringLength = edge->getReverseEdge()->getListOfOverlapOffsets()->at(0);
 		returnString = returnString + destinationRead.substr(destinationRead.length() - substringLength, substringLength);
 	}
@@ -2976,6 +2977,11 @@ string OverlapGraph::getStringInEdge(const Edge *edge)
 UINT64 OverlapGraph::reduceTrees(void)
 {
 	CLOCKSTART;
+	if(this->flowComputed == false)
+	{
+		cout << "Flow not computed." << endl;
+			return 0;
+	}
 	UINT64 NumOfInEdges, NumOfOutEdges, inFlow, outFlow, nodeMerged = 0;
 	vector <Edge *> listOfInEdges, listOfOutEdges;
 	for(UINT64 i = 0; i < graph->size(); i++)					// For each node in the graph
@@ -3229,10 +3235,10 @@ vector<Edge *> * OverlapGraph::getListOfFeasibleEdges(const Edge *edge)
  	 CP: *distance is actually the sum of the distances measured by all matepairs. this would be easier to understand if it's the average distance
 ***********************************************************************************************************************/
 
-UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2, INT64 *gapDistance)
+UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2, INT64 *averageGapDistance)
 {
 	UINT64 support = 0,dist = 0;
-	*gapDistance = 0;
+	*averageGapDistance = 0;
 	Edge *rEdge1 = edge1->getReverseEdge();
 	vector<Edge *> *listRead1, *listRead2;		//  This is the lists of edges that contain read1 and read2
 	vector<UINT64> *locationOnEdgeRead1, *locationOnEdgeRead2;
@@ -3276,16 +3282,82 @@ UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2, INT6
 				// if there are already in the same edge, don't do anything
 				if(listRead1->at(0) == listRead2->at(0) ||  listRead1->at(0) == listRead2->at(0)->getReverseEdge()) // Not on the same edge
 					continue;
-				*gapDistance += (INT64)((INT64)(getMean(datasetNumber))- (INT64)(dist));
+				*averageGapDistance += (INT64)((INT64)(getMean(datasetNumber))- (INT64)(dist));
 				support++;
 			}
 		}
 	}
 	if(support)
-		*gapDistance = (INT64)(*gapDistance/(INT64)(support));
+		*averageGapDistance = (INT64)(*averageGapDistance/(INT64)(support));
 	return support;
 }
 
+
+
+/**********************************************************************************************************************
+ 	 Overloading the function checkForScaffold
+ 	 This function also retruns the paired end reads and their distances in the input vector pointers.
+***********************************************************************************************************************/
+
+UINT64 OverlapGraph::checkForScaffold(const Edge *edge1, const Edge *edge2, INT64 *averageGapDistance, vector<Read *> * pairedReadsInSource, vector <Read *> *pairedReadsInDestination, vector<INT64> *gapDistance)
+{
+	UINT64 support = 0,dist = 0;
+	*averageGapDistance = 0;
+	Edge *rEdge1 = edge1->getReverseEdge();
+	vector<Edge *> *listRead1, *listRead2;		//  This is the lists of edges that contain read1 and read2
+	vector<UINT64> *locationOnEdgeRead1, *locationOnEdgeRead2;
+	// CP: listOfReads contains all the reads in the end section of edge1
+	vector<UINT64> listOfReads;
+	for(UINT64 i = 0; i <rEdge1->getListOfReads()->size(); i++)
+	{
+		dist+=rEdge1->getListOfOverlapOffsets()->at(i);
+		if(dist>2*longestMeanOfInsertSize)
+			 break;
+		listOfReads.push_back(rEdge1->getListOfReads()->at(i));
+	}
+	for(UINT64 i = 0; i < listOfReads.size(); i++)
+	{
+		Read *read1 = dataSet->getReadFromID(listOfReads.at(i));
+		for(UINT64 j = 0; j < read1->getMatePairList()->size(); j++)// For each matepair
+		{
+			Read *read2 = dataSet->getReadFromID(read1->getMatePairList()->at(j).matePairID);	// Get the read object of the matepair.
+			//if(read1->getReadNumber() > read2->getReadNumber()) // To avoid duplicate computation
+				//	continue;
+			UINT64 orient = read1->getMatePairList()->at(j).matePairOrientation;		// Get the matepair orientation
+			UINT64 datasetNumber = read1->getMatePairList()->at(j).datasetNumber;		// Get the dataset number
+
+			// 0 = 00 means the reverse of r1 and the reverse of r2 are matepairs.
+			// 1 = 01 means the reverse of r1 and the forward of r2 are matepairs.
+			// 2 = 10 means the forward of r1 and the reverse of r2 are matepairs.
+			// 3 = 11 means the forward of r1 and the forward of r2 are matepairs.
+			// To calculate distance of forward read, flip the read and get the location of the offset.
+			listRead1 = (orient == 0 || orient == 1) ? read1->getListOfEdgesForward() : read1->getListOfEdgesReverse();
+			locationOnEdgeRead1 = (orient == 0 || orient == 1) ? read1->getLocationOnEdgeForward() : read1->getLocationOnEdgeReverse();
+			// To calculate distance of reverse read, flip the read and get the location of the offset.
+			listRead2 = (orient == 0 || orient == 2) ? read2->getListOfEdgesForward() : read2->getListOfEdgesReverse();
+			locationOnEdgeRead2 = (orient == 0 || orient == 2) ? read2->getLocationOnEdgeForward() : read2->getLocationOnEdgeReverse();
+			// Only consider uniquely mapped reads and the distance is less than mean+3*SD
+			if( listRead1->size() == 1 && listRead2->size() == 1 && listRead1->at(0) == edge1->getReverseEdge()
+					&& listRead2->at(0) == edge2
+					&& locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) < (getMean(datasetNumber) + insertSizeRangeSD * getSD(datasetNumber)) )
+				// Both the reads are present on only on edge and the distance is less that mean+3*sd
+			{
+				dist = locationOnEdgeRead1->at(0) + locationOnEdgeRead2->at(0) + read1->getReadLength() ;
+				// if there are already in the same edge, don't do anything
+				if(listRead1->at(0) == listRead2->at(0) ||  listRead1->at(0) == listRead2->at(0)->getReverseEdge()) // Not on the same edge
+					continue;
+				*averageGapDistance += (INT64)((INT64)(getMean(datasetNumber))- (INT64)(dist));
+				pairedReadsInSource->push_back(read1);
+				pairedReadsInDestination->push_back(read2);
+				gapDistance->push_back((INT64)((INT64)(getMean(datasetNumber))- (INT64)(dist)));
+				support++;
+			}
+		}
+	}
+	if(support)
+		*averageGapDistance = (INT64)(*averageGapDistance/(INT64)(support));
+	return support;
+}
 
 
 
@@ -3651,15 +3723,14 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 	edgeForward->setReverseEdge(edgeReverse);	// set the pointer of reverse edge
 	edgeReverse->setReverseEdge(edgeForward);	// set the pointer of reverse edge
 
-	// CP2: why are coverage of edges updated here?? We should  re-calculate the coverage of the whole graph when we need this info
 
 	UINT16 flow = min(edge1->flow,edge2->flow);	// Take the minimum of the flow from the two original edges.
-	UINT64 coverage = min(edge1->coverageDepth, edge2->coverageDepth);	// not used
+//	UINT64 coverage = min(edge1->coverageDepth, edge2->coverageDepth);	// not used
 	edgeForward->flow = flow;	// set the flow in the forward edge.
-	edgeForward->coverageDepth = coverage;
+//	edgeForward->coverageDepth = coverage;
 
 	edgeReverse->flow = flow;	// set the flow in the reverse edge.
-	edgeReverse->coverageDepth = coverage;
+//	edgeReverse->coverageDepth = coverage;
 
 	//if(flowComputed && flow == 0 && edgeForward->getOverlapOffset() > 1000)
 	//{
@@ -3671,13 +3742,13 @@ bool OverlapGraph::mergeEdgesDisconnected(Edge *edge1, Edge *edge2, UINT64 gapLe
 
 	edge1->flow = edge1->flow - flow;		// decrease the flow in the original edge.
 	edge1->getReverseEdge()->flow = edge1->getReverseEdge()->flow - flow; // decrease the flow in the original edge.
-	edge1->coverageDepth = edge1->coverageDepth - coverage;
-	edge1->getReverseEdge()->coverageDepth = edge1->getReverseEdge()->coverageDepth - coverage;
+//	edge1->coverageDepth = edge1->coverageDepth - coverage;
+//	edge1->getReverseEdge()->coverageDepth = edge1->getReverseEdge()->coverageDepth - coverage;
 
 	edge2->flow = edge2->flow - flow; // decrease the flow in the original edge.
 	edge2->getReverseEdge()->flow = edge2->getReverseEdge()->flow - flow; // decrease the flow in the original edge.
-	edge2->coverageDepth = edge2->coverageDepth - coverage;
-	edge2->getReverseEdge()->coverageDepth = edge2->getReverseEdge()->coverageDepth - coverage;
+//	edge2->coverageDepth = edge2->coverageDepth - coverage;
+//	edge2->getReverseEdge()->coverageDepth = edge2->getReverseEdge()->coverageDepth - coverage;
 
 	if(edge1->flow == 0 || flow == 0)	// Remove the edge1 if the flow is used.
 		removeEdge(edge1);
@@ -3805,17 +3876,23 @@ UINT64 OverlapGraph::removeSimilarEdges(void)
 								if( editDistance < min(e1->getOverlapOffset(), e2->getOverlapOffset())/20 )
 								{
 									UINT64 l;
+									getBaseByBaseCoverage(e1);
+									getBaseByBaseCoverage(e2);
+									if(e1->coverageDepth < e2->coverageDepth) // Will swap the edges based on coverage depth.
+									{
+										Edge *temp = e1;
+										e1 = e2;
+										e2 = temp;
+									}
 									for(l= 0; l <  listOfEdges1.size(); l++)	// Already in the list.
 									{
-										if(listOfEdges2.at(l) ==  e2 || listOfEdges2.at(l) == e1) // check if the edges are already used.
+										if(listOfEdges2.at(l) == e1 || listOfEdges2.at(l) ==  e2) // check if the edges are already used.
 											break;
 									}
 									if(l ==  listOfEdges1.size())				// Not in the list. Add it in the list.
 									{
-										// CP2: this seems to pick a random edge to be removed
-										// CP2: Should change to remove the edge with higher coverage?? since the one with low coveragew will be more likely to be an error
-										listOfEdges1.push_back(e1);				// We will keep this edge.
-										listOfEdges2.push_back(e2);				// This edge will be deleted and the flow will be moved to the first edge.
+										listOfEdges1.push_back(e1);					// We will keep this edge.
+										listOfEdges2.push_back(e2);					// This edge will be deleted and the flow will be moved to the first edge.
 										listOfEditDistance.push_back(editDistance);	// Also store the edit distance.
 									}
 								}
@@ -3959,24 +4036,6 @@ UINT64 OverlapGraph::resolveNodes(void)
 	return counter;
 }
 
-
-// CP2: where are they used? Should they be removed?
-
-struct stackElement
-{
-	Edge * edge;
-	UINT64 distance;
-};
-
-struct overlappingReads
-{
-	Edge *edge;
-	UINT64 readID;
-	UINT64 distance;
-};
-
-
-
 /**********************************************************************************************************************
 	Calculate the coverage depth of an edge for every basepair and then update the Mean and SD of coverage depth in
 	the edge. Only consider reads that are unique to the edge.
@@ -4088,6 +4147,11 @@ void OverlapGraph::sortEdges()
 UINT64 OverlapGraph::reduceLoops(void)
 {
 	CLOCKSTART;
+	if(this->flowComputed == false)
+	{
+		cout << "Flow not computed." << endl;
+		return 0;
+	}
 	UINT64 counter = 0;
 	Edge *ab,*bb,*bc;
 	for(UINT64 i = 1; i < graph->size(); i++)
