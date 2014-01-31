@@ -30,69 +30,40 @@ int main(int argc, char **argv)
 	string allFileName;
 	bool startFromUnitigGraph = false;
 	parseArguments(argc, argv, pairedEndFileNames, singleEndFileNames, allFileName, minimumOverlapLength, startFromUnitigGraph);
-	Dataset *dataSet;
+	Dataset *dataSet = new Dataset(pairedEndFileNames, singleEndFileNames, minimumOverlapLength);
 	OverlapGraph *overlapGraph;
 /*
 	if(startFromUnitigGraph) // Read the graph from unitig file
 	{
 		overlapGraph = new OverlapGraph();
-		dataSet = new Dataset(pairedEndFileNames, singleEndFileNames, minimumOverlapLength);
-		//dataSet=new Dataset();
-				
-		// Ted: Read the mate-pair information here.
-		// Without using the unitig graph, the mate-pair infomation was retrieved again after markContainedReads() in buildOverlapGraphFromHashTable().
-        // Only mate-pair information reload is enough to work with unitig graph??
-		// Ted: BH changed the setDataset to not reload the mate-pair information.
-		// He added it to the unitig graph.
 		overlapGraph->setDataset(dataSet);
-		// Ted: -s option does not get argument.
-		// unitig graph filename prefix should be same to the all output filename prefix.
-		//yingfeng begin
-		
 		//overlapGraph->readGraphFromFile(allFileName+".unitig");
 		overlapGraph->readGraphFromFastaFile(allFileName+".overlapgraph.fasta");
-		
-		// yingfeng end
 		overlapGraph->sortEdges();
 	}
 	else // Build the graph from the scratch
 	{
-		dataSet = new Dataset(pairedEndFileNames, singleEndFileNames, minimumOverlapLength);
 		HashTable *hashTable=new HashTable();
 		hashTable->insertDataset(dataSet, minimumOverlapLength);
-		//overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
+		
 		overlapGraph = new OverlapGraph();
 		overlapGraph->buildOverlapGraphFromHashTable(*hashTable);
-		delete hashTable;
-		//dataSet->saveReads(allFileName+"_sortedReads.fasta");
+		
+		//overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
+		dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		overlapGraph->sortEdges();
 		overlapGraph->saveGraphToFile(allFileName+".unitig");
 		overlapGraph->saveGraphToFastaFile(allFileName+".overlapgraph.fasta");
 	}
 
+	overlapGraph->calculateFlow(allFileName+"_flow.input", allFileName+"_flow.output");
+	cout << "nodes: " << overlapGraph->getNumberOfNodes() << " edges: " << overlapGraph->getNumberOfEdges() << endl;
+	overlapGraph->printGraph(allFileName+"graph1.gdl", allFileName+"contigs1.fasta");
+
+	overlapGraph->removeAllSimpleEdgesWithoutFlow();
+
 	overlapGraph->calculateMeanAndSdOfInsertSize();
-	overlapGraph->simplifyGraph(); // NEW: Simplify the graph before the flow.
 
-	bool stableVersion = false;
-	if(!stableVersion)
-	{
-		// Use this to mark edges of minimum flow 1 based on desired coverage
-		overlapGraph->calculateFlow2(allFileName+"_flow.input", allFileName+"_flow.output");
-		cout << "nodes: " << overlapGraph->getNumberOfNodes() << " edges: " << overlapGraph->getNumberOfEdges() << endl;
-		overlapGraph->printGraph(allFileName+"graph1.gdl", allFileName+"contigs1.fasta");
-		overlapGraph->removeAllSimpleEdgesWithoutFlow();
-		// Remove both simply and composite edge without any flow.
-		overlapGraph->removeAllEdgesWithoutFlow();
-	}
-	else
-	{
-		// Use this to mark edges of minimum flow 1 based on desired coverage
-		overlapGraph->calculateFlow(allFileName+"_flow.input", allFileName+"_flow.output");
-		cout << "nodes: " << overlapGraph->getNumberOfNodes() << " edges: " << overlapGraph->getNumberOfEdges() << endl;
-		overlapGraph->printGraph(allFileName+"graph1.gdl", allFileName+"contigs1.fasta");
-		overlapGraph->removeAllSimpleEdgesWithoutFlow();
-
-	}
 
 
 	do
@@ -106,38 +77,18 @@ int main(int argc, char **argv)
 		counter = overlapGraph->findSupportByMatepairsAndMerge();
 	} while (counter > 0 && iteration < loopLimit); // To avoid infinite loops
 
-	// write the new overlap graph file
-	// overlapGraph->saveGraphToFile(allFileName+".unitig");
-	// restart from the overlap graph from this point
-	/*
-	overlapGraph = new OverlapGraph();
-	dataSet=new Dataset();
-	overlapGraph->setDataset(dataSet);
-	overlapGraph->readGraphFromFile(allFileName+".unitig");
-	overlapGraph->sortEdges();
-	*/
-
-
-/*	overlapGraph->printGraph(allFileName+"graph2.gdl", allFileName+"contigs2.fasta");
+	overlapGraph->printGraph(allFileName+"graph2.gdl", allFileName+"contigs2.fasta");
 	overlapGraph->saveGraphToFastaFile(allFileName+".overlapgraph2.fasta");
-	
-	*/
+*/
 //
 		overlapGraph = new OverlapGraph();
-		dataSet = new Dataset(pairedEndFileNames, singleEndFileNames, minimumOverlapLength);
 		overlapGraph->setDataset(dataSet);
 		//overlapGraph->readGraphFromFile(allFileName+".unitig");
 		overlapGraph->readGraphFromFastaFile(allFileName+".overlapgraph2.fasta");
 		overlapGraph->sortEdges();
-
-
-
 //
-	
-	
+
 	iteration = 0;
-	
-	
 	do
 	{
 		// Scaffolder
@@ -150,7 +101,6 @@ int main(int argc, char **argv)
 
 	} while (counter > 0 && iteration < loopLimit);// To avoid infinite loops
 
-	// CP: write the new overlap graph file and test restarting from the overlap graph from this point
 	overlapGraph->printGraph(allFileName+"graph3.gdl", allFileName+"contigs3.fasta");
 
 	iteration = 0;
@@ -186,7 +136,7 @@ void parseArguments(int argc, char **argv, vector<string> & pairedEndFileNames, 
 	startFromUnitigGraph = false;
 	vector<string> argumentsList;
 	cout << "PRINTING ARGUMENTS" << endl;
-	for(int i = 0; i < argc; i++)
+	for(UINT64 i = 0; i < argc; i++)
 	{
 		cout << argv[i] << ' ';
 	}
@@ -196,7 +146,7 @@ void parseArguments(int argc, char **argv, vector<string> & pairedEndFileNames, 
 
 	if(argumentsList.size() == 1)
 	{
-		cerr << endl << "Usage: MetaGenomics [OPTION]...[PRARAM]..." << endl;
+		cerr << endl << "Usage: omega [OPTION]...[PRARAM]..." << endl;
 		cerr << "  -pe\tnumber of files and paired-end file names" <<endl; 			// Paired-end file name in fasta/fastq format. mate pairs should be one after another in the file.
 		cerr << "  -se\tnumber of files and single-end file names" <<endl; 			// Single-end file name in fasta/fastq format.
 		cerr << "  -f\tAll file name prefix" <<endl; 			// all output file with have this name with different extensions.
