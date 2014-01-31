@@ -153,10 +153,6 @@ class OverlapGraph
 
 		string getStringInEdge(const Edge *edge);							// Get the string in an edge by overlapping the ordered reads in the edge.
 
-		//yingfeng's code begin
-		void saveGraphToFastaFile();
-		void readGraphFromFastaFile();
-		//yingfeng's code end
 	public:
 
 		OverlapGraph(void);											// Default constructor.
@@ -193,6 +189,11 @@ class OverlapGraph
 		UINT64 removeAllSimpleEdgesWithoutFlow();						// Not used. Only for testing.
 		UINT64 removeAllEdgesWithoutFlow();						// Not used. Only for testing.
 		vector< vector<Edge *> * > * getGraph() {return graph;};
+		
+		//yingfeng's code begin
+		bool saveGraphToFastaFile(string fileName);
+		bool readGraphFromFastaFile(string fileName);
+		//yingfeng's code end
 
 };
 
