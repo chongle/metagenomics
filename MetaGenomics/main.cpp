@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 	overlapGraph->calculateMeanAndSdOfInsertSize();
 	overlapGraph->simplifyGraph(); // NEW: Simplify the graph before the flow.
 
-	bool stableVersion = false;
+	bool stableVersion = true;
 	if(!stableVersion)
 	{
 		// Use this to mark edges of minimum flow 1 based on desired coverage

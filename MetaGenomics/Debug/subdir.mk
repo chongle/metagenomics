@@ -7,6 +7,7 @@ CPP_SRCS += \
 ../Dataset.cpp \
 ../Edge.cpp \
 ../HashTable.cpp \
+../MatePairGraph.cpp \
 ../OverlapGraph.cpp \
 ../Read.cpp \
 ../main.cpp 
@@ -15,6 +16,7 @@ OBJS += \
 ./Dataset.o \
 ./Edge.o \
 ./HashTable.o \
+./MatePairGraph.o \
 ./OverlapGraph.o \
 ./Read.o \
 ./main.o 
@@ -23,6 +25,7 @@ CPP_DEPS += \
 ./Dataset.d \
 ./Edge.d \
 ./HashTable.d \
+./MatePairGraph.d \
 ./OverlapGraph.d \
 ./Read.d \
 ./main.d 
