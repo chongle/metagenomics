@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 	parseArguments(argc, argv, pairedEndFileNames, singleEndFileNames, allFileName, minimumOverlapLength, startFromUnitigGraph);
 	Dataset *dataSet;
 	OverlapGraph *overlapGraph;
-/*
+
 	if(startFromUnitigGraph) // Read the graph from unitig file
 	{
 		overlapGraph = new OverlapGraph();
@@ -50,6 +50,7 @@ int main(int argc, char **argv)
 		//yingfeng begin
 		
 		//overlapGraph->readGraphFromFile(allFileName+".unitig");
+		// yingfeng: the following line is for reading the Unitig graph
 		overlapGraph->readGraphFromFastaFile(allFileName+".overlapgraph.fasta");
 		
 		// yingfeng end
@@ -67,6 +68,7 @@ int main(int argc, char **argv)
 		//dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		overlapGraph->sortEdges();
 		overlapGraph->saveGraphToFile(allFileName+".unitig");
+		//yingfeng: the following line is to generate unitig graph
 		overlapGraph->saveGraphToFastaFile(allFileName+".overlapgraph.fasta");
 	}
 
@@ -117,12 +119,14 @@ int main(int argc, char **argv)
 	overlapGraph->sortEdges();
 	*/
 
-
-/*	overlapGraph->printGraph(allFileName+"graph2.gdl", allFileName+"contigs2.fasta");
+// generate
+	overlapGraph->printGraph(allFileName+"graph2.gdl", allFileName+"contigs2.fasta");
+//yingfeng: the following line is to generate graph of contigs
 	overlapGraph->saveGraphToFastaFile(allFileName+".overlapgraph2.fasta");
 	
-	*/
-//
+	
+// Yingfeng: the following part is used to verify that readGraphFromFastaFile() function works 
+/*
 		overlapGraph = new OverlapGraph();
 		dataSet = new Dataset(pairedEndFileNames, singleEndFileNames, minimumOverlapLength);
 		overlapGraph->setDataset(dataSet);
@@ -130,7 +134,7 @@ int main(int argc, char **argv)
 		overlapGraph->readGraphFromFastaFile(allFileName+".overlapgraph2.fasta");
 		overlapGraph->sortEdges();
 
-
+*/
 
 //
 	
