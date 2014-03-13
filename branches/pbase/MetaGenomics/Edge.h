@@ -53,6 +53,7 @@ class Edge{
 												//	v       GGGATTATACCATCGAGATTCAAT
 												// CP: what about a composite edge? from the beginning of the first read to the beginning of the last read?
 												// BH: Yes. Froom the beginning of the first read, u, to the beginning of the last read, v, for composite edge.
+												// Yingfeng is confused on this part.
 
 		vector<UINT64> * listOfReads; 			// List of ordered reads in the current edge. NOT including u and v.
 		vector<UINT16> * listOfOverlapOffsets; 	// List of overlap offsets of the ordered reads in the current edge.

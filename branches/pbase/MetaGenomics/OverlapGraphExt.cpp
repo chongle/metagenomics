@@ -20,29 +20,38 @@ bool OverlapGraph::saveGraphToFastaFile(string fileName)
 	{
 	    for(j = 0; j < graph->at(i)->size(); j++)
 	    {
+	    	// for each edge
 		e = graph->at(i)->at(j);
 		source = e->getSourceRead()->getReadNumber();
 		destination = e->getDestinationRead()->getReadNumber();
 		if(source < destination || (source == destination && e < e->getReverseEdge()))
 		{
+			// sequence ID start from 0 and increment for each edge
 		    filePointer<<">"<<iSeqId;
+		    // print the read ID of source read and destination read
 		    filePointer<<"\t"<<source<<","<<destination;
+		    // print the orientation and offset and flow and coverage of the edge
 		    filePointer<<","<<(int)(e->getOrientation())<<","<<e->getOverlapOffset();
 		    filePointer<<","<<e->flow<<","<<e->coverageDepth;
 		    filePointer<<",(";
 		    for(k = 0; k < e->getListOfReads()->size(); k++)
 		    {
-			if (k > 0)
+			// skip the first read, because you don't need to print comma
+		    if (k > 0)
 			    filePointer<<",";
+	    	// go each contained read in this composite edge
+		    // print read number, overlap offset and orientation
 			filePointer<<"("<<e->getListOfReads()->at(k);
 			filePointer<<","<<e->getListOfOverlapOffsets()->at(k);
 			filePointer<<","<<(int)(e->getListOfOrientations()->at(k))<<")";
 		    }
 		    filePointer<<")"<<endl;	
+		    // print out the sequence of the edge, but this is not used by the read function
 		    sSeq = getStringInEdge(e);
 		    start = 0;
 		    do
 		    {
+		    	// print 100 bases in a line
 			filePointer<<sSeq.substr(start, 100)<<endl;
 			start += 100;
 		    } while (start < sSeq.length());
@@ -64,6 +73,8 @@ template <typename T> T transferStr(string & inputStr)
     return target;
 }
 
+// sMajorEdgeInfo = "113277,179601,3,446606,0,0"
+// source = 113277, destination = 179601, orientation =3, overlapOffset = 446606, flow =0, coverageDepth =0
 void parseMajorEdgeInfo(const string & sMajorEdgeInfo, UINT64 & source, UINT64 & destination,
 			UINT64 & orientation, UINT64 & overlapOffset, UINT64 & flow,
 			UINT64 & coverageDepth)
@@ -118,6 +129,7 @@ void parseAnElement(const string & sInternalElement, vector<UINT64> *listReads,
     listOrientations->push_back(currentOrientation);
 }
 
+// length is the length of the edge
 void parseCompositionEdgeInfo(const string & sCompositionEdge, vector<UINT64> *listReads, 
 			      vector<UINT16> *listOverlapOffsets, vector<UINT8> *listOrientations,
 			      UINT64 & length)
@@ -132,6 +144,7 @@ void parseCompositionEdgeInfo(const string & sCompositionEdge, vector<UINT64> *l
 	{
 	    iPos2 = sRestStr.find(")", iPos1+1);
 	    sInternalElement = sRestStr.substr(iPos1+1, iPos2-iPos1-1);
+	    // populate the vectors in this function
 	    parseAnElement(sInternalElement, listReads, listOverlapOffsets, listOrientations, length);
 	    sRestStr = sRestStr.substr(iPos2+1);
 	    iPos1 = sRestStr.find("(");
@@ -158,6 +171,7 @@ UINT8 twinEdgeOrientation(UINT8 orientation) // copy from OverLapgraph.cpp
 
 void parseEdgeInfo(const string & sEdgeInfo, Dataset * dataSet, Edge *edgeForward, Edge *edgeReverse)
 {
+	// variables to be populated from sEdgeInfo
     UINT64 source, destination, orientation, overlapOffset, flow, coverageDepth;
     string sMajorEdgeInfo, sCompositionEdge;
     size_t iPos;
@@ -170,21 +184,35 @@ void parseEdgeInfo(const string & sEdgeInfo, Dataset * dataSet, Edge *edgeForwar
     vector<UINT8> *listOrientationsReverse = new vector<UINT8>;
     UINT64 length = 0, size, j, length1, length2, overlapOffsetForward, revereseOverlap;
     UINT64 revereseOverlapOffset;
+
+    // sEdgeInfo = "113277,179601,3,446606,0,0,((194758,3,0),(143828,1,0), ...."
     iPos = sEdgeInfo.find("(");
+
+    // sMajorEdgeInfo = "113277,179601,3,446606,0,0"
     sMajorEdgeInfo = sEdgeInfo.substr(0, iPos-1);
+    // sCompositionEdge = "((194758,3,0),(143828,1,0), ...."
     sCompositionEdge = sEdgeInfo.substr(iPos+1, sEdgeInfo.length()-iPos-2);
+
+    // example return:
+    // source = 113277, destination = 179601, orientation =3, overlapOffset = 446606, flow =0, coverageDepth =0
     parseMajorEdgeInfo(sMajorEdgeInfo, source, destination, orientation, overlapOffset,
 		       flow, coverageDepth);
+
+    // parse the reads and get overlap, orientation and length of the whole edge
     parseCompositionEdgeInfo(sCompositionEdge, listReads, listOverlapOffsets, listOrientations, length);
+
+    // get the pointers for source and destination
     read1 = dataSet->getReadFromID(source);
     read2 = dataSet->getReadFromID(destination);
     size = listReads->size();
     for(j = 0; j < size; j++)
     {
+    	// populate reverse edge that goes from destination to source
 	listReadsReverse->push_back(listReads->at(size-j-1));
 	if(j == 0) // last/first read
 	{
 	    length1 = read2->getReadLength();
+	    // calculate overlap forward on the original edge
 	    overlapOffsetForward = overlapOffset - length;
 	}
 	else // any read within the edge
@@ -224,8 +252,11 @@ bool OverlapGraph::readGraphFromFastaFile(string fileName)
     
     if (filePointer == NULL)
 	MYEXIT("Unable to open file: "+fileName);
+    // create an empty graph
     graph = new vector< vector<Edge *> * >;
     graph->reserve(dataSet->getNumberOfUniqueReads()+1);
+
+    // initiaze the edges in the graph
     for(i = 0; i <= dataSet->getNumberOfUniqueReads(); i++) // initialize the list
     {
 	vector<Edge *> *newList = new vector<Edge *>;
@@ -233,13 +264,20 @@ bool OverlapGraph::readGraphFromFastaFile(string fileName)
     }
     while (! filePointer.eof() )
     {
+    	// get a line at a time.
 	getline(filePointer, sCurrentLine);
 	if ((sCurrentLine != "") && (sCurrentLine.at(0)=='>'))
 	{
+		// get the header line startin with >
+		// e.g. the header line is  ">0  113277,179601,3,446606,0,0,((194758,3,0),(143828,1,0), ...."
 	    iPos = sCurrentLine.find("\t", 2);
+	    // sEdgeInfo = "113277,179601,3,446606,0,0,((194758,3,0),(143828,1,0), ...."
 	    sEdgeInfo = sCurrentLine.substr(iPos+1);
 	    edgeForward = new Edge();
 	    edgeReverse = new Edge();
+
+	    // dataSet is populated already
+	    // this function populate edgeForward, edgeReverse
 	    parseEdgeInfo(sEdgeInfo, dataSet, edgeForward, edgeReverse);
 	    insertEdge(edgeForward);
 	    insertEdge(edgeReverse);
