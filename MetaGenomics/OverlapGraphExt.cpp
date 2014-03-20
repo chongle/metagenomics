@@ -1,8 +1,53 @@
 
 #include "Common.h"
 #include "OverlapGraph.h"
+
 //#include "CS2/cs2.h"
 
+void saveReadsToFastaFile(ofstream& filePointer, Dataset * dataSet, bool flowComputed, const vector<INT64>& meanOfInsertSizes,
+			  const vector<INT64>& sdOfInsertSizes, const vector< vector<Edge *> * > *graph)
+{
+    UINT64 i, j;//, start;
+    string sSeqRead;
+    filePointer<<">-2\t"; // "-2" indicates general information
+    filePointer<<dataSet->getNumberOfUniqueReads()<<","<<(int)(flowComputed)<<",";
+    filePointer<<dataSet->numberOfPairedDatasets<<","<<meanOfInsertSizes.size()<<",(";
+    for (i=0; i< meanOfInsertSizes.size();i++)
+    {
+	if (i>0)
+	    filePointer<<",";
+	filePointer <<"(" <<meanOfInsertSizes.at(i) <<","<< sdOfInsertSizes.at(i) <<")";
+    }
+    filePointer<<")"<<endl;
+    filePointer<<"NoSeq"<<endl;
+    for(i = 1; i < graph->size(); i++)
+    {
+	filePointer<<">-1\t"; // -1 indicates reads
+	Read *r = dataSet->getReadFromID(i);
+	filePointer << r->getReadNumber() <<"," << r->superReadID<<","<<r->getFrequency();
+	filePointer << "," << r->getMatePairList()->size() << ",(";
+	for (j=0; j< r->getMatePairList()->size(); j++ )
+	{
+	    if (j>0)
+		filePointer << ",";
+	    filePointer <<"(" <<r->getMatePairList()->at(j).matePairID<<",";
+	    filePointer <<(int)(r->getMatePairList()->at(j).matePairOrientation) << ",";
+	    filePointer <<(int)(r->getMatePairList()->at(j).datasetNumber) << ")";
+	}
+	filePointer<<")"<<endl;
+	sSeqRead = r->getStringForward();
+	filePointer<<sSeqRead<<endl;
+//	start = 0;
+//	do
+//	{
+		// print 100 bases in a line
+//	    filePointer<<sSeqRead.substr(start, 100)<<endl;
+//	    start += 100;
+//	} while (start < sSeqRead.length());
+    }
+    filePointer<<">-3\t"<<endl; // -3 end
+    filePointer<<"ENDREAD"<<endl;
+}
 
 bool OverlapGraph::saveGraphToFastaFile(string fileName)
 {
@@ -14,6 +59,7 @@ bool OverlapGraph::saveGraphToFastaFile(string fileName)
     if(filePointer == NULL)
 	MYEXIT("Unable to open file: "+fileName);
 
+    saveReadsToFastaFile(filePointer, dataSet, flowComputed, meanOfInsertSizes, sdOfInsertSizes, graph);
     for (i=0; i< graph->size(); i++)
     {
 	if(!graph->at(i)->empty())
@@ -241,9 +287,99 @@ void parseEdgeInfo(const string & sEdgeInfo, Dataset * dataSet, Edge *edgeForwar
     edgeReverse->coverageDepth = coverageDepth; //by yingfeng
 }
 
+void parseGeneralInfo(const string & sGenernal, Dataset * dataSet, bool & flowComputed, 
+		      vector<INT64> & meanOfInsertSizes, vector<INT64> & sdOfInsertSizes)
+{
+    size_t iPosBeg, iPosEnd, iFirstSep;
+    UINT64 numOfUniqueRead,numOfMatePairDataset,tempValue;
+    //INT64 tempInt64Value;
+    string sRegular, sComposition, sValueStr;
+    
+    iPosBeg = sGenernal.find("\t", 2)+1;
+    iPosEnd = sGenernal.find("(", iPosBeg);
+    sRegular= sGenernal.substr(iPosBeg, iPosEnd-iPosBeg-1);
+    sComposition = sGenernal.substr(iPosEnd+1);
+    iPosEnd = sComposition.rfind(")");
+    sComposition = sComposition.substr(0, iPosEnd);
+    iPosEnd = sRegular.find(",");
+    sValueStr = sRegular.substr(0, iPosEnd);
+    numOfUniqueRead = transferStr<UINT64>(sValueStr);
+    dataSet->numberOfUniqueReads = numOfUniqueRead;
+    iPosBeg = iPosEnd+1;
+    iPosEnd = sRegular.find(",", iPosBeg) ;
+    sValueStr = sGenernal.substr(iPosBeg, iPosEnd - iPosBeg);
+    tempValue = transferStr<UINT64>(sValueStr);
+    flowComputed = tempValue;
+    iPosBeg = iPosEnd + 1;
+    iPosEnd = sGenernal.find(",", iPosBeg);
+    sValueStr = sGenernal.substr(iPosBeg, iPosEnd - iPosBeg);
+    numOfMatePairDataset = transferStr<UINT64>(sValueStr);
+    dataSet->numberOfPairedDatasets = numOfMatePairDataset;
+    //sValueStr = sGenernal.substr(iPosEnd+1);
+    //tempValue = transferStr<UINT64>(sValueStr);
+    iPosBeg = sComposition.find("(");
+    while (iPosBeg != string::npos)
+    {
+	iPosEnd   = sComposition.find(")", iPosBeg + 1);
+	iFirstSep = sComposition.find(",", iPosBeg + 1);
+	sValueStr = sComposition.substr(iPosBeg+1, iFirstSep - iPosBeg - 1);
+	tempValue = transferStr<UINT64>(sValueStr);
+	meanOfInsertSizes.push_back(tempValue);
+	sValueStr = sComposition.substr(iFirstSep+1, iPosEnd - iFirstSep - 1);
+	tempValue = transferStr<UINT64>(sValueStr);
+	sdOfInsertSizes.push_back(tempValue);
+	iPosBeg = sComposition.find("(", iPosEnd);
+    }
+}
+
+void parseReadInfo(const string & sReadInfo, const string & sSeqForward, Dataset * dataSet) 
+{
+    string sReadGeneral, sReadCompoisition, sValueStr;
+    size_t iPosBeg, iPosEnd, iFirstSep, iSecondSep;
+    UINT64 tempValue, matePairID, orient, datasetNumber;
+    Read *r = new Read;
+    r->setRead(sSeqForward);
+    iPosBeg = sReadInfo.find("\t", 2)+1;
+    iPosEnd = sReadInfo.find("(", iPosBeg);
+    sReadGeneral = sReadInfo.substr(iPosBeg, iPosEnd-iPosBeg-1);
+    iPosBeg = iPosEnd;
+    iPosEnd = sReadInfo.rfind(")");
+    sReadCompoisition = sReadInfo.substr(iPosBeg+1, iPosEnd - iPosBeg - 1);
+    iPosEnd = sReadGeneral.find(",");
+    sValueStr = sReadGeneral.substr(0, iPosEnd);
+    tempValue = transferStr<UINT64>(sValueStr);
+    r->setReadNumber(tempValue);
+    iPosBeg = iPosEnd + 1;
+    iPosEnd = sReadGeneral.find(",", iPosBeg);
+    sValueStr = sReadGeneral.substr(iPosBeg, iPosEnd - iPosBeg);
+    tempValue = transferStr<UINT64>(sValueStr);
+    r->superReadID = tempValue;
+    iPosBeg = iPosEnd + 1;
+    iPosEnd = sReadGeneral.find(",", iPosBeg);
+    sValueStr = sReadGeneral.substr(iPosBeg, iPosEnd - iPosBeg);
+    tempValue = transferStr<UINT64>(sValueStr);    
+    r->setFrequency(tempValue);
+    iPosBeg = sReadCompoisition.find("(");
+    while (iPosBeg != string::npos)
+    {
+	iPosEnd = sReadCompoisition.find(")", iPosBeg + 1);
+	iFirstSep = sReadCompoisition.find(",", iPosBeg + 1);
+	iSecondSep= sReadCompoisition.find(",", iFirstSep+1);
+	sValueStr = sReadCompoisition.substr(iPosBeg+1, iFirstSep-iPosBeg-1);
+	matePairID = transferStr<UINT64>(sValueStr);
+	sValueStr = sReadCompoisition.substr(iFirstSep+1, iSecondSep-iFirstSep-1);
+	orient = transferStr<UINT64>(sValueStr);
+	sValueStr = sReadCompoisition.substr(iSecondSep+1, iPosEnd-iSecondSep-1);
+	datasetNumber = transferStr<UINT64>(sValueStr);
+	r->addMatePair(matePairID,orient,datasetNumber);
+	iPosBeg = sReadCompoisition.find("(", iPosEnd);
+    }
+    dataSet->addRead(r);
+}
+
 bool OverlapGraph::readGraphFromFastaFile(string fileName)
 {
-    string sCurrentLine, sEdgeInfo;
+    string sCurrentLine, sEdgeInfo, sCurrentReadForward;
     ifstream filePointer;
     filePointer.open(fileName.c_str());
     size_t iPos;
@@ -254,6 +390,30 @@ bool OverlapGraph::readGraphFromFastaFile(string fileName)
 	MYEXIT("Unable to open file: "+fileName);
     // create an empty graph
     graph = new vector< vector<Edge *> * >;
+    
+    while(!filePointer.eof())
+    {
+	getline(filePointer, sCurrentLine);
+	if (sCurrentLine == "")
+	    continue;
+	if (sCurrentLine.substr(0,4) == ">-3\t")
+	{
+	    getline(filePointer, sCurrentLine);
+	    break;
+	}
+	if (sCurrentLine.substr(0,4) == ">-2\t")
+	{
+	    parseGeneralInfo(sCurrentLine, dataSet, flowComputed, this->meanOfInsertSizes, this->sdOfInsertSizes);
+	    continue;
+	}
+	if (sCurrentLine.substr(0,4) == ">-1\t")
+	{
+	    getline(filePointer, sCurrentReadForward);
+	    parseReadInfo(sCurrentLine, sCurrentReadForward, dataSet);
+	    continue;
+	}
+    }
+    
     graph->reserve(dataSet->getNumberOfUniqueReads()+1);
 
     // initiaze the edges in the graph

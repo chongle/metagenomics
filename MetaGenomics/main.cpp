@@ -36,8 +36,8 @@ int main(int argc, char **argv)
 	if(startFromUnitigGraph) // Read the graph from unitig file
 	{
 		overlapGraph = new OverlapGraph();
-		dataSet = new Dataset(pairedEndFileNames, singleEndFileNames, minimumOverlapLength);
-		//dataSet=new Dataset();
+		//dataSet = new Dataset(pairedEndFileNames, singleEndFileNames, minimumOverlapLength);
+		dataSet=new Dataset();
 				
 		// Ted: Read the mate-pair information here.
 		// Without using the unitig graph, the mate-pair infomation was retrieved again after markContainedReads() in buildOverlapGraphFromHashTable().
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 	overlapGraph->calculateMeanAndSdOfInsertSize();
 	overlapGraph->simplifyGraph(); // NEW: Simplify the graph before the flow.
 
-	bool stableVersion = false;
+	bool stableVersion = true;
 	if(!stableVersion)
 	{
 		// Use this to mark edges of minimum flow 1 based on desired coverage
