@@ -107,7 +107,7 @@ OverlapGraph::~OverlapGraph()
 bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 {
 	CLOCKSTART;
-	estimatedGenomeSize = 0;
+	estimatedGenomeSize = 0;    //JJ: aren't these already set in function 'OverlapGraph::OverlapGraph(HashTable *ht)'?
 	numberOfNodes = 0;
 	numberOfEdges = 0;
 	flowComputed = false;
@@ -702,7 +702,7 @@ UINT64 OverlapGraph::contractCompositePaths(void)
 bool OverlapGraph::mergeEdges(Edge *edge1, Edge *edge2)
 {
 	Edge *edgeForward = new Edge(); // New forward edge.
-	Read *read1 = edge1->getSourceRead(), *read2 = edge2->getDestinationRead();
+	Read *read1 = edge1->getSourceRead(), *read2 = edge2->getDestinationRead(); // New source and destination reads.
 	Edge *edgeReverse = new Edge(); // New reverse edge.
 
 	UINT8 orientationForward = mergedEdgeOrientation(edge1,edge2);			// Orientation of the forward edge.
