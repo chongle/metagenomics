@@ -208,10 +208,11 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	delete queue;
 	delete markedNodes;
 	delete hashTable;	// Do not need the hash table any more.
+    // JJ: For the purpose of getting only unitigs, we don't want to remove dead end nodes, instead, only composite edges are contracted
 	do
 	{
 		 counter = contractCompositePaths();
-		 counter += removeDeadEndNodes();
+		 //counter += removeDeadEndNodes();
 	} while (counter > 0);
 	CLOCKSTOP;
 	return true;
