@@ -120,7 +120,7 @@ bool Dataset::readDataset(string fileName, UINT64 minOverlap, UINT64 datasetNumb
 	string line1, text, line1ReverseComplement,line2ReverseComplement;
 	enum FileType { FASTA, FASTQ, UNDEFINED};
 	FileType fileType = UNDEFINED;
-	while(!myFile.eof())
+	while(!myFile.eof()) //JJ: for every read, the file type is detected again. Is this necessary? Is it possible that one file includes different types of reads (fasta and fastq??)
 	{
 		if( (goodReads + badReads ) != 0 && (goodReads + badReads)%1000000 == 0)
 			cout<< setw(10) << goodReads + badReads << " reads processed in dataset " << setw(2) << datasetNumber <<". " << setw(10) << goodReads << " good reads." << setw(10) << badReads << " bad reads." << endl;
@@ -322,7 +322,7 @@ bool Dataset::removeDupicateReads(void)
 	{
 		if(reads->at(j)->getStringForward()!= reads->at(i)->getStringForward())
 		{
-			j++;
+			j++;    //JJ: following: switch read i and read j, this won't be necessary if i and j are equal
 			temp = reads->at(j);
 			reads->at(j) = reads->at(i);
 			reads->at(i) = temp;
