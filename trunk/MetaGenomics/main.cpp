@@ -47,15 +47,9 @@ int main(int argc, char **argv)
 		overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
 		dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		overlapGraph->sortEdges();
-        overlapGraph->printGraph(allFileName+"graph0.gdl", allFileName+"contigs0.fasta");
 		overlapGraph->saveGraphToFile(allFileName+".unitig");
 	}
 
-	delete dataSet;
-	delete overlapGraph;
-	CLOCKSTOP;
-    return 0;
-/*
 	overlapGraph->calculateFlow(allFileName+"_flow.input", allFileName+"_flow.output");
 	cout << "nodes: " << overlapGraph->getNumberOfNodes() << " edges: " << overlapGraph->getNumberOfEdges() << endl;
 	overlapGraph->printGraph(allFileName+"graph1.gdl", allFileName+"contigs1.fasta");
@@ -112,8 +106,6 @@ int main(int argc, char **argv)
 	delete dataSet;
 	delete overlapGraph;
 	CLOCKSTOP;
-
-*/
 }
 
 
