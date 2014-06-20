@@ -107,7 +107,7 @@ OverlapGraph::~OverlapGraph()
 bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 {
 	CLOCKSTART;
-	estimatedGenomeSize = 0;    //JJ: aren't these already set in function 'OverlapGraph::OverlapGraph(HashTable *ht)'?
+	estimatedGenomeSize = 0;
 	numberOfNodes = 0;
 	numberOfEdges = 0;
 	flowComputed = false;
@@ -208,8 +208,6 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	delete queue;
 	delete markedNodes;
 	delete hashTable;	// Do not need the hash table any more.
-    // JJ: For the purpose of getting only unitigs, we don't want to remove dead end nodes, instead, only composite edges are contracted
-	// JJ: Now I will do remove dead end nodes again and see how much the graph will be simplified
 	do
 	{
 		 counter = contractCompositePaths();
@@ -704,7 +702,7 @@ UINT64 OverlapGraph::contractCompositePaths(void)
 bool OverlapGraph::mergeEdges(Edge *edge1, Edge *edge2)
 {
 	Edge *edgeForward = new Edge(); // New forward edge.
-	Read *read1 = edge1->getSourceRead(), *read2 = edge2->getDestinationRead(); // New source and destination reads.
+	Read *read1 = edge1->getSourceRead(), *read2 = edge2->getDestinationRead();
 	Edge *edgeReverse = new Edge(); // New reverse edge.
 
 	UINT8 orientationForward = mergedEdgeOrientation(edge1,edge2);			// Orientation of the forward edge.
