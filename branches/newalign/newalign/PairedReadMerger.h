@@ -46,6 +46,8 @@ public:
 	~PairedReadMerger();
 
 	bool start();
+	bool searchHashTable(SubjectAlignmentPairedEnd & subjectAlignment);
+
 };
 
 #endif /* PAIREDREADMERGER_H_ */

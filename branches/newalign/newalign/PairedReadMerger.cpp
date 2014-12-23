@@ -31,7 +31,7 @@ bool PairedReadMerger::start() {
 	while(subject->loadNextChunk(subjectList)){
 		// #pragma omp parallel for
 		for(int i = 0; i < subjectList.size(); i++){
-				hashTable->search(subjectList[i]);
+				searchHashTable(subjectList[i]);
 
 		}
 		// end of omp parallel

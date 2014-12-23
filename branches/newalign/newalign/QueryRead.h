@@ -17,6 +17,7 @@ public:
 	virtual ~QueryRead();
 	bool addAlignment(Alignment subjectAlignment);
 	bool correctErrors();
+	bool flag4Removal; // this is a contained or duplicate read
 };
 
 #endif /* QUERYREAD_H_ */

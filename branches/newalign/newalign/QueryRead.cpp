@@ -8,8 +8,8 @@
 #include "QueryRead.h"
 
 QueryRead::QueryRead() {
-	// TODO Auto-generated constructor stub
 
+	flag4Removal = false;
 }
 
 QueryRead::~QueryRead() {
