@@ -28,6 +28,8 @@ public:
 	ErrorCorrector();
 	~ErrorCorrector();
 	bool start();
+	bool searchHashTable(SubjectAlignment & subject);
+
 };
 
 #endif /* ERRORCORRECTOR_H_ */

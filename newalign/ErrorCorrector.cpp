@@ -13,7 +13,8 @@ ErrorCorrector::ErrorCorrector() {
 }
 
 ErrorCorrector::~ErrorCorrector() {
-	// TODO Auto-generated destructor stub
+
+
 }
 
 bool ErrorCorrector::start() {
@@ -31,7 +32,7 @@ bool ErrorCorrector::start() {
 	while(subject->loadNextChunk(subjectList)){
 		// #pragma omp parallel for
 		for(int i = 0; i < subjectList.size(); i++){
-				hashTable->search(subjectList[i]);
+				searchHashTable(subjectList[i])
 
 		}
 		// end of omp parallel

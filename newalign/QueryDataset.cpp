@@ -13,6 +13,8 @@ QueryDataset::QueryDataset() {
 }
 
 QueryDataset::~QueryDataset() {
-	// TODO Auto-generated destructor stub
+	for(int i = 0; i < queryReadList.size(); i++){
+		delete queryReadList[i];
+	}
 }
 

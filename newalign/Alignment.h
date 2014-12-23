@@ -8,6 +8,9 @@
 #ifndef ALIGNMENT_H_
 #define ALIGNMENT_H_
 
+include "Contig"
+
+
 class Alignment {
 public:
 	Alignment();
@@ -15,6 +18,7 @@ public:
 
 	QueryRead * queryRead;
 	string subjectReadSequence;
+	string subjectReadName;
 	int orientation;
 	int start;
 	int stop;
