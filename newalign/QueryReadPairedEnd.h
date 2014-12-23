@@ -8,6 +8,8 @@
 #ifndef QUERYREADPAIREDEND_H_
 #define QUERYREADPAIREDEND_H_
 
+#include "Config.h"
+
 class QueryReadPairedEnd {
 public:
 	QueryReadPairedEnd();

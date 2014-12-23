@@ -8,11 +8,14 @@
 #ifndef QUERYDATASET_H_
 #define QUERYDATASET_H_
 
+#include "Config.h"
+
 class QueryDataset {
 public:
 	QueryDataset();
 	virtual ~QueryDataset();
 	vector<QueryRead *> queryReadList;
+	bool buildDataset(const string & sQueryFilename);
 
 };
 

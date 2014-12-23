@@ -8,6 +8,9 @@
 #ifndef ERRORCORRECTOR_H_
 #define ERRORCORRECTOR_H_
 
+#include "Config.h"
+
+
 class SubjectAlignment {
 	// alignment input
 	string subjectReadSequence;
@@ -22,7 +25,6 @@ class ErrorCorrector {
 
 	QueryDataset * queryDataset;
 	HashTable * hashTable;
-	SubjectDataset * subject;
 
 public:
 	ErrorCorrector();

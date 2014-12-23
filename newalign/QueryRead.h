@@ -8,6 +8,8 @@
 #ifndef QUERYREAD_H_
 #define QUERYREAD_H_
 
+#include "Config.h"
+
 class QueryRead {
 	vector<Alignment> queryAlignmentList;
 	string readSequence;

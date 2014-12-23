@@ -18,12 +18,20 @@ ErrorCorrector::~ErrorCorrector() {
 }
 
 bool ErrorCorrector::start() {
+
 	if (!queryDataset->buildDataset(Config::getQueryDatasetFilename())){
-		cout << "Error: cannot build query dataset" << endl;
+		cout << "Error: cannot build query dataset: " << Config::getQueryDatasetFilename() << endl;
 		return false;
 	}
+
 	if (!hashTable->insertDataset(queryDataset)){
 		cout << "Error: cannot build hash table" << endl;
+		return false;
+	}
+
+	SubjectDataset * subject = new SubjectDataset;
+	if(!subject->setFilename(Config::getSubjectDatasetFilenames())){
+		cout << "Error: cannot load subject dataset" << endl;
 		return false;
 	}
 
@@ -53,6 +61,8 @@ bool ErrorCorrector::start() {
 	// end of omp parallel
 
 	queryDataset->write2File();
+
+	delete subject;
 
 }
 

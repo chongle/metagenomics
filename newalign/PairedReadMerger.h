@@ -8,18 +8,39 @@
 #ifndef PAIREDREADMERGER_H_
 #define PAIREDREADMERGER_H_
 
+#include "Config.h"
 
 class AlignmentPairedEnd {
 
 public:
 
 	QueryReadPairedEnd * queryPairedEndRead;
-	string subjectReadSequence;
 
-	// results
-	int orientation;
-	int start;
-	int stop;
+	// this is in the same orientation as the query forward
+	string gapSequence;
+
+	// orientation of the query read
+	bool queryOrientation;		// true for forward, false for reverse
+
+	//  The following case will have a positive subject start position
+	//  query:        XXXXXXMMMMMMMM
+	//	subject:            MMMMMMMMXXXXXXX
+	//  The following case will have a negative subject start position
+	//  query:        MMMMMMXXXXXXXX
+	//	subject: XXXXXMMMMMM
+	int subjectStart;
+	int leftQueryEnd;
+	int rightQueryStart;
+	int subjectEnd;
+	int rightQueryEnd;
+
+	// coordinates are defined by the query reads
+	// all insertion and deletion is on the subject read
+	// lower case char means substitution
+	// upper case char means insertion
+	// 'D' means deletion
+	//
+	map<int, char> editInfor;
 };
 
 class SubjectAlignmentPairedEnd {
@@ -29,7 +50,6 @@ class SubjectAlignmentPairedEnd {
 
 	// alignment results
 	vector<AlignmentPairedEnd> queryAlignmentList;
-
 
 };
 
