@@ -8,16 +8,26 @@
 #ifndef SUBJECTDATASET_H_
 #define SUBJECTDATASET_H_
 
+#include "Config.h"
+
 class SubjectDataset {
+
+	vector<string> sFilenameList;
+
+	int currentFileIndex; // the index of the file in sFilenameList, which is currently be processinged loadNextChunk
+
+	ifstream currentFileStreamer;
+
+
 public:
 	SubjectDataset();
 	~SubjectDataset();
 
 
-	bool setFilename(string sFilename);
+	bool setFilenameList(const vector<string> & sFilenames);
 	// load the next chunk and populate currentChunk
 	// return false if there is no reads in the file.
-	bool loadNextChunk();
+	bool loadNextChunk(vector<SubjectAlignment> & chunkAlignment);
 	bool clearCurrentChunk();
 };
 

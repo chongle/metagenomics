@@ -7,6 +7,9 @@
 int main(int argc, char **argv)
 {
 
+	// parse command line options:
+	// align.exe -q query.fasta -s subject1.fasta ... -o CorrectErrors
+	// align.exe --query query.fasta --subject subject1.fasta ... --operation CorrectErrors
 	if(!Config::setConfig(argc, argv)){
 		cout << "Error: wrong configurations" << endl;
 		return false;
@@ -39,9 +42,6 @@ int main(int argc, char **argv)
 			cout<< "Failed to run ErrorCorrector start()";
 		}
 		delete errorCorrector;
-	}
-	else if (Config::getOperation() == "RemoveContainedReads"){
-		// start remove container reads
 	}
 	else{
 		cout << "Error: invalid operation type."<< endl;

@@ -16,3 +16,10 @@ QueryRead::~QueryRead() {
 	// TODO Auto-generated destructor stub
 }
 
+
+bool QueryRead::correctErrors(){
+
+	for(int i = 0; i < queryAlignmentList.size(); i++){
+
+	}
+}

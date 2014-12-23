@@ -8,6 +8,8 @@
 #ifndef OVERLAPGRAPHCONSTRUCTOR_H_
 #define OVERLAPGRAPHCONSTRUCTOR_H_
 
+#include "Config.h"
+
 class edge{
 public:
 	// alignment input

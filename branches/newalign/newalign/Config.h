@@ -51,16 +51,22 @@ class Config {
 
 private:
 	static string operationCode;
-	static vector<string> queryFilenameList;
+	static string queryFilenameList;
 	static vector<string> subjectFilenameList;
 
 public:
 	Config();
+	~Config();
 	static bool setConfig(int argc, char **argv);
 	static string getOperation();
-	static string getSubjectDatasetFilename(); // subject is dataset B streamed from hard drive
+	static vector<string> getSubjectDatasetFilenames(); // subject is dataset B streamed from hard drive
 	static string getQueryDatasetFilename();	// query is database A loaded to memory
-	~Config();
+	static int getminimumOverlapLength();
+	static int getSingleKeyHashTableKeyLength();
+	static int getDoubleKeyHashTableKeyLength();
+
+
+
 };
 
 #endif /* CONFIG_H_ */

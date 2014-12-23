@@ -18,3 +18,9 @@ QueryDataset::~QueryDataset() {
 	}
 }
 
+bool QueryDataset::buildDataset(const string & sQueryFilename)
+{
+	// get from Dataset.cpp in Omega
+
+	// queryReadList
+}

@@ -8,6 +8,8 @@
 #ifndef QUERYDATASETPAIREDEND_H_
 #define QUERYDATASETPAIREDEND_H_
 
+#include "Config.h"
+
 class QueryDatasetPairedEnd {
 public:
 	QueryDatasetPairedEnd();

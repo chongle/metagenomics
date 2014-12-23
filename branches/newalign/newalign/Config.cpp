@@ -16,3 +16,6 @@ Config::~Config() {
 	// TODO Auto-generated destructor stub
 }
 
+static bool Contig::setConfig(int argc, char **argv){
+
+}
