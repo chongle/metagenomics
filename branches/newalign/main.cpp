@@ -8,8 +8,8 @@ int main(int argc, char **argv)
 {
 
 	// parse command line options:
-	// align.exe -q query.fasta -s subject1.fasta ... -o CorrectErrors
-	// align.exe --query query.fasta --subject subject1.fasta ... --operation CorrectErrors
+	// align.exe -a -q query.fasta -s subject1.fasta ... -o CorrectErrors --single
+	// align.exe -a --query query.fasta --subject subject1.fasta ... --operation CorrectErrors --double
 	if(!Config::setConfig(argc, argv)){
 		cout << "Error: wrong configurations" << endl;
 		return false;
