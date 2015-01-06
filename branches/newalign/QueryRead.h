@@ -16,6 +16,7 @@ class QueryRead {
 	string readName;
 public:
 	QueryRead();
+	QueryRead(string & sequence, string & name);
 	virtual ~QueryRead();
 	bool addAlignment(Alignment subjectAlignment);
 	bool correctErrors();

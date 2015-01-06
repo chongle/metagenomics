@@ -12,9 +12,16 @@ QueryRead::QueryRead() {
 	flag4Removal = false;
 }
 
+QueryRead::QueryRead(string sequence, string name)
+{
+	readSequence = sequence;
+	readName = name;
+}
+
 QueryRead::~QueryRead() {
 	// TODO Auto-generated destructor stub
 }
+
 
 
 bool QueryRead::correctErrors(){
