@@ -50,9 +50,24 @@ typedef long long INT64;
 class Config {
 
 private:
-	static string operationCode;
-	static string queryFilenameList;
+	static string operationCode="";//"ConstructGraph","MergePairedEndReads","CorrectErrors"
+	static string queryFilename = "";
 	static vector<string> subjectFilenameList;
+
+	static UINT16 minimumOverlapLength=40;
+	static UINT16 hashKeyLength = 32;
+	static UINT64 streamChunkSize = 100;
+	static bool isSingleKey = true;
+
+	static bool isSingleEnd = true; //subject is always treated as single end, while the query is only paired end when using "MergePairedEndReads"
+	static bool isFilter = false;
+
+	static bool perfectMatch = false;
+	static UINT16 maxMismatch = 1; //only valid when perfectMatch is set to false
+	static UINT16 maxIndel = 0; //only valid when perfectMatch is set to false
+
+	static void printHelp();
+
 
 public:
 	Config();
@@ -61,9 +76,17 @@ public:
 	static string getOperation();
 	static vector<string> getSubjectDatasetFilenames(); // subject is dataset B streamed from hard drive
 	static string getQueryDatasetFilename();	// query is database A loaded to memory
-	static int getminimumOverlapLength();
-	static int getSingleKeyHashTableKeyLength();
-	static int getDoubleKeyHashTableKeyLength();
+	static UINT16 getminimumOverlapLength();
+	static UINT16 getHashKeyLength();
+	static UINT64 getStreamChunkSize();
+
+	static bool isSingleKeyHashTable();
+	static bool allowMismatch();
+	static bool isQuerySingleEndReads();
+
+	static UINT16 getMaxMismatch();
+	static UINT16 getMaxIndel();
+	static bool isFilterOrAlign();
 
 
 
