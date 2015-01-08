@@ -71,7 +71,7 @@ UINT32 QueryRead::getReadLength()
 	return this->readSequence.length();
 }
 
-string QueryRead::reverseComplement(const string & read)
+static string QueryRead::reverseComplement(const string & read)
 {
 	UINT64 stringLength = read.length();
 	string reverse(stringLength,'0');
@@ -86,7 +86,7 @@ string QueryRead::reverseComplement(const string & read)
 }
 string QueryRead::reverseComplement()
 {
-	return reverseComplement(this->readSequence);
+	return QueryRead::reverseComplement(this->readSequence);
 }
 
 bool QueryRead::correctErrors(){

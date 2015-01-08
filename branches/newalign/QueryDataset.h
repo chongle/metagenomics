@@ -19,7 +19,7 @@ class QueryDataset {
 	UINT64 shortestReadLength;
 	UINT64 longestReadLength;
 
-	bool qualityFilter(string & sequence);
+
 	bool duplicateFilter();
 	void sortReads();
 	bool compareReads (QueryRead *read1, QueryRead *read2);//for sortReads
@@ -27,6 +27,8 @@ public:
 	QueryDataset();
 	virtual ~QueryDataset();
 	vector<QueryRead *> queryReadList;
+
+	static bool qualityFilter(string & sequence);
 
 	bool buildDataset(const string & QueryFilename);
 	UINT64 getNumberOfReads(); 						// Get the number of total reads in the database.

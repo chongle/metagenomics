@@ -27,7 +27,57 @@ UINT64 QueryDataset::getNumberOfUniqueReads()
 	return this->numberOfUniqueReads;
 }
 
-bool QueryDataset::qualityFilter(string & sequence)
+QueryRead * QueryDataset::getReadFromID(UINT64 ID)
+{
+	if(ID < 1 || ID > numberOfUniqueReads)	// ID outside the range.
+	{
+
+		cout << "ID " << ID << " out of bound."<<endl;
+		return NULL;
+
+	}
+	else return queryReadList.at(ID - 1);
+}
+
+QueryRead * QueryDataset::getReadFromString(const string & read)
+{
+	UINT64 min = 0, max = getNumberOfUniqueReads()-1;
+	string readReverse = QueryRead::reverseComplement(read);
+	int comparator;
+	if(read.compare(readReverse) < 0)
+	{
+		while (max >= min) 															// At first search for the forward string.
+		{
+			UINT64 mid = (min + max) / 2; 	// Determine which subarray to search.
+			comparator = queryReadList.at(mid)->getSequence().compare(read.c_str());
+			if(comparator == 0)
+				return queryReadList.at(mid);
+			else if (comparator < 0) 	// Change min index to search upper subarray.
+				min = mid + 1;
+			else if (comparator > 0) 	// Change max index to search lower subarray.
+				max = mid - 1;
+		}
+	}
+	else
+	{
+		while (max >= min) 																	// If forward string is not found then search for the reverse string
+		{
+			UINT64 mid = (min+max) / 2; 													// Determine which subarray to search
+			comparator = queryReadList.at(mid)->getSequence().compare(readReverse.c_str());
+			if( comparator == 0)
+				return queryReadList.at(mid);
+			else if (comparator < 0) 	// Change min index to search upper subarray.
+				min = mid + 1;
+			else if (comparator > 0) 	// Change max index to search lower subarray.
+				max = mid - 1;
+		}
+	}
+	cout<<"String not found "<<endl;
+	return NULL;
+}
+
+
+static bool QueryDataset::qualityFilter(string & sequence)
 {
 	//Returns true if the read contains only {A,C,G,T} and does not contain more than 80% of the same nucleotide
 	UINT64 cnt[4] = {0,0,0,0};
@@ -179,7 +229,12 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 	cout << setw(10) << goodReads << " good reads in current dataset."  << endl;
 	cout << setw(10) << badReads << " bad reads in current dataset." << endl;
 	cout << setw(10) << goodReads + badReads << " total reads in current dataset." << endl;
-	cout << setw(10) << numberOfReads << " good reads in all datasets." << endl << endl;;
+	cout << setw(10) << numberOfReads << " good reads in all datasets." << endl << endl;
+
+
+	//sort the reads by its alphabetical order; and remove the duplicate reads so then the readID can be assigned uniquely
+	sortReads();
+	duplicateFilter();
 
 	return true;
 }

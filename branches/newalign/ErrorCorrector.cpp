@@ -35,7 +35,7 @@ bool ErrorCorrector::start() {
 		return false;
 	}
 
-	vector<SubjectAlignment> subjectList;
+	vector<SubjectAlignment*> subjectList;
 
 	while(subject->loadNextChunk(subjectList)){
 		// #pragma omp parallel for

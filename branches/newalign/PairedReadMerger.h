@@ -15,10 +15,11 @@
 class SubjectAlignmentPairedEnd {
 	// alignment input
 	string subjectReadSequence;
+
 	string subjectReadName;
 
 	// alignment results
-	vector<AlignmentPairedEnd> queryAlignmentList;
+	vector<AlignmentPairedEnd*> queryAlignmentList;
 
 };
 
