@@ -34,7 +34,7 @@ public:
 	UINT64 getIdentifier();
 	UINT32 getFrequency();
 	UINT32 getReadLength();
-	string reverseComplement(const string & read);
+	static string reverseComplement(const string & read);
 	string reverseComplement();
 };
 

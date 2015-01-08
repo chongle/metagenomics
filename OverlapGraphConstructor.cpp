@@ -22,18 +22,20 @@ bool OverlapGraphConstructor::start() {
 		cout << "Error: cannot build query dataset" << endl;
 		return false;
 	}
-	if (!hashTable->insertDataset(queryDataset)){
+	if (!singleKeyHashTable->insertQueryDataset(queryDataset)){
 		cout << "Error: cannot build hash table" << endl;
 		return false;
 	}
-	vector<edge> edgeList;
+	vector<edge*> edgeList;
 
 	while(subject->loadNextChunk(edgeList)){
-		// #pragma omp parallel for
+	#pragma omp parallel for
+	{
 		for(int i = 0; i < edgeList.size(); i++){
 				searchHashTable(edgeList[i]);
 
 		}
+	}
 		// end of omp parallel
 
 		for(int i = 0; i < edgeList.size(); i++){
@@ -54,5 +56,5 @@ bool OverlapGraphConstructor::start() {
 			queryDataset->queryReadList[i]->printEdges2File();
 		}
 	}
-
+	return true;
 }

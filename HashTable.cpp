@@ -10,17 +10,44 @@
 HashTable::HashTable() {
 	// TODO Auto-generated constructor stub
 	hashKeyLength = Config::hashKeyLength;
+	hashTableName = "";
 	numberOfHashCollision = 0;
 	maxSingleHashCollision = 0;
 	hashTableSize = 0;
 	hashTable = NULL;
 }
+HashTable::HashTable(UINT16 keylength) {
+	// TODO Auto-generated constructor stub
+	hashKeyLength = keylength;
+	hashTableName = "";
+	numberOfHashCollision = 0;
+	maxSingleHashCollision = 0;
+	hashTableSize = 0;
+	hashTable = NULL;
 
-HashTable::HashTable(UINT16 keylength, UINT64 size) {
+}
+HashTable::HashTable(UINT16 keylength, string name) {
+	// TODO Auto-generated constructor stub
+	hashKeyLength = keylength;
+	hashTableName = name;
+	numberOfHashCollision = 0;
+	maxSingleHashCollision = 0;
+	hashTableSize = 0;
+	hashTable = NULL;
+
+}
+HashTable::HashTable(UINT16 keylength, UINT64 dataSetSize) {
 	// TODO Auto-generated constructor stub
 	hashKeyLength = keylength;
 	numberOfHashCollision = 0;
 	maxSingleHashCollision = 0;
+	InitializeWithDataSize(dataSetSize);
+
+}
+
+void HashTable::InitializeWithDataSize(UINT64 dataSetSize)
+{
+	UINT64 size = getPrimeLargerThanNumber(dataSetSize * 2 + 1);  // Size should be at least twice the number of entries in the hash table to reduce hash collision.
 	setHashTableSizeAndInitialize(size);
 }
 
@@ -72,14 +99,86 @@ void HashTable::setHashTableSizeAndInitialize(UINT64 size)
 {
 	cout << "Hash Table size set to: " << size << endl;
 	hashTableSize=size;
-    // Ted: hashTable name should be changed. This can be called in the constructor.
-	hashTable = new vector < vector<UINT64> *>;
+
+	hashTable = new vector < DataVector *>();
 	hashTable->reserve(size);
-    // Ted:
+
 	for(UINT64 i = 0; i < hashTable->capacity(); i++) // Initialize the hash table.
 	{
-		vector<UINT64> * newList = new vector<UINT64>;
+		vector<UINT64> * newList = new vector<UINT64>();
+		DataVector * dataVector = new DataVector();
+		dataVector->dataList = newList;
 		newList->resize(newList->size());
-		hashTable->push_back(newList);
+		hashTable->push_back(dataVector);
 	}
+}
+
+
+bool HashTable::findInsertIndex(string keyString, UINT64& hashTableIndex)
+{
+	UINT64 currentCollisionNum = 0;
+
+	hashTableIndex = hashFunction(keyString);
+	bool isEmpty = hashTable->at(hashTableIndex)->dataList->empty();
+	while(!isEmpty)
+	{
+		if(currentCollisionNum>1000 || currentCollisionNum>hashTableSize)
+		{
+			cout<<"Too much collision, need to enlarge the hashTableSize"<<endl;
+			return false;
+		}
+		if(keyString == hashTable->at(hashTableIndex)->keystring)
+				break;
+		numberOfHashCollision++;
+		currentCollisionNum++;
+		hashTableIndex = (hashTableIndex == hashTableSize - 1) ? 0: hashTableIndex + 1; 	// Increment the index
+		isEmpty = hashTable->at(hashTableIndex)->dataList->empty();
+	}
+
+	if(currentCollisionNum> this->maxSingleHashCollision)
+		this->maxSingleHashCollision = currentCollisionNum;
+
+	return true;
+}
+bool HashTable::insertIntoHashTable(string keyString, UINT64 readID)
+{
+
+	UINT64 hashTableIndex;
+	bool insertSuccess = findInsertIndex(keyString, hashTableIndex);
+
+
+	hashTable->at(hashTableIndex)->dataList->push_back(readID);							// Add the string in the list.
+	hashTable->at(hashTableIndex)->dataList->resize(hashTable->at(hashTableIndex)->dataList->size());		// Resize to reduce space.
+	return insertSuccess;
+
+}
+
+bool HashTable::getIndexFromHashTable(string subString, UINT64& hashTableIndex)
+{
+	UINT64 currentCollisionNum = 0;
+	hashTableIndex = hashFunction(subString);
+	bool isEmpty = hashTable->at(hashTableIndex)->dataList->empty();
+	while(!isEmpty && currentCollisionNum<=maxSingleHashCollision)
+	{
+
+			if(subString == hashTable->at(hashTableIndex)->keystring)
+					return true;
+
+			currentCollisionNum++;
+			hashTableIndex = (hashTableIndex == hashTableSize - 1) ? 0: hashTableIndex + 1; 	// Increment the index
+			isEmpty = hashTable->at(hashTableIndex)->dataList->empty();
+	}
+	return false;
+}
+string HashTable::getHashKeyFromIndex(UINT64 hashTableIndex)
+{
+	string keyString = hashTable->at(hashTableIndex)->keystring;
+	return keyString;
+}
+vector<UINT64> * HashTable::getReadIDListOfReads(string subString)
+{
+	UINT64 hashTableIndex;
+	if(getIndexFromHashTable(subString,hashTableIndex))
+		return hashTable->at(hashTableIndex)->dataList;
+	else return NULL;
 }

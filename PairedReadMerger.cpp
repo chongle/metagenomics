@@ -26,7 +26,7 @@ bool PairedReadMerger::start() {
 		return false;
 	}
 
-	vector<SubjectAlignmentPairedEnd> subjectList;
+	vector<SubjectAlignmentPairedEnd*> subjectList;
 
 	while(subject->loadNextChunk(subjectList)){
 		// #pragma omp parallel for
