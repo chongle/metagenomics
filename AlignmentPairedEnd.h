@@ -36,8 +36,8 @@ public:
 
 	// coordinates are defined by the query reads
 	// all insertion and deletion is on the subject read
-	// lower case char means substitution
-	// upper case char means insertion
+	// upper case char means substitution
+	// lower case char means insertion
 	// 'D' means deletion
 	//
 	map<int, char> editInfor;

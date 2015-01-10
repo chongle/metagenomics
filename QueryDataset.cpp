@@ -108,7 +108,13 @@ bool QueryDataset::duplicateFilter()
 			queryReadList.at(i) = temp;
 		}
 		else if(i!=j)
+		{
 			queryReadList.at(j)->setFrequency(queryReadList.at(j)->getFrequency() + 1);
+			//set the name as the alphabetical larger name
+			string newname = queryReadList.at(i)->getName();
+			if(queryReadList.at(j)->getName()< newname)
+				queryReadList.at(j)->setName(newname);
+		}
 	}
 	numberOfUniqueReads = j+1;
 	cout <<"Number of unique reads: " << numberOfUniqueReads << endl;

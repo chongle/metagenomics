@@ -58,3 +58,9 @@ bool OverlapGraphConstructor::start() {
 	}
 	return true;
 }
+
+
+bool OverlapGraphConstructor::searchHashTable(edge & currentEdge)
+{
+
+}

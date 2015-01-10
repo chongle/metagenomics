@@ -20,17 +20,24 @@ class SingleKeyHashTable {
 	map<string, HashTable*> hashTableMap;
 	UINT16 minimumOverlapLength;
 	UINT16 hashKeyLength;
+	int maxMismatch;
 	QueryDataset * queryDataSet = NULL;
 
 
 
 	string getReadSubstring(string mode, UINT64 readID);// mode ={forwardprefix, forwardsuffix, reverseprefix, reversesuffix}
+	bool doAlignment(Alignment* align, string mode, int subjectStart);
+	bool subjectWindowRange(int& startpoint, int& stoppoint, string mode, string& subjectRead);
+
 public:
 	SingleKeyHashTable();
 	virtual ~SingleKeyHashTable();
 	bool InitializeAllHashTables();
 	bool insertQueryDataset(QueryDataset* d);
 	bool insertQueryRead(QueryRead *read, string mode);// mode ={forwardprefix, forwardsuffix, reverseprefix, reversesuffix}
+	bool singleKeySearch(edge & Edge);
+	bool singleKeySearch(SubjectAlignment & subject);
+	bool singleKeySearch(SubjectAlignmentPairedEnd & subjectAlignment);
 };
 
 #endif /* SINGLEKEYHASHTABLE_H_ */

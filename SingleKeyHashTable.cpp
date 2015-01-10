@@ -11,6 +11,7 @@ SingleKeyHashTable::SingleKeyHashTable() {
 	// TODO Auto-generated constructor stub
 	this->minimumOverlapLength = Config::minimumOverlapLength;
 	this->hashKeyLength = Config::hashKeyLength;
+	this->maxMismatch = Config::maxMismatch;
 }
 
 SingleKeyHashTable::~SingleKeyHashTable() {
@@ -112,7 +113,162 @@ bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string mode)
 {
 	UINT64 readID = read->getIdentifier();
 	string keystring = getReadSubstring(mode,readID);
-	HashTable * currentHashTable = hashTableMap[mode];
+	HashTable * currentHashTable = hashTableMap.at(mode);
 	return currentHashTable->insertIntoHashTable(keystring,readID);
+
+}
+
+bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectStart)
+{
+
+	if(mode=="forwardprefix")
+	{
+		align->queryOrientation = true;
+		if(align->subjectReadSequence.length()- subjectStart - hashKeyLength >= align->queryRead->getSequence().length() - hashKeyLength) // The overlap must continue till the end.
+			return false;
+		string restSubject = align->subjectReadSequence.substr(subjectStart + hashKeyLength, align->subjectReadSequence.length()-(subjectStart + hashKeyLength));
+		string restQuery = align->queryRead->getSequence().substr(hashKeyLength,  restSubject.length());
+		int currentMismatchCount=0;
+		for(int i=0; i<restQuery.length();i++)
+		{
+			if(restQuery.at(i)!=restSubject.at(i))
+			{
+				currentMismatchCount++;
+				if(currentMismatchCount>maxMismatch)return false;
+				align->editInfor.insert(std::pair<int, char>(hashKeyLength+i, restSubject.at(i)));
+			}
+		}
+		align->subjectStart = -subjectStart;
+		align->subjectEnd = align->subjectStart + align->subjectReadSequence.length()-1;
+		align->queryEnd = align->queryRead->getReadLength()-1;
+	}
+	else if(mode == "forwardsuffix")
+	{
+		align->queryOrientation = true;
+		if(align->queryRead->getSequence().length()-hashKeyLength < subjectStart)
+			return false;
+		string restSubject = align->subjectReadSequence.substr(0, subjectStart);
+		string restQuery = align->queryRead->getSequence().substr(align->queryRead->getReadLength()-hashKeyLength-subjectStart, restSubject.length());
+		int currentMismatchCount=0;
+		for(int i=0; i<restQuery.length();i++)
+		{
+			if(restQuery.at(i)!=restSubject.at(i))
+			{
+				currentMismatchCount++;
+				if(currentMismatchCount>maxMismatch)return false;
+				align->editInfor.insert(std::pair<int, char>(align->queryRead->getReadLength()-hashKeyLength-subjectStart+i, restSubject.at(i)));
+			}
+		}
+		align->subjectStart = align->queryRead->getReadLength()-hashKeyLength-subjectStart;
+		align->subjectEnd = align->subjectStart + align->subjectReadSequence.length()-1;
+		align->queryEnd = align->queryRead->getReadLength()-1;
+	}
+	else if(mode == "reverseprefix")
+	{
+		align->queryOrientation = false;
+		if(align->subjectReadSequence.length()- subjectStart - hashKeyLength >= align->queryRead->getSequence().length() - hashKeyLength) // The overlap must continue till the end.
+			return false;
+		string restSubject = align->subjectReadSequence.substr(subjectStart + hashKeyLength, align->subjectReadSequence.length()-(subjectStart + hashKeyLength));
+		string restQuery = align->queryRead->reverseComplement().substr(hashKeyLength,  restSubject.length());
+		int currentMismatchCount=0;
+		for(int i=0; i<restQuery.length();i++)
+		{
+			if(restQuery.at(i)!=restSubject.at(i))
+			{
+				currentMismatchCount++;
+				if(currentMismatchCount>maxMismatch)return false;
+				align->editInfor.insert(std::pair<int, char>(hashKeyLength+i, restSubject.at(i)));
+			}
+		}
+		align->subjectStart = -subjectStart;
+		align->subjectEnd = align->subjectStart + align->subjectReadSequence.length()-1;
+		align->queryEnd = align->queryRead->getReadLength()-1;
+	}
+	else if(mode == "reversesuffix")
+	{
+		align->queryOrientation = false;
+		if(align->queryRead->getSequence().length()-hashKeyLength < subjectStart)
+			return false;
+		string restSubject = align->subjectReadSequence.substr(0, subjectStart);
+		string restQuery = align->queryRead->reverseComplement().substr(align->queryRead->getReadLength()-hashKeyLength-subjectStart, restSubject.length());
+		int currentMismatchCount=0;
+		for(int i=0; i<restQuery.length();i++)
+		{
+			if(restQuery.at(i)!=restSubject.at(i))
+			{
+				currentMismatchCount++;
+				if(currentMismatchCount>maxMismatch)return false;
+				align->editInfor.insert(std::pair<int, char>(align->queryRead->getReadLength()-hashKeyLength-subjectStart+i, restSubject.at(i)));
+			}
+		}
+		align->subjectStart = align->queryRead->getReadLength()-hashKeyLength-subjectStart;
+		align->subjectEnd = align->subjectStart + align->subjectReadSequence.length()-1;
+		align->queryEnd = align->queryRead->getReadLength()-1;
+	}
+	else return false;
+
+	return true;
+}
+
+bool SingleKeyHashTable::subjectWindowRange(int& startpoint, int& stoppoint, string mode, string& subjectRead)
+{
+	if(mode=="forwardprefix" || mode == "reverseprefix")
+	{
+		startpoint = 0;
+		stoppoint = subjectRead.length()-this->minimumOverlapLength;
+	}
+	else if(mode == "forwardsuffix" || mode == "reversesuffix")
+	{
+		startpoint = this->minimumOverlapLength - hashKeyLength;
+		stoppoint = subjectRead.length()-hashKeyLength;
+
+	}
+	else return false;
+
+	return true;
+}
+
+bool SingleKeyHashTable::singleKeySearch(edge & Edge)
+{
+
+	string subjectRead = Edge.subjectReadSequence;
+	int startpoint = this->minimumOverlapLength-this->hashKeyLength;
+	int stoppoint = subjectRead.length()-this->minimumOverlapLength;
+
+	for(int i =0; i<this->hashTableNameList.size();i++)
+	{
+
+
+	string modestring = this->hashTableNameList.at(i);
+
+	int startpoint,stoppoint;
+	if(subjectWindowRange(startpoint, stoppoint, modestring, subjectRead)) return false;
+
+	for(int j=startpoint;j<=stoppoint;j++)
+	{
+	string subString = subjectRead.substr(startpoint, hashKeyLength);
+	vector<UINT64> currentIDList = hashTableMap.at(modestring)->getReadIDListOfReads(subString);
+	for(int k=0;k<currentIDList.size();k++)
+	{
+		UINT64 currentID = currentIDList.at(k);
+		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
+		string querySequence = queryRead->getSequence();
+		string queryName = queryRead->getName();
+		bool alignFlag = true;
+		if(queryName>=Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(alignFlag)
+		{
+			Alignment* align = new Alignment();
+			align->subjectReadName = Edge.subjectReadName;
+			align->subjectReadSequence = subjectRead;
+			align->queryRead = queryRead;
+			if(doAlignment(align, modestring, startpoint)==false) delete align;
+			else Edge.alignmentList.push_back(align);
+			//need to consider contained reads marking
+		}
+	}
+	}
+
+	}
 
 }
