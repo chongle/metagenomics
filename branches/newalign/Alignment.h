@@ -25,6 +25,26 @@ public:
 	// orientation of the query read
 	bool queryOrientation;		// true for forward, false for reverse
 
+//******OMEGA original definition for the alignment orientation******
+	// orient 0
+	//   >--------MMMMMMMMMMMMMMM*************> 			read1      M means match found by hash table
+	//            MMMMMMMMMMMMMMM*************------->      read2      * means we need to check these characters for match
+
+	// orient 2
+	//	 >---*****MMMMMMMMMMMMMMM*************> 			read1
+	//		      MMMMMMMMMMMMMMM*************-------<	    Reverese complement of read2
+
+	// orient 1
+	//   	>********MMMMMMMMMMMMMMM-------------> 			read1      M means match found by hash table
+	//  >----********MMMMMMMMMMMMMMM       		    		read2      * means we need to check these characters for match
+
+	// orient 3
+	//	 	>********MMMMMMMMMMMMMMM-------------> 			read1
+	//	<----********MMMMMMMMMMMMMMM						Reverse Complement of Read2
+
+//*******************************************************************
+
+
 	// coordinates of the overlap alignment, which is defined by the query reads
 	//  The following case will have a positive subject start position
 	//  query:        XXXXXXMMMMMMMM
@@ -36,10 +56,12 @@ public:
 	int queryEnd;
 	int subjectEnd;
 
+	int orientationTranslate();
+
 	// coordinates are defined by the query reads
 	// all insertion and deletion is on the subject read
-	// lower case char means substitution
-	// upper case char means insertion
+	// upper case char means substitution
+	// lower case char means insertion
 	// 'D' means deletion
 	//
 	map<int, char> editInfor;
