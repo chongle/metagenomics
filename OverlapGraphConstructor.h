@@ -31,6 +31,7 @@ public:
 class OverlapGraphConstructor {
 	QueryDataset * queryDataset;
 	SingleKeyHashTable * singleKeyHashTable;
+	DoubleKeyHashTable * doubleKeyHashTable;
 	SubjectDataset * subject;
 public:
 	OverlapGraphConstructor();

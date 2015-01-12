@@ -125,7 +125,7 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 	{
 		align->queryOrientation = true;
 		if(align->subjectReadSequence.length()- subjectStart - hashKeyLength >= align->queryRead->getSequence().length() - hashKeyLength) // The overlap must continue till the end.
-			return false;
+			checkForContainedAlignment(align, mode, subjectStart);
 		string restSubject = align->subjectReadSequence.substr(subjectStart + hashKeyLength, align->subjectReadSequence.length()-(subjectStart + hashKeyLength));
 		string restQuery = align->queryRead->getSequence().substr(hashKeyLength,  restSubject.length());
 		int currentMismatchCount=0;
@@ -145,8 +145,8 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 	else if(mode == "forwardsuffix")
 	{
 		align->queryOrientation = true;
-		if(align->queryRead->getSequence().length()-hashKeyLength < subjectStart)
-			return false;
+		if(align->queryRead->getSequence().length()-hashKeyLength <= subjectStart)
+			checkForContainedAlignment(align, mode, subjectStart);
 		string restSubject = align->subjectReadSequence.substr(0, subjectStart);
 		string restQuery = align->queryRead->getSequence().substr(align->queryRead->getReadLength()-hashKeyLength-subjectStart, restSubject.length());
 		int currentMismatchCount=0;
@@ -167,7 +167,7 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 	{
 		align->queryOrientation = false;
 		if(align->subjectReadSequence.length()- subjectStart - hashKeyLength >= align->queryRead->getSequence().length() - hashKeyLength) // The overlap must continue till the end.
-			return false;
+			checkForContainedAlignment(align, mode, subjectStart);
 		string restSubject = align->subjectReadSequence.substr(subjectStart + hashKeyLength, align->subjectReadSequence.length()-(subjectStart + hashKeyLength));
 		string restQuery = align->queryRead->reverseComplement().substr(hashKeyLength,  restSubject.length());
 		int currentMismatchCount=0;
@@ -187,8 +187,8 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 	else if(mode == "reversesuffix")
 	{
 		align->queryOrientation = false;
-		if(align->queryRead->getSequence().length()-hashKeyLength < subjectStart)
-			return false;
+		if(align->queryRead->getSequence().length()-hashKeyLength <= subjectStart)
+			checkForContainedAlignment(align, mode, subjectStart);
 		string restSubject = align->subjectReadSequence.substr(0, subjectStart);
 		string restQuery = align->queryRead->reverseComplement().substr(align->queryRead->getReadLength()-hashKeyLength-subjectStart, restSubject.length());
 		int currentMismatchCount=0;
@@ -210,6 +210,7 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 	return true;
 }
 
+//the choice of the start and stop position should meet the minimum overlap requirement.
 bool SingleKeyHashTable::subjectWindowRange(int& startpoint, int& stoppoint, string mode, string& subjectRead)
 {
 	if(mode=="forwardprefix" || mode == "reverseprefix")
@@ -228,6 +229,90 @@ bool SingleKeyHashTable::subjectWindowRange(int& startpoint, int& stoppoint, str
 	return true;
 }
 
+bool SingleKeyHashTable::checkForContainedAlignment(Alignment* align, string mode, int subjectStart)
+{
+	string subjectString=align->subjectReadSequence; // Get the forward of read1
+	string queryString="";
+//	string queryString = (mode=="forwardprefix" || mode=="forwardsuffix") ? align->queryRead->getSequence() : align->queryRead->reverseComplement(); // Get the string in read2 based on the orientation.
+	if(mode=="forwardprefix" || mode=="forwardsuffix")
+	{
+		queryString = align->queryRead->getSequence();
+		align->queryOrientation = true;
+	}
+	else if(mode=="reverseprefix" || mode=="reversesuffix")
+	{
+		queryString = align->queryRead->reverseComplement();
+		align->queryOrientation = false;
+	}
+	else return false;
+
+	if(mode=="forwardprefix" || mode=="reverseprefix")
+									// mode = forwardprefix
+									//   >--------MMMMMMMMMMMMMMM*******------> subject read1      M means match found by hash table
+									//            MMMMMMMMMMMMMMM*******>       query read2      * means we need to check these characters for match
+									//				OR
+									// mode = reverseprefix
+									//	 >---*****MMMMMMMMMMMMMMM*******------> subject read1
+									//		      MMMMMMMMMMMMMMM*******<	    Reverese complement of query read2
+	{
+		int restSubjectLength = subjectString.length() - subjectStart - this->hashKeyLength; 	// This is the remaining of read1
+		int restQueryLength = queryString.length() - this->hashKeyLength; 	// This is the remaining of read2
+		if(restSubjectLength >= restQueryLength)
+		{
+			string restSubject = subjectString.substr(subjectStart + hashKeyLength, restQueryLength);
+			string restQuery = queryString.substr(hashKeyLength,  restQueryLength);
+			int currentMismatchCount=0;
+			for(int i=0; i<restQuery.length();i++)
+			{
+				if(restQuery.at(i)!=restSubject.at(i))
+				{
+					currentMismatchCount++;
+					if(currentMismatchCount>maxMismatch)return false;
+					align->editInfor.insert(std::pair<int, char>(hashKeyLength+i, restSubject.at(i)));
+				}
+			}
+			align->subjectStart = -subjectStart;
+			align->subjectEnd = align->subjectStart + align->subjectReadSequence.length()-1;
+			align->queryEnd = align->queryRead->getReadLength()-1;
+
+		}
+	}
+	else if(mode=="forwardsuffix" || mode=="reversesuffix")
+									// mode = forwardsuffix
+									//   >---*****MMMMMMMMMMMMMMM-------------> subject read1      M means match found by hash table
+									//      >*****MMMMMMMMMMMMMMM       		query read2      * means we need to check these characters for match
+									//				OR
+									// mode = reversesuffix
+									//	 >---*****MMMMMMMMMMMMMMM-------------> subject read1
+									//		<*****MMMMMMMMMMMMMMM				Reverse Complement of query Read2
+	{
+		int restSubjectLength = subjectStart;
+		int restQueryLength = queryString.length() - this->hashKeyLength;
+		if(restSubjectLength >= restQueryLength)
+		{
+			string restSubject = subjectString.substr(subjectStart-restQueryLength, restQueryLength);
+			string restQuery = queryString.substr(0, restQueryLength);
+			int currentMismatchCount=0;
+			for(int i=0; i<restQuery.length();i++)
+			{
+				if(restQuery.at(i)!=restSubject.at(i))
+				{
+					currentMismatchCount++;
+					if(currentMismatchCount>maxMismatch)return false;
+					align->editInfor.insert(std::pair<int, char>(i, restSubject.at(i)));
+				}
+			}
+			align->subjectStart = align->queryRead->getReadLength()-hashKeyLength-subjectStart;
+			align->subjectEnd = align->subjectStart + align->subjectReadSequence.length()-1;
+			align->queryEnd = align->queryRead->getReadLength()-1;
+		}
+	}
+	else return false;
+
+	return true;
+
+}
+
 bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 {
 
@@ -242,7 +327,7 @@ bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 	string modestring = this->hashTableNameList.at(i);
 
 	int startpoint,stoppoint;
-	if(subjectWindowRange(startpoint, stoppoint, modestring, subjectRead)) return false;
+	if(subjectWindowRange(startpoint, stoppoint, modestring, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
 
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
@@ -264,7 +349,7 @@ bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 			align->queryRead = queryRead;
 			if(doAlignment(align, modestring, startpoint)==false) delete align;
 			else Edge.alignmentList.push_back(align);
-			//need to consider contained reads marking
+
 		}
 	}
 	}

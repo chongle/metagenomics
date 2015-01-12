@@ -155,3 +155,17 @@ bool DoubleKeyHashTable::insertQueryRead(QueryRead *read, string mode)
 	return currentHashTable->insertIntoHashTable(keystring,readID);
 
 }
+
+
+bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectStart)
+{
+}
+
+bool SingleKeyHashTable::subjectWindowRange(int& startpoint, int& stoppoint, string mode, string& subjectRead)
+{
+}
+
+bool SingleKeyHashTable::singleKeySearch(edge & Edge)
+{
+}
+}
