@@ -27,6 +27,7 @@ class SingleKeyHashTable {
 
 	string getReadSubstring(string mode, UINT64 readID);// mode ={forwardprefix, forwardsuffix, reverseprefix, reversesuffix}
 	bool doAlignment(Alignment* align, string mode, int subjectStart);
+	bool checkForContainedAlignment(Alignment* align, string mode, int subjectStart)
 	bool subjectWindowRange(int& startpoint, int& stoppoint, string mode, string& subjectRead);
 
 public:

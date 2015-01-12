@@ -17,10 +17,12 @@ class DoubleKeyHashTable {
 	map<string, HashTable*> hashTableMap;
 	UINT16 minimumOverlapLength;
 	UINT16 hashKeyLength;
+	int maxMismatch;
 	QueryDataset * queryDataSet = NULL;
 
 
-
+	string getReadSubstring(string mode, UINT64 readID);// mode ={forwardprefix, forwardsuffix, reverseprefix, reversesuffix}
+	bool doAlignment(Alignment* align, string mode, int subjectStart);
 	string getReadSubstring(string mode, UINT64 readID);// mode ={forwardprefix1,forwardprefix2, forwardsuffix1,forwardsuffix2, reverseprefix1, reverseprefix2, reversesuffix1, reversesuffix2}
 public:
 	DoubleKeyHashTable();
