@@ -125,7 +125,7 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 	{
 		align->queryOrientation = true;
 		if(align->subjectReadSequence.length()- subjectStart - hashKeyLength >= align->queryRead->getSequence().length() - hashKeyLength) // The overlap must continue till the end.
-			checkForContainedAlignment(align, mode, subjectStart);
+			return checkForContainedAlignment(align, mode, subjectStart);
 		string restSubject = align->subjectReadSequence.substr(subjectStart + hashKeyLength, align->subjectReadSequence.length()-(subjectStart + hashKeyLength));
 		string restQuery = align->queryRead->getSequence().substr(hashKeyLength,  restSubject.length());
 		int currentMismatchCount=0;
@@ -146,7 +146,7 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 	{
 		align->queryOrientation = true;
 		if(align->queryRead->getSequence().length()-hashKeyLength <= subjectStart)
-			checkForContainedAlignment(align, mode, subjectStart);
+			return checkForContainedAlignment(align, mode, subjectStart);
 		string restSubject = align->subjectReadSequence.substr(0, subjectStart);
 		string restQuery = align->queryRead->getSequence().substr(align->queryRead->getReadLength()-hashKeyLength-subjectStart, restSubject.length());
 		int currentMismatchCount=0;
@@ -167,7 +167,7 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 	{
 		align->queryOrientation = false;
 		if(align->subjectReadSequence.length()- subjectStart - hashKeyLength >= align->queryRead->getSequence().length() - hashKeyLength) // The overlap must continue till the end.
-			checkForContainedAlignment(align, mode, subjectStart);
+			return checkForContainedAlignment(align, mode, subjectStart);
 		string restSubject = align->subjectReadSequence.substr(subjectStart + hashKeyLength, align->subjectReadSequence.length()-(subjectStart + hashKeyLength));
 		string restQuery = align->queryRead->reverseComplement().substr(hashKeyLength,  restSubject.length());
 		int currentMismatchCount=0;
@@ -188,7 +188,7 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 	{
 		align->queryOrientation = false;
 		if(align->queryRead->getSequence().length()-hashKeyLength <= subjectStart)
-			checkForContainedAlignment(align, mode, subjectStart);
+			return checkForContainedAlignment(align, mode, subjectStart);
 		string restSubject = align->subjectReadSequence.substr(0, subjectStart);
 		string restQuery = align->queryRead->reverseComplement().substr(align->queryRead->getReadLength()-hashKeyLength-subjectStart, restSubject.length());
 		int currentMismatchCount=0;
@@ -317,8 +317,7 @@ bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 {
 
 	string subjectRead = Edge.subjectReadSequence;
-	int startpoint = this->minimumOverlapLength-this->hashKeyLength;
-	int stoppoint = subjectRead.length()-this->minimumOverlapLength;
+
 
 	for(int i =0; i<this->hashTableNameList.size();i++)
 	{
@@ -340,7 +339,7 @@ bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
-		if(queryName>=Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(queryName>Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
 		if(alignFlag)
 		{
 			Alignment* align = new Alignment();
