@@ -17,7 +17,7 @@ class SubjectAlignment {
 	string subjectReadName;
 
 	// alignment results
-	vector<Alignment*> queryAlignment=NULL;
+	vector<Alignment*> queryAlignmentList=NULL;
 
 };
 

@@ -330,7 +330,7 @@ bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
-	string subString = subjectRead.substr(startpoint, hashKeyLength);
+	string subString = subjectRead.substr(j, hashKeyLength);
 	vector<UINT64> currentIDList = hashTableMap.at(modestring)->getReadIDListOfReads(subString);
 	for(int k=0;k<currentIDList.size();k++)
 	{
@@ -340,14 +340,60 @@ bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
 		if(queryName>Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		//however, this will cause missing of the contained read detection/alignment. Accept this reality.
 		if(alignFlag)
 		{
 			Alignment* align = new Alignment();
 			align->subjectReadName = Edge.subjectReadName;
 			align->subjectReadSequence = subjectRead;
 			align->queryRead = queryRead;
-			if(doAlignment(align, modestring, startpoint)==false) delete align;
+			if(doAlignment(align, modestring, j)==false) delete align;
 			else Edge.alignmentList.push_back(align);
+
+		}
+	}
+	}
+
+	}
+
+}
+
+bool SingleKeyHashTable::singleKeySearch(SubjectAlignment & subjectAlign)
+{
+
+	string subjectRead = subjectAlign.subjectReadSequence;
+
+
+	for(int i =0; i<this->hashTableNameList.size();i++)
+	{
+
+
+	string modestring = this->hashTableNameList.at(i);
+
+	int startpoint,stoppoint;
+	if(subjectWindowRange(startpoint, stoppoint, modestring, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
+
+	for(int j=startpoint;j<=stoppoint;j++)
+	{
+	string subString = subjectRead.substr(j, hashKeyLength);
+	vector<UINT64> currentIDList = hashTableMap.at(modestring)->getReadIDListOfReads(subString);
+	for(int k=0;k<currentIDList.size();k++)
+	{
+		UINT64 currentID = currentIDList.at(k);
+		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
+		string querySequence = queryRead->getSequence();
+		string queryName = queryRead->getName();
+		bool alignFlag = true;
+		if(queryName>subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		//however, this will cause missing of the contained read detection/alignment. Accept this reality.
+		if(alignFlag)
+		{
+			Alignment* align = new Alignment();
+			align->subjectReadName = subjectAlign.subjectReadName;
+			align->subjectReadSequence = subjectRead;
+			align->queryRead = queryRead;
+			if(doAlignment(align, modestring, j)==false) delete align;
+			else subjectAlign.queryAlignmentList.push_back(align);
 
 		}
 	}

@@ -11,7 +11,7 @@
 #include "Config.h"
 
 class QueryRead {
-	vector<Alignment> queryAlignmentList;
+	vector<Alignment*> queryAlignmentList;
 	string readSequence;
 	string readName;
 	UINT64 readID; 						// Unique Identification of the read. start from one. zero means a new read.
@@ -22,7 +22,7 @@ public:
 	QueryRead();
 	QueryRead(string & sequence, string & name);
 	virtual ~QueryRead();
-	bool addAlignment(Alignment subjectAlignment);
+	bool addAlignment(Alignment* subjectAlignment);
 	bool correctErrors();
 	bool needRemoval();
 	void setName(string & name);
