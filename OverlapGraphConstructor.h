@@ -33,6 +33,7 @@ class OverlapGraphConstructor {
 	SingleKeyHashTable * singleKeyHashTable;
 	DoubleKeyHashTable * doubleKeyHashTable;
 	SubjectDataset * subject;
+	bool isContainedAlignment(Alignment * subjectAlignment);
 public:
 	OverlapGraphConstructor();
 	~OverlapGraphConstructor();

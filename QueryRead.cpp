@@ -71,6 +71,11 @@ UINT32 QueryRead::getReadLength()
 	return this->readSequence.length();
 }
 
+bool QueryRead::addAlignment(Alignment* subjectAlignment)
+{
+	this->queryAlignmentList.push_back(subjectAlignment);
+	return true;
+}
 static string QueryRead::reverseComplement(const string & read)
 {
 	UINT64 stringLength = read.length();

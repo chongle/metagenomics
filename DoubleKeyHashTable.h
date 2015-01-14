@@ -24,7 +24,9 @@ class DoubleKeyHashTable {
 
 	bool subjectWindowRange(int& startpoint, int& stoppoint, string mode, string& subjectRead);
 	string getReadSubstring(string mode, UINT64 readID);// mode ={forwardprefix, forwardsuffix, reverseprefix, reversesuffix}
-	bool doAlignment(Alignment* align, string mode, int subjectStart);
+//	bool doAlignment(Alignment* align, string mode, int subjectStart);
+	bool createAlignment(Alignment* subjectAlignment, int leftKeyPoint, int rightKeyPoint, int keyEndPoint, string mode, int keymatchmode);
+	bool alignSubStrings(Alignment* subjectAlignment, string& subSubject, string& subQuery, int offset, int seedStart, int seedEnd);
 	string getReadSubstring(string mode, UINT64 readID);// mode ={forwardprefix1,forwardprefix2, forwardsuffix1,forwardsuffix2, reverseprefix1, reverseprefix2, reversesuffix1, reversesuffix2}
 	bool wennDiagramTwoLists(vector<UINT64> list1, vector<UINT64> list2, vector<UINT64>& list1only, vector<UINT64>& list2only, vector<UINT64>& list12);
 public:
@@ -34,7 +36,7 @@ public:
 	bool insertQueryDataset(QueryDataset* d);
 	bool insertQueryRead(QueryRead *read, string mode);// mode ={forwardprefix1,forwardprefix2, forwardsuffix1,forwardsuffix2, reverseprefix1, reverseprefix2, reversesuffix1, reversesuffix2}
 	bool doubleKeySearch(edge & Edge);
-	bool doubleKeySearch(SubjectAlignment & subject);
+	bool doubleKeySearch(SubjectAlignment & subjectAlign);
 	bool doubleKeySearch(SubjectAlignmentPairedEnd & subjectAlignment);
 
 };

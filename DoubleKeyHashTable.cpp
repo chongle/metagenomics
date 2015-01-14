@@ -162,9 +162,7 @@ bool DoubleKeyHashTable::insertQueryRead(QueryRead *read, string mode)
 }
 
 
-bool DoubleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectStart)
-{
-}
+
 
 bool DoubleKeyHashTable::subjectWindowRange(int& startpoint, int& stoppoint, string mode, string& subjectRead)
 {
@@ -200,8 +198,8 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
-	string subStringLeft = subjectRead.substr(startpoint, hashKeyLength);
-	string subStringRight = subjectRead.substr(startpoint+hashKeyLength, hashKeyLength);
+	string subStringLeft = subjectRead.substr(j, hashKeyLength);
+	string subStringRight = subjectRead.substr(j+hashKeyLength, hashKeyLength);
 	string modeLeft = mode+"1";
 	string modeRight = mode+"2";
 	vector<UINT64> LeftIDList = hashTableMap.at(modeLeft)->getReadIDListOfReads(subStringLeft);
@@ -225,14 +223,273 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 			align->subjectReadName = Edge.subjectReadName;
 			align->subjectReadSequence = subjectRead;
 			align->queryRead = queryRead;
-			if(doAlignment(align, mode, startpoint)==false) delete align;
+			if(createAlignment(align, j, j+this->hashKeyLength, j+this->hashKeyLength-1, mode, 3)==false) delete align;
 			else Edge.alignmentList.push_back(align);
 
 		}
 	}
+
+	for(int k=0;k<Key1OnlyList.size();k++)
+	{
+		UINT64 currentID = Key1OnlyList.at(k);
+		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
+		string querySequence = queryRead->getSequence();
+		string queryName = queryRead->getName();
+		bool alignFlag = true;
+		if(queryName>Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(alignFlag)
+		{
+			Alignment* align = new Alignment();
+			align->subjectReadName = Edge.subjectReadName;
+			align->subjectReadSequence = subjectRead;
+			align->queryRead = queryRead;
+			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength-1, mode, 1)==false) delete align;
+			else Edge.alignmentList.push_back(align);
+
+		}
+	}
+	for(int k=0;k<Key2OnlyList.size();k++)
+	{
+		UINT64 currentID = Key2OnlyList.at(k);
+		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
+		string querySequence = queryRead->getSequence();
+		string queryName = queryRead->getName();
+		bool alignFlag = true;
+		if(queryName>Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(alignFlag)
+		{
+			Alignment* align = new Alignment();
+			align->subjectReadName = Edge.subjectReadName;
+			align->subjectReadSequence = subjectRead;
+			align->queryRead = queryRead;
+			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength-1, mode, 2)==false) delete align;
+			else Edge.alignmentList.push_back(align);
+
+		}
 	}
 
+	}//loop for window j
+
+	}//loop of i for each mode
+}
+
+bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
+{
+	string subjectRead = subjectAlign.subjectReadSequence;
+
+
+	for(int i =0; i<this->modeList.size();i++)
+	{
+
+
+	string mode = this->modeList.at(i);
+
+	int startpoint,stoppoint;
+	if(subjectWindowRange(startpoint, stoppoint, mode, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
+
+	for(int j=startpoint;j<=stoppoint;j++)
+	{
+	string subStringLeft = subjectRead.substr(j, hashKeyLength);
+	string subStringRight = subjectRead.substr(j+hashKeyLength, hashKeyLength);
+	string modeLeft = mode+"1";
+	string modeRight = mode+"2";
+	vector<UINT64> LeftIDList = hashTableMap.at(modeLeft)->getReadIDListOfReads(subStringLeft);
+	vector<UINT64> RightIDList = hashTableMap.at(modeRight)->getReadIDListOfReads(subStringRight);
+	vector<UINT64> Key1OnlyList = new vector<UINT64>;
+	vector<UINT64> Key2OnlyList = new vector<UINT64>;
+	vector<UINT64> BothKeyList = new vector<UINT64>;
+	wennDiagramTwoLists(LeftIDList,RightIDList,Key1OnlyList, Key2OnlyList, BothKeyList);
+
+	for(int k=0;k<BothKeyList.size();k++)
+	{
+		UINT64 currentID = BothKeyList.at(k);
+		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
+		string querySequence = queryRead->getSequence();
+		string queryName = queryRead->getName();
+		bool alignFlag = true;
+		if(queryName>subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(alignFlag)
+		{
+			Alignment* align = new Alignment();
+			align->subjectReadName = subjectAlign.subjectReadName;
+			align->subjectReadSequence = subjectRead;
+			align->queryRead = queryRead;
+			if(createAlignment(align, j, j+this->hashKeyLength, j+this->hashKeyLength-1, mode, 3)==false) delete align;
+			else subjectAlign.queryAlignmentList.push_back(align);
+
+		}
 	}
+
+	for(int k=0;k<Key1OnlyList.size();k++)
+	{
+		UINT64 currentID = Key1OnlyList.at(k);
+		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
+		string querySequence = queryRead->getSequence();
+		string queryName = queryRead->getName();
+		bool alignFlag = true;
+		if(queryName>subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(alignFlag)
+		{
+			Alignment* align = new Alignment();
+			align->subjectReadName = subjectAlign.subjectReadName;
+			align->subjectReadSequence = subjectRead;
+			align->queryRead = queryRead;
+			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength-1, mode, 1)==false) delete align;
+			else subjectAlign.queryAlignmentList.push_back(align);
+
+		}
+	}
+	for(int k=0;k<Key2OnlyList.size();k++)
+	{
+		UINT64 currentID = Key2OnlyList.at(k);
+		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
+		string querySequence = queryRead->getSequence();
+		string queryName = queryRead->getName();
+		bool alignFlag = true;
+		if(queryName>subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(alignFlag)
+		{
+			Alignment* align = new Alignment();
+			align->subjectReadName = subjectAlign.subjectReadName;
+			align->subjectReadSequence = subjectRead;
+			align->queryRead = queryRead;
+			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength-1, mode, 2)==false) delete align;
+			else subjectAlign.queryAlignmentList.push_back(align);
+
+		}
+	}
+
+	}//loop for window j
+
+	}//loop of i for each mode
+}
+
+//This function is designed for dynamic key range.
+//keymatchmode = 1(only left key matched),2(only right key matched),3(both matched)
+bool DoubleKeyHashTable::createAlignment(Alignment* subjectAlignment, int leftKeyPoint, int rightKeyPoint, int keyEndPoint, string mode, int keymatchmode)
+{
+	string subjectString=subjectAlignment->subjectReadSequence; // Get the forward of read1
+	string queryString="";
+	if(mode=="forwardprefix" || mode=="forwardsuffix")
+	{
+		queryString = subjectAlignment->queryRead->getSequence();
+		subjectAlignment->queryOrientation = true;
+	}
+	else if(mode=="reverseprefix" || mode=="reversesuffix")
+	{
+		queryString = subjectAlignment->queryRead->reverseComplement();
+		subjectAlignment->queryOrientation = false;
+	}
+	else return false;
+
+	int leftKeyLength = rightKeyPoint-leftKeyPoint;
+	int rightKeyLength = keyEndPoint-rightKeyPoint+1;
+
+	bool isContainedAlign;
+	int maxCompareLength;
+	int offset;
+	int seedStart, seedEnd;
+	string subSubject, subQuery;
+	if(mode == "forwardprefix" || mode=="reverseprefix")
+	{
+		subjectAlignment->subjectStart = 0-leftKeyPoint;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectAlignment->subjectReadSequence.length()-1;
+		subjectAlignment->queryEnd = subjectAlignment->queryRead->getReadLength()-1;
+		isContainedAlign = subjectAlignment->subjectReadSequence.length()- leftKeyPoint  >= subjectAlignment->queryRead->getReadLength();
+		if(!isContainedAlign)
+		{
+			maxCompareLength = subjectAlignment->subjectReadSequence.length()- leftKeyPoint;
+			offset = 0;
+		}
+		else
+		{
+			maxCompareLength = subjectAlignment->queryRead->getReadLength();
+			offset = 0;
+		}
+		subSubject = subjectString.substr(0-subjectAlignment->subjectStart,maxCompareLength);
+		subQuery = queryString.substr(0,maxCompareLength);
+		//mark the perfect matched region
+		if(keymatchmode ==1)
+		{
+			seedStart = 0;
+			seedEnd = leftKeyLength-1;
+		}
+		else if(keymatchmode == 2)
+		{
+			seedStart = leftKeyLength;
+			seedEnd = leftKeyLength+rightKeyLength-1;
+		}
+		else if(keymatchmode == 3)
+		{
+			seedStart = 0;
+			seedEnd = leftKeyLength+rightKeyLength-1;
+		}
+		else return false;
+
+	}
+	else if (mode == "forwardsuffix" || mode=="reversesuffix")
+	{
+		subjectAlignment->subjectStart = subjectAlignment->queryRead->getReadLength()-1-keyEndPoint;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectAlignment->subjectReadSequence.length()-1;
+		subjectAlignment->queryEnd = subjectAlignment->queryRead->getReadLength()-1;
+		isContainedAlign = subjectAlignment->queryRead->getReadLength()-(leftKeyLength+rightKeyLength) <= leftKeyPoint;
+		if(!isContainedAlign)
+		{
+			maxCompareLength = keyEndPoint + 1;
+			offset = subjectAlignment->queryRead->getReadLength()-1-keyEndPoint;
+		}
+		else
+		{
+			maxCompareLength = subjectAlignment->queryRead->getReadLength();
+			offset = 0;
+		}
+		subSubject = subjectString.substr(queryString.length()-maxCompareLength-subjectAlignment->subjectStart,maxCompareLength);
+		subQuery = queryString.substr(queryString.length()-maxCompareLength,maxCompareLength);
+		if(keymatchmode ==1)
+		{
+			seedStart = queryString.length()-rightKeyLength-leftKeyLength;
+			seedEnd = queryString.length()-rightKeyLength - 1;
+		}
+		else if(keymatchmode == 2)
+		{
+			seedStart = queryString.length()-rightKeyLength;
+			seedEnd = queryString.length()-1;
+		}
+		else if(keymatchmode == 3)
+		{
+			seedStart = queryString.length()-rightKeyLength-leftKeyLength;
+			seedEnd = queryString.length()-1;
+		}
+		else return false;
+	}
+	else return false;
+
+	return alignSubStrings(subjectAlignment, subSubject, subQuery, offset, seedStart, seedEnd);
+}
+
+bool DoubleKeyHashTable::alignSubStrings(Alignment* subjectAlignment, string& subSubject, string& subQuery, int offset, int seedStart, int seedEnd)
+{
+	int currentMismatchCount=0;
+	int i = 0;
+	while(i<subSubject.size())
+	{
+		if(i==seedStart)
+		{
+			i = seedEnd;
+		}
+		else
+		{
+			if(subSubject.at(i)!=subQuery.at(i))
+			{
+				currentMismatchCount++;
+				if(currentMismatchCount>maxMismatch)return false;
+				subjectAlignment->editInfor.insert(std::pair<int, char>(offset+i, subSubject.at(i)));
+			}
+
+		}
+		i++;
+	}
+	return true;
 }
 
 bool DoubleKeyHashTable::wennDiagramTwoLists(vector<UINT64> list1, vector<UINT64> list2, vector<UINT64>& list1only, vector<UINT64>& list2only, vector<UINT64>& list12)//sorted from smaller to larger ID in the list

@@ -37,7 +37,7 @@ public:
 	bool insertQueryDataset(QueryDataset* d);
 	bool insertQueryRead(QueryRead *read, string mode);// mode ={forwardprefix, forwardsuffix, reverseprefix, reversesuffix}
 	bool singleKeySearch(edge & Edge);
-	bool singleKeySearch(SubjectAlignment & subject);
+	bool singleKeySearch(SubjectAlignment & subjectAlign);
 	bool singleKeySearch(SubjectAlignmentPairedEnd & subjectAlignment);
 };
 
