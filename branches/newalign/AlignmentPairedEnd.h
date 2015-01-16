@@ -9,6 +9,10 @@
 #define ALIGNMENTPAIREDEND_H_
 
 #include "Config.h"
+#include "QueryReadPairedEnd.h"
+
+
+
 
 class AlignmentPairedEnd {
 
@@ -45,4 +49,18 @@ public:
 	AlignmentPairedEnd();
     virtual ~AlignmentPairedEnd();
 };
+
+//class SubjectAlignmentPairedEnd is used by PairedReadMerger
+class SubjectAlignmentPairedEnd {
+public:
+	// alignment input
+	string subjectReadSequence;
+
+	string subjectReadName;
+
+	// alignment results
+	vector<AlignmentPairedEnd*> queryAlignmentList;
+
+};
+
 #endif /* ALIGNMENTPAIREDEND_H_ */

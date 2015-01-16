@@ -87,8 +87,9 @@ bool SingleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
 	hashTableNameList.push_back("reversesuffix");
 	InitializeAllHashTables();
 
-#pragma omp parallel for
+#pragma omp parallel
 	{
+	#pragma omp for
 		for(int i = 0; i< hashTableNameList.size(); i++)
 		{
 			string stringmode = hashTableNameList.at(i);
@@ -331,10 +332,10 @@ bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
 	string subString = subjectRead.substr(j, hashKeyLength);
-	vector<UINT64> currentIDList = hashTableMap.at(modestring)->getReadIDListOfReads(subString);
-	for(int k=0;k<currentIDList.size();k++)
+	vector<UINT64> * currentIDList = hashTableMap.at(modestring)->getReadIDListOfReads(subString);
+	for(int k=0;k<currentIDList->size();k++)
 	{
-		UINT64 currentID = currentIDList.at(k);
+		UINT64 currentID = currentIDList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
@@ -376,10 +377,10 @@ bool SingleKeyHashTable::singleKeySearch(SubjectAlignment & subjectAlign)
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
 	string subString = subjectRead.substr(j, hashKeyLength);
-	vector<UINT64> currentIDList = hashTableMap.at(modestring)->getReadIDListOfReads(subString);
-	for(int k=0;k<currentIDList.size();k++)
+	vector<UINT64>* currentIDList = hashTableMap.at(modestring)->getReadIDListOfReads(subString);
+	for(int k=0;k<currentIDList->size();k++)
 	{
-		UINT64 currentID = currentIDList.at(k);
+		UINT64 currentID = currentIDList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();

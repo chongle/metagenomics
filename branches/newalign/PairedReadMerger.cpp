@@ -17,7 +17,7 @@ PairedReadMerger::~PairedReadMerger() {
 }
 
 bool PairedReadMerger::start() {
-	if (!queryDatasetPairedEnd->buildDataset(Config::getQueryDatasetFilename())){
+/*	if (!queryDatasetPairedEnd->buildDataset(Config::getQueryDatasetFilename())){
 		cout << "Error: cannot build query dataset" << endl;
 		return false;
 	}
@@ -52,5 +52,6 @@ bool PairedReadMerger::start() {
 	// end of omp parallel
 
 	queryDataset->write2File();
+	*/
 
 }

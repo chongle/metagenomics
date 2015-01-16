@@ -76,7 +76,7 @@ bool QueryRead::addAlignment(Alignment* subjectAlignment)
 	this->queryAlignmentList.push_back(subjectAlignment);
 	return true;
 }
-static string QueryRead::reverseComplement(const string & read)
+string QueryRead::reverseComplement(const string & read)
 {
 	UINT64 stringLength = read.length();
 	string reverse(stringLength,'0');
@@ -126,19 +126,22 @@ bool QueryRead::printAlignmentToFile(string fileName)
 	int overlapLength = coordinates.at(1)-coordinates.at(0);
 	int subStart = coordinates.at(0)-align->subjectStart;
 	int subEnd = coordinates.at(1)-align->subjectStart;
-	outputString = this->readName + "\t" + align->subjectReadName + "\t" + align->orientationTranslate() +
-			"," + overlapLength + "," + align->editInfor.size() + "," + align->editInfor.size() +
-			+this->getReadLength() +  "," + coordinates.at(0)+  "," + coordinates.at(1) + ","
-			+align->subjectReadSequence.length() + "," + subStart + "," + subEnd + "," + "no error info" + "\r\n";
+	std::stringstream sstm;
+	sstm << this->readName + "\t" + align->subjectReadName + "\t" <<align->orientationTranslate() <<
+			"," << overlapLength << "," << align->editInfor.size() << "," << align->editInfor.size()
+			<< "," << this->getReadLength() <<  "," << coordinates.at(0)<<  "," << coordinates.at(1) << ","
+			<<align->subjectReadSequence.length() << "," << subStart << "," << subEnd << ", no error info \r\n"<<endl;
+	outputString = sstm.str();
 	filePointer<<outputString;
 	}
 	filePointer.close();
 	return true;
 }
-
-bool QueryRead::correctErrors(){
+/*
+bool QueryRead::correctErrors(int minimumDepth, double cutoff){
 
 	for(int i = 0; i < queryAlignmentList.size(); i++){
 
 	}
 }
+*/

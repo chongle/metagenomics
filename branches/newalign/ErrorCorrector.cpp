@@ -18,7 +18,7 @@ ErrorCorrector::~ErrorCorrector() {
 }
 
 bool ErrorCorrector::start() {
-
+/*
 	if (!queryDataset->buildDataset(Config::getQueryDatasetFilename())){
 		cout << "Error: cannot build query dataset: " << Config::getQueryDatasetFilename() << endl;
 		return false;
@@ -63,7 +63,7 @@ bool ErrorCorrector::start() {
 	queryDataset->write2File();
 
 	delete subject;
-
+*/
 }
 
 

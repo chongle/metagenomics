@@ -42,8 +42,9 @@ bool OverlapGraphConstructor::start() {
 	vector<edge*> edgeList;
 
 	while(subject->loadNextChunk(edgeList)){
-	#pragma omp parallel for
+	#pragma omp parallel
 	{
+		#pragma omp for
 		for(int i = 0; i < edgeList.size(); i++){
 				searchHashTable(*edgeList[i]);
 
@@ -84,9 +85,9 @@ void OverlapGraphConstructor::printEdgesToFile(bool nonRemovedReads, string outF
 	for(int i = 0; i < queryDataset->queryReadList.size(); i++){
 		if(nonRemovedReads)
 		if(!queryDataset->queryReadList[i]->flag4Removal){
-			queryDataset->queryReadList[i]->printAlignmentToFile();
+			queryDataset->queryReadList[i]->printAlignmentToFile(outFileName);
 		}
-		else queryDataset->queryReadList[i]->printAlignmentToFile();
+		else queryDataset->queryReadList[i]->printAlignmentToFile(outFileName);
 
 	}
 }

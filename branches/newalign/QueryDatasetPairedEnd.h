@@ -9,6 +9,7 @@
 #define QUERYDATASETPAIREDEND_H_
 
 #include "Config.h"
+#include "QueryReadPairedEnd.h"
 
 class QueryDatasetPairedEnd {
 public:

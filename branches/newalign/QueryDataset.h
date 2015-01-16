@@ -22,7 +22,7 @@ class QueryDataset {
 
 	bool duplicateFilter();
 	void sortReads();
-	bool compareReads (QueryRead *read1, QueryRead *read2);//for sortReads
+//	bool compareReads (QueryRead *read1, QueryRead *read2);//for sortReads
 public:
 	QueryDataset();
 	virtual ~QueryDataset();

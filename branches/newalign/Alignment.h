@@ -9,6 +9,11 @@
 #define ALIGNMENT_H_
 
 #include "Config.h"
+#include "QueryRead.h"
+
+class QueryRead;
+
+
 
 
 class Alignment {
@@ -19,8 +24,8 @@ public:
 	QueryRead * queryRead;
 
 	// Don't need these two variables for error correction to save memory.
-	string subjectReadSequence = "";
-	string subjectReadName =  "";
+	string subjectReadSequence;
+	string subjectReadName;
 
 	// orientation of the query read
 	bool queryOrientation;		// true for forward, false for reverse
@@ -65,6 +70,39 @@ public:
 	// 'D' means deletion
 	//
 	map<int, char> editInfor;
+};
+
+
+//class edge is used by OverlapGraphConstructor
+class edge{
+public:
+	// alignment input
+	string subjectReadSequence;
+	string subjectReadName;
+
+
+
+	// alignment results
+	vector<Alignment*> alignmentList;
+
+	// a list of query reads that are contained by the subject read or duplicate with the subject read
+	// when a query is duplicate with a subject read, we compare their names and add the query read to the duplicate read list if its name is greater than the subject read name.
+	vector<QueryRead *> containedOrDeplicateReadList;//It's all for contained read if the duplicated reads are removed from the beginning.
+
+
+};
+
+
+//class SubjectAlignment is used by ErrorCorrector
+class SubjectAlignment {
+public:
+	// alignment input
+	string subjectReadSequence;
+	string subjectReadName;
+
+	// alignment results
+	vector<Alignment*> queryAlignmentList;
+
 };
 
 #endif /* ALIGNMENT_H_ */
