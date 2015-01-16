@@ -94,6 +94,48 @@ string QueryRead::reverseComplement()
 	return QueryRead::reverseComplement(this->readSequence);
 }
 
+bool wayToSort(int i, int j) { return i < j; }
+
+bool QueryRead::printAlignmentToFile(string fileName)
+{
+	ofstream filePointer;
+	filePointer.open(fileName.c_str());
+	if(filePointer == NULL)
+	{
+		cout<<"Unable to open file: "<<endl;
+		return false;
+	}
+
+
+	for(int i =0; i< this->queryAlignmentList.size();i++)
+	{
+	string outputString;
+	Alignment *align = this->queryAlignmentList[i];
+	/*SourceVertexId       DestinationVertexId     Properties
+
+	where properties should have
+
+	orientation, overlap length, substitutions, edits, length1, start1,
+	stop1, length2, start2, stop2, error info
+	*/
+	vector<int> coordinates;
+	coordinates.push_back(align->queryEnd);
+	coordinates.push_back(align->subjectStart);
+	coordinates.push_back(align->subjectEnd);
+	sort(coordinates.begin(), coordinates.end(), wayToSort);
+	int overlapLength = coordinates.at(1)-coordinates.at(0);
+	int subStart = coordinates.at(0)-align->subjectStart;
+	int subEnd = coordinates.at(1)-align->subjectStart;
+	outputString = this->readName + "\t" + align->subjectReadName + "\t" + align->orientationTranslate() +
+			"," + overlapLength + "," + align->editInfor.size() + "," + align->editInfor.size() +
+			+this->getReadLength() +  "," + coordinates.at(0)+  "," + coordinates.at(1) + ","
+			+align->subjectReadSequence.length() + "," + subStart + "," + subEnd + "," + "no error info" + "\r\n";
+	filePointer<<outputString;
+	}
+	filePointer.close();
+	return true;
+}
+
 bool QueryRead::correctErrors(){
 
 	for(int i = 0; i < queryAlignmentList.size(); i++){
