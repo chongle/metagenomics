@@ -9,7 +9,7 @@
 
 OverlapGraphConstructor::OverlapGraphConstructor() {
 	// TODO Auto-generated constructor stub
-
+	queryDataset = new QueryDataset();
 }
 
 OverlapGraphConstructor::~OverlapGraphConstructor() {
