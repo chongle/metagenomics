@@ -36,6 +36,7 @@ public:
 	UINT32 getReadLength();
 	static string reverseComplement(const string & read);
 	string reverseComplement();
+	bool printAlignmentToFile(string fileName)
 };
 
 #endif /* QUERYREAD_H_ */

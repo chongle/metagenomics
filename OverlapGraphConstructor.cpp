@@ -74,13 +74,21 @@ bool OverlapGraphConstructor::start() {
 		edgeList.clear();
 
 	}
+	printEdgesToFile(true, "ourgraph.txt");
 
-	for(int i = 0; i < queryDataset->queryReadList.size(); i++){
-		if(!queryDataset->queryReadList[i]->flag4Removal){
-			queryDataset->queryReadList[i]->printEdges2File();
-		}
-	}
 	return true;
+}
+
+void OverlapGraphConstructor::printEdgesToFile(bool nonRemovedReads, string outFileName)
+{
+	for(int i = 0; i < queryDataset->queryReadList.size(); i++){
+		if(nonRemovedReads)
+		if(!queryDataset->queryReadList[i]->flag4Removal){
+			queryDataset->queryReadList[i]->printAlignmentToFile();
+		}
+		else queryDataset->queryReadList[i]->printAlignmentToFile();
+
+	}
 }
 
 //either subject is contained in query or query is contained in subject

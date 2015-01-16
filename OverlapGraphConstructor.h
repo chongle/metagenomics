@@ -39,6 +39,7 @@ public:
 	~OverlapGraphConstructor();
 	bool start();
 	bool searchHashTable(edge & currentEdge);
+	void printEdgesToFile(bool nonRemovedReads, string outFileName);
 
 };
 
