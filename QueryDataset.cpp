@@ -9,7 +9,7 @@
 
 QueryDataset::QueryDataset() {
 	// TODO Auto-generated constructor stub
-
+	cout << "constructor " << queryReadList.size() << endl;
 }
 
 QueryDataset::~QueryDataset() {
@@ -145,6 +145,7 @@ void QueryDataset::sortReads()
 
 bool QueryDataset::buildDataset(const string & QueryFilename)
 {
+	cout << "initial " << queryReadList.size() << endl;
 	string fileName = QueryFilename;
 	cout << "Reading dataset: "  << " from file: " << fileName << endl;
 	ifstream myFile;
@@ -156,6 +157,7 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 	string line1,line0, text, line1ReverseComplement,line2ReverseComplement;
 	enum FileType {FASTA, FASTQ, UNDEFINED};
 	FileType fileType = UNDEFINED;
+
 	while(!myFile.eof())
 	{
 		if( (goodReads + badReads ) != 0 && (goodReads + badReads)%1000000 == 0)
@@ -174,6 +176,7 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 		line.clear();
 		if(fileType == FASTA) 			// Fasta file
 		{
+
 			getline (myFile,text);
 			line.push_back(text);
 			getline (myFile,text,'>');
@@ -183,6 +186,8 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 			line1 = line.at(1);								// The first string is in the 2nd line.
 
 			line0 = line.at(0);                              //title line is the very first line
+
+
 		}
 		else if(fileType == FASTQ) 					// Fastq file.
 		{
@@ -205,6 +210,7 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 		    *p = toupper(*p);
 		if(line1.length() > Config::getminimumOverlapLength() && qualityFilter(line1) ) // Test the read is of good quality.
 		{
+
 			QueryRead *r1=new QueryRead();
 			r1->setName(readname);
 			line1ReverseComplement = r1->reverseComplement(line1);
@@ -220,8 +226,11 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 				longestReadLength = len;
 			if(len < shortestReadLength)
 				shortestReadLength = len;
-
+			cout << queryReadList.size() << endl;
+			queryReadList.push_back(NULL);
+			cout << r1->getSequence() << endl;
 			queryReadList.push_back(r1);						// Store the first string in the dataset.
+			cout << "line 163" << endl;
 			numberOfReads++;							// Counter of the total number of reads.
 			goodReads++;
 		}
