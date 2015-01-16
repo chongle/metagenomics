@@ -9,6 +9,10 @@
 #define SINGLEKEYHASHTABLE_H_
 
 #include "Config.h"
+#include "HashTable.h"
+#include "QueryDataset.h"
+#include "Alignment.h"
+#include "AlignmentPairedEnd.h"
 
 class SingleKeyHashTable {
 

@@ -49,27 +49,27 @@ typedef long long INT64;
 
 class Config {
 
-private:
-	static string operationCode="";//"ConstructGraph","MergePairedEndReads","CorrectErrors"
-	static string queryFilename = "";
+public:
+	static string operationCode;//"ConstructGraph","MergePairedEndReads","CorrectErrors"
+	static string queryFilename;
 	static vector<string> subjectFilenameList;
 
-	static UINT16 minimumOverlapLength=40;
-	static UINT16 hashKeyLength = 32;
-	static UINT64 streamChunkSize = 100;
-	static bool isSingleKey = true;
+	static UINT16 minimumOverlapLength;
+	static UINT16 hashKeyLength;
+	static UINT64 streamChunkSize;
+	static bool isSingleKey;
 
-	static bool isSingleEnd = true; //subject is always treated as single end, while the query is only paired end when using "MergePairedEndReads"
-	static bool isFilter = false;
+	static bool isSingleEnd; //subject is always treated as single end, while the query is only paired end when using "MergePairedEndReads"
+	static bool isFilter;
 
-	static bool perfectMatch = false;
-	static UINT16 maxMismatch = 1; //only valid when perfectMatch is set to false
-	static UINT16 maxIndel = 0; //only valid when perfectMatch is set to false
+	static bool perfectMatch;
+	static UINT16 maxMismatch; //only valid when perfectMatch is set to false
+	static UINT16 maxIndel; //only valid when perfectMatch is set to false
 
 	static void printHelp();
 
 
-public:
+
 	Config();
 	~Config();
 	static bool setConfig(int argc, char **argv);

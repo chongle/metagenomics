@@ -9,22 +9,15 @@
 #define ERRORCORRECTOR_H_
 
 #include "Config.h"
+#include "QueryDataset.h"
+#include "Alignment.h"
 
 
-class SubjectAlignment {
-	// alignment input
-	string subjectReadSequence;
-	string subjectReadName;
-
-	// alignment results
-	vector<Alignment*> queryAlignmentList=NULL;
-
-};
 
 class ErrorCorrector {
 
 	QueryDataset * queryDataset;
-	HashTable * hashTable;
+//	HashTable * hashTable;
 
 public:
 	ErrorCorrector();

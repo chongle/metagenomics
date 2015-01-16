@@ -101,7 +101,7 @@ bool DoubleKeyHashTable::InitializeAllHashTables()
 {
 	if(hashTableNameList.empty() || queryDataSet == NULL) return false;
 
-	for(int i = 0; i< hashTableNameList.size(); i++)
+	for(unsigned int i = 0; i< hashTableNameList.size(); i++)
 	{
 		string stringmode = hashTableNameList.at(i);
 		HashTable *currentHashtable = new HashTable(this->hashKeyLength);
@@ -130,9 +130,10 @@ bool DoubleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
 	modeList.push_back("reversesuffix");
 	InitializeAllHashTables();
 
-#pragma omp parallel for
+#pragma omp parallel
 	{
-		for(int i = 0; i< hashTableNameList.size(); i++)
+		#pragma omp for
+		for(unsigned int i = 0; i< hashTableNameList.size(); i++)
 		{
 			string stringmode = hashTableNameList.at(i);
 			UINT64 currentID = 1;
@@ -146,7 +147,7 @@ bool DoubleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
 			}
 
 		}
-	}
+	}//end of parallel
 
 
 	return true;
@@ -202,16 +203,16 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 	string subStringRight = subjectRead.substr(j+hashKeyLength, hashKeyLength);
 	string modeLeft = mode+"1";
 	string modeRight = mode+"2";
-	vector<UINT64> LeftIDList = hashTableMap.at(modeLeft)->getReadIDListOfReads(subStringLeft);
-	vector<UINT64> RightIDList = hashTableMap.at(modeRight)->getReadIDListOfReads(subStringRight);
-	vector<UINT64> Key1OnlyList = new vector<UINT64>;
-	vector<UINT64> Key2OnlyList = new vector<UINT64>;
-	vector<UINT64> BothKeyList = new vector<UINT64>;
+	vector<UINT64>* LeftIDList = hashTableMap.at(modeLeft)->getReadIDListOfReads(subStringLeft);
+	vector<UINT64>* RightIDList = hashTableMap.at(modeRight)->getReadIDListOfReads(subStringRight);
+	vector<UINT64>* Key1OnlyList = new vector<UINT64>;
+	vector<UINT64>* Key2OnlyList = new vector<UINT64>;
+	vector<UINT64>* BothKeyList = new vector<UINT64>;
 	wennDiagramTwoLists(LeftIDList,RightIDList,Key1OnlyList, Key2OnlyList, BothKeyList);
 
-	for(int k=0;k<BothKeyList.size();k++)
+	for(unsigned int k=0;k<BothKeyList->size();k++)
 	{
-		UINT64 currentID = BothKeyList.at(k);
+		UINT64 currentID = BothKeyList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
@@ -229,9 +230,9 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 		}
 	}
 
-	for(int k=0;k<Key1OnlyList.size();k++)
+	for(unsigned int k=0;k<Key1OnlyList->size();k++)
 	{
-		UINT64 currentID = Key1OnlyList.at(k);
+		UINT64 currentID = Key1OnlyList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
@@ -248,9 +249,9 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 
 		}
 	}
-	for(int k=0;k<Key2OnlyList.size();k++)
+	for(unsigned int k=0;k<Key2OnlyList->size();k++)
 	{
-		UINT64 currentID = Key2OnlyList.at(k);
+		UINT64 currentID = Key2OnlyList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
@@ -271,6 +272,7 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 	}//loop for window j
 
 	}//loop of i for each mode
+	return true;
 }
 
 bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
@@ -293,16 +295,16 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 	string subStringRight = subjectRead.substr(j+hashKeyLength, hashKeyLength);
 	string modeLeft = mode+"1";
 	string modeRight = mode+"2";
-	vector<UINT64> LeftIDList = hashTableMap.at(modeLeft)->getReadIDListOfReads(subStringLeft);
-	vector<UINT64> RightIDList = hashTableMap.at(modeRight)->getReadIDListOfReads(subStringRight);
-	vector<UINT64> Key1OnlyList = new vector<UINT64>;
-	vector<UINT64> Key2OnlyList = new vector<UINT64>;
-	vector<UINT64> BothKeyList = new vector<UINT64>;
+	vector<UINT64>* LeftIDList = hashTableMap.at(modeLeft)->getReadIDListOfReads(subStringLeft);
+	vector<UINT64>* RightIDList = hashTableMap.at(modeRight)->getReadIDListOfReads(subStringRight);
+	vector<UINT64>* Key1OnlyList = new vector<UINT64>;
+	vector<UINT64>* Key2OnlyList = new vector<UINT64>;
+	vector<UINT64>* BothKeyList = new vector<UINT64>;
 	wennDiagramTwoLists(LeftIDList,RightIDList,Key1OnlyList, Key2OnlyList, BothKeyList);
 
-	for(int k=0;k<BothKeyList.size();k++)
+	for(unsigned int k=0;k<BothKeyList->size();k++)
 	{
-		UINT64 currentID = BothKeyList.at(k);
+		UINT64 currentID = BothKeyList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
@@ -320,9 +322,9 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 		}
 	}
 
-	for(int k=0;k<Key1OnlyList.size();k++)
+	for(unsigned int k=0;k<Key1OnlyList->size();k++)
 	{
-		UINT64 currentID = Key1OnlyList.at(k);
+		UINT64 currentID = Key1OnlyList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
@@ -339,9 +341,9 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 
 		}
 	}
-	for(int k=0;k<Key2OnlyList.size();k++)
+	for(unsigned int k=0;k<Key2OnlyList->size();k++)
 	{
-		UINT64 currentID = Key2OnlyList.at(k);
+		UINT64 currentID = Key2OnlyList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
@@ -362,6 +364,7 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 	}//loop for window j
 
 	}//loop of i for each mode
+	return true;
 }
 
 //This function is designed for dynamic key range.
@@ -492,43 +495,43 @@ bool DoubleKeyHashTable::alignSubStrings(Alignment* subjectAlignment, string& su
 	return true;
 }
 
-bool DoubleKeyHashTable::wennDiagramTwoLists(vector<UINT64> list1, vector<UINT64> list2, vector<UINT64>& list1only, vector<UINT64>& list2only, vector<UINT64>& list12)//sorted from smaller to larger ID in the list
+bool DoubleKeyHashTable::wennDiagramTwoLists(vector<UINT64>* list1, vector<UINT64>* list2, vector<UINT64>* list1only, vector<UINT64>* list2only, vector<UINT64>* list12)//sorted from smaller to larger ID in the list
 {
-	int i,j;
+	unsigned int i,j;
 	i=0;j=0;
-	while(i<list1.size()&&j<list2.size())
+	while(i<list1->size()&&j<list2->size())
 	{
-		if(list1.at(i)<list2.at(i))
+		if(list1->at(i)<list2->at(i))
 		{
-			UINT64 smallvalue = list1.at(i);
-			list1.push_back(smallvalue);
+			UINT64 smallvalue = list1->at(i);
+			list1->push_back(smallvalue);
 			i++;
 		}
-		else if(list1.at(i)>list2.at(i))
+		else if(list1->at(i)>list2->at(i))
 		{
-			UINT64 smallvalue = list2.at(i);
-			list2.push_back(smallvalue);
+			UINT64 smallvalue = list2->at(i);
+			list2->push_back(smallvalue);
 			j++;
 		}
 		else //same value in both list
 		{
-			UINT64 value = list1.at(i);
-			list12.push_back(value);
+			UINT64 value = list1->at(i);
+			list12->push_back(value);
 			i++;j++;
 		}
 	}
 
-	while(i<list1.size())
+	while(i<list1->size())
 	{
-		UINT64 smallvalue = list1.at(i);
-		list1.push_back(smallvalue);
+		UINT64 smallvalue = list1->at(i);
+		list1->push_back(smallvalue);
 		i++;
 	}
 
-	while(j<list2.size())
+	while(j<list2->size())
 	{
-		UINT64 smallvalue = list2.at(i);
-		list2.push_back(smallvalue);
+		UINT64 smallvalue = list2->at(i);
+		list2->push_back(smallvalue);
 		j++;
 	}
 	return true;

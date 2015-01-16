@@ -77,7 +77,7 @@ QueryRead * QueryDataset::getReadFromString(const string & read)
 }
 
 
-static bool QueryDataset::qualityFilter(string & sequence)
+bool QueryDataset::qualityFilter(string & sequence)
 {
 	//Returns true if the read contains only {A,C,G,T} and does not contain more than 80% of the same nucleotide
 	UINT64 cnt[4] = {0,0,0,0};
@@ -130,17 +130,17 @@ bool QueryDataset::duplicateFilter()
 	return true;
 }
 
-void QueryDataset::sortReads()
-{
-	sort(queryReadList.begin(),queryReadList.end(), compareReads);	// Sort the reads lexicographically.
 
-}
 
-bool QueryDataset::compareReads (QueryRead *read1, QueryRead *read2)
+bool compareReads (QueryRead *read1, QueryRead *read2)
 {
 	return read1->getSequence() < read2->getSequence();
 }
+void QueryDataset::sortReads()
+{
+	std::sort(queryReadList.begin(),queryReadList.end(), compareReads);	// Sort the reads lexicographically.
 
+}
 
 
 bool QueryDataset::buildDataset(const string & QueryFilename)

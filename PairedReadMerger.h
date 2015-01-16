@@ -9,24 +9,17 @@
 #define PAIREDREADMERGER_H_
 
 #include "Config.h"
+#include "QueryDataset.h"
+#include "SubjectDataset.h"
+#include "AlignmentPairedEnd.h"
 
 
 
-class SubjectAlignmentPairedEnd {
-	// alignment input
-	string subjectReadSequence;
-
-	string subjectReadName;
-
-	// alignment results
-	vector<AlignmentPairedEnd*> queryAlignmentList;
-
-};
 
 class PairedReadMerger {
 
 	QueryDataset * queryDataset;
-	HashTable * hashTable;
+//	HashTable * hashTable;
 	SubjectDataset * subject;
 
 //	search(SubjectAlignmentPairedEnd);

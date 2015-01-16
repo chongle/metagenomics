@@ -16,7 +16,25 @@ Config::~Config() {
 	// TODO Auto-generated destructor stub
 }
 
-static void Config::printHelp()
+//Here is to create and initialize the static members
+string Config::operationCode="";//"ConstructGraph","MergePairedEndReads","CorrectErrors"
+string Config::queryFilename = "";
+
+vector<string> Config::subjectFilenameList;
+
+UINT16 Config::minimumOverlapLength=40;
+UINT16 Config::hashKeyLength = 32;
+UINT64 Config::streamChunkSize = 100;
+bool Config::isSingleKey = true;
+
+bool Config::isSingleEnd = true; //subject is always treated as single end, while the query is only paired end when using "MergePairedEndReads"
+bool Config::isFilter = false;
+
+bool Config::perfectMatch = false;
+UINT16 Config::maxMismatch = 1; //only valid when perfectMatch is set to false
+UINT16 Config::maxIndel = 0; //only valid when perfectMatch is set to false
+
+void Config::printHelp()
 {
     std::cout << std::endl
               << "  Usage:" << std::endl
@@ -39,11 +57,11 @@ static void Config::printHelp()
 			  << std::endl;
 }
 
-static bool Config::setConfig(int argc, char **argv)
+bool Config::setConfig(int argc, char **argv)
 {
 	vector<string> argumentsList;
 	cout << "PRINTING ARGUMENTS" << endl;
-	for(UINT64 i = 0; i < argc; i++)
+	for(int i = 0; i < argc; i++)
 	{
 		cout << argv[i] << ' ';
 	}
@@ -129,53 +147,53 @@ static bool Config::setConfig(int argc, char **argv)
     return true;
 }
 
-static string Config::getOperation()
+string Config::getOperation()
 {
 	return Config::operationCode;
 }
-static vector<string> Config::getSubjectDatasetFilenames()
+vector<string> Config::getSubjectDatasetFilenames()
 {
 	return Config::subjectFilenameList;
 }
-static string Config::getQueryDatasetFilename()
+string Config::getQueryDatasetFilename()
 {
 	return Config::queryFilename;
 }
-static UINT16 Config::getminimumOverlapLength()
+UINT16 Config::getminimumOverlapLength()
 {
 	return Config::minimumOverlapLength;
 }
-static UINT16 Config::getHashKeyLength()
+UINT16 Config::getHashKeyLength()
 {
 	return Config::hashKeyLength;
 }
-static UINT64 Config::getStreamChunkSize()
+UINT64 Config::getStreamChunkSize()
 {
 	return Config::streamChunkSize;
 }
 
-static bool Config::isSingleKeyHashTable()
+bool Config::isSingleKeyHashTable()
 {
 	return Config::isSingleKey;
 }
-static bool Config::allowMismatch()
+bool Config::allowMismatch()
 {
 	return !Config::perfectMatch;
 }
-static bool Config::isQuerySingleEndReads()
+bool Config::isQuerySingleEndReads()
 {
 	return Config::isSingleEnd;
 }
 
-static UINT16 Config::getMaxMismatch()
+UINT16 Config::getMaxMismatch()
 {
 	return Config::maxMismatch;
 }
-static UINT16 Config::getMaxIndel()
+UINT16 Config::getMaxIndel()
 {
 	return Config::maxIndel;
 }
-static bool Config::isFilterOrAlign()
+bool Config::isFilterOrAlign()
 {
 	return Config::isFilter;
 }

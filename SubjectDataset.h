@@ -9,6 +9,8 @@
 #define SUBJECTDATASET_H_
 
 #include "Config.h"
+#include "Alignment.h"
+#include "AlignmentPairedEnd.h"
 
 enum FileType {FASTA, FASTQ, UNDEFINED};
 

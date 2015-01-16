@@ -9,6 +9,8 @@
 
 Alignment::Alignment() {
 	// TODO Auto-generated constructor stub
+	this->subjectReadName = "";
+	this->subjectReadSequence = "";
 
 }
 

@@ -6,6 +6,7 @@
  */
 
 #include "SubjectDataset.h"
+#include "QueryDataset.h"
 
 SubjectDataset::SubjectDataset() {
 	// TODO Auto-generated constructor stub
