@@ -25,7 +25,7 @@ class SingleKeyHashTable {
 	UINT16 minimumOverlapLength;
 	UINT16 hashKeyLength;
 	int maxMismatch;
-	QueryDataset * queryDataSet = NULL;
+	QueryDataset * queryDataSet;
 
 
 

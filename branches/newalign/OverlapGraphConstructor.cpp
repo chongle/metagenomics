@@ -10,10 +10,31 @@
 OverlapGraphConstructor::OverlapGraphConstructor() {
 	// TODO Auto-generated constructor stub
 	queryDataset = new QueryDataset();
+	subject = new SubjectDataset();
+
+	if(Config::isSingleKey)
+	{
+		singleKeyHashTable = new SingleKeyHashTable();
+	}
+	else
+	{
+		doubleKeyHashTable = new DoubleKeyHashTable();
+	}
+
 }
 
 OverlapGraphConstructor::~OverlapGraphConstructor() {
 	// TODO Auto-generated destructor stub
+	delete queryDataset;
+	delete subject;
+	if(Config::isSingleKey)
+	{
+		delete singleKeyHashTable;
+	}
+	else
+	{
+		delete doubleKeyHashTable;
+	}
 }
 
 bool OverlapGraphConstructor::searchHashTable(edge & currentEdge)
@@ -34,12 +55,23 @@ bool OverlapGraphConstructor::start() {
 		return false;
 	}
 
-
-	if (!singleKeyHashTable->insertQueryDataset(queryDataset)){
-		cout << "Error: cannot build hash table" << endl;
-		return false;
+	if(Config::isSingleKey)
+	{
+		if (!singleKeyHashTable->insertQueryDataset(queryDataset)){
+			cout << "Error: cannot build hash table" << endl;
+			return false;
+		}
 	}
+	else
+	{
+		if (!doubleKeyHashTable->insertQueryDataset(queryDataset)){
+			cout << "Error: cannot build hash table" << endl;
+			return false;
+		}
+	}
+
 	vector<edge*> edgeList;
+	edgeList.clear();
 
 	while(subject->loadNextChunk(edgeList)){
 	#pragma omp parallel
@@ -72,6 +104,8 @@ bool OverlapGraphConstructor::start() {
 
 		}
 
+		for(int i=0;i<edgeList.size();i++)
+			delete edgeList.at(i);
 		edgeList.clear();
 
 	}

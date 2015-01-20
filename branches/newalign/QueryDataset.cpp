@@ -9,13 +9,20 @@
 
 QueryDataset::QueryDataset() {
 	// TODO Auto-generated constructor stub
-	cout << "constructor " << queryReadList.size() << endl;
+//	cout << "constructor " << queryReadList.size() << endl;
+	numberOfReads = 0;								// Number of total reads present in the dataset.
+	numberOfUniqueReads = 0; 						// number of unique reads in the dataset.
+
+	shortestReadLength = 0xFFFFFFFFFFFFFFFF;
+	longestReadLength = 0;
+	queryReadList.clear();
 }
 
 QueryDataset::~QueryDataset() {
 	for(int i = 0; i < queryReadList.size(); i++){
-		delete queryReadList[i];
+		delete queryReadList.at(i);
 	}
+	queryReadList.clear();
 }
 
 UINT64 QueryDataset::getNumberOfReads()
@@ -226,11 +233,11 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 				longestReadLength = len;
 			if(len < shortestReadLength)
 				shortestReadLength = len;
-			cout << queryReadList.size() << endl;
-			queryReadList.push_back(NULL);
-			cout << r1->getSequence() << endl;
+//			cout << queryReadList.size() << endl;
+
+//			cout << r1->getSequence() << endl;
 			queryReadList.push_back(r1);						// Store the first string in the dataset.
-			cout << "line 163" << endl;
+
 			numberOfReads++;							// Counter of the total number of reads.
 			goodReads++;
 		}

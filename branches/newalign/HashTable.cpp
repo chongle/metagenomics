@@ -7,6 +7,20 @@
 
 #include "HashTable.h"
 
+DataVector::DataVector()
+{
+	dataList = NULL;
+	keystring = "";
+}
+DataVector::~DataVector()
+{
+	if(dataList!=NULL)
+	{
+		dataList->clear();
+		delete dataList;
+	}
+
+}
 HashTable::HashTable() {
 	// TODO Auto-generated constructor stub
 	hashKeyLength = Config::hashKeyLength;
@@ -53,6 +67,13 @@ void HashTable::InitializeWithDataSize(UINT64 dataSetSize)
 
 HashTable::~HashTable() {
 	// TODO Auto-generated destructor stub
+	if(hashTable!=NULL)
+	{
+		for(int i=0; i<hashTable->size();i++)
+			delete hashTable->at(i);
+		hashTable->clear();
+		delete hashTable;
+	}
 }
 
 //This hash function only takes care of the first 32 bps and the last 32 bps of the total key length.

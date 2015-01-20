@@ -7,15 +7,47 @@
 
 #include "Alignment.h"
 
-Alignment::Alignment() {
+edge::edge()
+{
+	subjectReadSequence="";
+	subjectReadName="";
+	containedOrDeplicateReadList.clear();
+	alignmentList.clear();
+}
+edge::~edge()
+{
+	containedOrDeplicateReadList.clear();
+	alignmentList.clear();
+}
+
+SubjectAlignment::SubjectAlignment()
+{
+	subjectReadSequence="";
+	subjectReadName="";
+	queryAlignmentList.clear();
+}
+SubjectAlignment::~SubjectAlignment()
+{
+	queryAlignmentList.clear();
+}
+
+Alignment::Alignment()
+{
 	// TODO Auto-generated constructor stub
 	this->subjectReadName = "";
 	this->subjectReadSequence = "";
+	queryRead = NULL;
+	queryOrientation = true;
+	subjectStart = 0;
+	queryEnd = 0;
+	subjectEnd = 0;
 
 }
 
 Alignment::~Alignment() {
 	// TODO Auto-generated destructor stub
+	editInfor.clear();
+	queryRead = NULL;
 }
 
 //******OMEGA original definition for the alignment orientation******

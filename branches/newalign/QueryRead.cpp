@@ -14,6 +14,7 @@ QueryRead::QueryRead() {
 	readID = 0;
 	frequency = 0;
 	flag4Removal = false;
+	queryAlignmentList.clear();
 }
 
 QueryRead::QueryRead(string& sequence, string& name)
@@ -23,10 +24,14 @@ QueryRead::QueryRead(string& sequence, string& name)
 	readID = 0;
 	frequency = 1;
 	flag4Removal = false;
+	queryAlignmentList.clear();
 }
 
 QueryRead::~QueryRead() {
 	// TODO Auto-generated destructor stub
+	for(int i = 0; i< queryAlignmentList.size();i++)
+		delete queryAlignmentList.at(i);
+	queryAlignmentList.clear();
 }
 
 bool QueryRead::needRemoval()
