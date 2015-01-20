@@ -15,7 +15,7 @@ class DataVector{
 public:
 	vector<UINT64> * dataList;
 	string keystring;
-DataVector(){dataList = NULL;keystring = "";};
+DataVector();
 ~DataVector();
 };
 

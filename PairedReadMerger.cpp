@@ -41,6 +41,9 @@ bool PairedReadMerger::start() {
 				subjectList[i].queryAlignmentList[j].queryRead->addAlignment( subjectList[i].queryAlignmentList[j] );
 			}
 		}
+
+		for(int i = 0; i < subjectList.size(); i++)
+		delete subjectList.at(i);
 		subjectList.clear();
 	}
 

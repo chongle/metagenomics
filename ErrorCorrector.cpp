@@ -36,6 +36,7 @@ bool ErrorCorrector::start() {
 	}
 
 	vector<SubjectAlignment*> subjectList;
+	subjectList.clear();
 
 	while(subject->loadNextChunk(subjectList)){
 		// #pragma omp parallel for
@@ -50,6 +51,9 @@ bool ErrorCorrector::start() {
 				subjectList[i].queryAlignment[j].queryRead->addAlignment( subjectList[i].queryAlignment[j] );
 			}
 		}
+
+		for(int i = 0; i < subjectList.size(); i++)
+		delete subjectList.at(i);
 		subjectList.clear();
 	}
 

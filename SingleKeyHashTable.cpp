@@ -12,10 +12,20 @@ SingleKeyHashTable::SingleKeyHashTable() {
 	this->minimumOverlapLength = Config::minimumOverlapLength;
 	this->hashKeyLength = Config::hashKeyLength;
 	this->maxMismatch = Config::maxMismatch;
+	queryDataSet = NULL;
+	hashTableMap.clear();
+	hashTableNameList.clear();
 }
 
 SingleKeyHashTable::~SingleKeyHashTable() {
 	// TODO Auto-generated destructor stub
+	for(int i = 0; i< hashTableNameList.size(); i++)
+	{
+		string stringmode = hashTableNameList.at(i);
+		delete HashTable(this->hashKeyLength);
+	}
+	hashTableMap.clear();
+	hashTableNameList.clear();
 }
 
 string SingleKeyHashTable::getReadSubstring(string mode, UINT64 readID)

@@ -12,10 +12,22 @@ DoubleKeyHashTable::DoubleKeyHashTable() {
 	this->minimumOverlapLength = Config::minimumOverlapLength;
 	this->hashKeyLength = Config::hashKeyLength;
 	this->maxMismatch = Config::maxMismatch;
+    hashTableNameList.clear();
+	modeList.clear();
+    hashTableMap.clear();
+	queryDataSet = NULL;
 }
 
 DoubleKeyHashTable::~DoubleKeyHashTable() {
 	// TODO Auto-generated destructor stub
+	for(int i = 0; i< hashTableNameList.size(); i++)
+	{
+		string stringmode = hashTableNameList.at(i);
+		delete HashTable(this->hashKeyLength);
+	}
+	hashTableMap.clear();
+	hashTableNameList.clear();
+	modeList.clear();
 }
 
 string DoubleKeyHashTable::getReadSubstring(string mode, UINT64 readID)
