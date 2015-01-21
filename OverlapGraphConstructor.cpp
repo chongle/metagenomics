@@ -73,21 +73,23 @@ bool OverlapGraphConstructor::start() {
 	vector<edge*> edgeList;
 	edgeList.clear();
 
-	while(subject->loadNextChunk(edgeList)){
-	#pragma omp parallel
+	subject->setFilenameList(Config::subjectFilenameList);
+	while(subject->loadNextChunk(edgeList))
 	{
-		#pragma omp for
-		for(int i = 0; i < edgeList.size(); i++){
+//	pragma omp parallel
+	{
+//		pragma omp for
+		for(UINT64 i = 0; i < edgeList.size(); i++)
 				searchHashTable(*edgeList[i]);
 
-		}
+
 	}
 		// end of omp parallel
 
 
 	//filter out contained alignment and mark the contained reads
-		for(int i = 0; i < edgeList.size(); i++){
-			for(int j = 0; j < edgeList[i]->alignmentList.size(); j++){
+		for(UINT64 i = 0; i < edgeList.size(); i++){cout<<i<<endl;
+			for(UINT16 j = 0; j < edgeList[i]->alignmentList.size(); j++){
 				if(!isContainedAlignment(edgeList[i]->alignmentList[j])){
 				edgeList[i]->alignmentList[j]->queryRead->addAlignment( edgeList[i]->alignmentList[j] );//only add non-contained alignment
 				}
@@ -104,11 +106,11 @@ bool OverlapGraphConstructor::start() {
 
 		}
 
-		for(int i=0;i<edgeList.size();i++)
+		for(UINT64 i=0;i<edgeList.size();i++)
 			delete edgeList.at(i);
 		edgeList.clear();
 
-	}
+	}// end of while chunk loop
 	printEdgesToFile(true, "ourgraph.txt");
 
 	return true;
@@ -116,12 +118,19 @@ bool OverlapGraphConstructor::start() {
 
 void OverlapGraphConstructor::printEdgesToFile(bool nonRemovedReads, string outFileName)
 {
-	for(int i = 0; i < queryDataset->queryReadList.size(); i++){
+	for(UINT64 i = 0; i < queryDataset->queryReadList.size(); i++){
 		if(nonRemovedReads)
-		if(!queryDataset->queryReadList[i]->flag4Removal){
+		{
+		if(!queryDataset->queryReadList[i]->flag4Removal)
+		{
 			queryDataset->queryReadList[i]->printAlignmentToFile(outFileName);
 		}
-		else queryDataset->queryReadList[i]->printAlignmentToFile(outFileName);
+		}
+		else
+		{
+			queryDataset->queryReadList[i]->printAlignmentToFile(outFileName);
+
+		}
 
 	}
 }

@@ -19,10 +19,10 @@ SingleKeyHashTable::SingleKeyHashTable() {
 
 SingleKeyHashTable::~SingleKeyHashTable() {
 	// TODO Auto-generated destructor stub
-	for(int i = 0; i< hashTableNameList.size(); i++)
+	for(unsigned int i = 0; i< hashTableNameList.size(); i++)
 	{
 		string stringmode = hashTableNameList.at(i);
-		delete HashTable(this->hashKeyLength);
+		delete hashTableMap.at(stringmode);
 	}
 	hashTableMap.clear();
 	hashTableNameList.clear();
@@ -76,7 +76,7 @@ bool SingleKeyHashTable::InitializeAllHashTables()
 {
 	if(hashTableNameList.empty() || queryDataSet == NULL) return false;
 
-	for(int i = 0; i< hashTableNameList.size(); i++)
+	for(unsigned int i = 0; i< hashTableNameList.size(); i++)
 	{
 		string stringmode = hashTableNameList.at(i);
 		HashTable *currentHashtable = new HashTable(this->hashKeyLength);
@@ -97,10 +97,10 @@ bool SingleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
 	hashTableNameList.push_back("reversesuffix");
 	InitializeAllHashTables();
 
-#pragma omp parallel
+//pragma omp parallel
 	{
-	#pragma omp for
-		for(int i = 0; i< hashTableNameList.size(); i++)
+	//pragma omp for
+		for(unsigned int i = 0; i< hashTableNameList.size(); i++)
 		{
 			string stringmode = hashTableNameList.at(i);
 			UINT64 currentID = 1;
@@ -140,7 +140,7 @@ bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectS
 		string restSubject = align->subjectReadSequence.substr(subjectStart + hashKeyLength, align->subjectReadSequence.length()-(subjectStart + hashKeyLength));
 		string restQuery = align->queryRead->getSequence().substr(hashKeyLength,  restSubject.length());
 		int currentMismatchCount=0;
-		for(int i=0; i<restQuery.length();i++)
+		for(unsigned int i=0; i<restQuery.length();i++)
 		{
 			if(restQuery.at(i)!=restSubject.at(i))
 			{
@@ -337,13 +337,13 @@ bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 	string modestring = this->hashTableNameList.at(i);
 
 	int startpoint,stoppoint;
-	if(subjectWindowRange(startpoint, stoppoint, modestring, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
+	if(!subjectWindowRange(startpoint, stoppoint, modestring, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
 
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
 	string subString = subjectRead.substr(j, hashKeyLength);
 	vector<UINT64> * currentIDList = hashTableMap.at(modestring)->getReadIDListOfReads(subString);
-	for(int k=0;k<currentIDList->size();k++)
+	for(UINT64 k=0;currentIDList!=NULL&&k<currentIDList->size();k++)
 	{
 		UINT64 currentID = currentIDList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);
@@ -382,13 +382,13 @@ bool SingleKeyHashTable::singleKeySearch(SubjectAlignment & subjectAlign)
 	string modestring = this->hashTableNameList.at(i);
 
 	int startpoint,stoppoint;
-	if(subjectWindowRange(startpoint, stoppoint, modestring, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
+	if(!subjectWindowRange(startpoint, stoppoint, modestring, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
 
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
 	string subString = subjectRead.substr(j, hashKeyLength);
 	vector<UINT64>* currentIDList = hashTableMap.at(modestring)->getReadIDListOfReads(subString);
-	for(int k=0;k<currentIDList->size();k++)
+	for(UINT64 k=0;currentIDList!=NULL&&k<currentIDList->size();k++)
 	{
 		UINT64 currentID = currentIDList->at(k);
 		QueryRead* queryRead = queryDataSet->getReadFromID(currentID);

@@ -23,7 +23,7 @@ DoubleKeyHashTable::~DoubleKeyHashTable() {
 	for(int i = 0; i< hashTableNameList.size(); i++)
 	{
 		string stringmode = hashTableNameList.at(i);
-		delete HashTable(this->hashKeyLength);
+		delete hashTableMap.at(stringmode);
 	}
 	hashTableMap.clear();
 	hashTableNameList.clear();
@@ -207,7 +207,7 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 	string mode = this->modeList.at(i);
 
 	int startpoint,stoppoint;
-	if(subjectWindowRange(startpoint, stoppoint, mode, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
+	if(!subjectWindowRange(startpoint, stoppoint, mode, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
 
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
@@ -299,7 +299,7 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 	string mode = this->modeList.at(i);
 
 	int startpoint,stoppoint;
-	if(subjectWindowRange(startpoint, stoppoint, mode, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
+	if(!subjectWindowRange(startpoint, stoppoint, mode, subjectRead)) return false;//guarantee it meets the minimum overlaplength requirement for alignments.
 
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
@@ -373,6 +373,12 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 		}
 	}
 
+	Key1OnlyList->clear();
+	Key2OnlyList->clear();
+	BothKeyList->clear();
+	delete Key1OnlyList;
+	delete Key2OnlyList;
+	delete BothKeyList;
 	}//loop for window j
 
 	}//loop of i for each mode
@@ -511,7 +517,7 @@ bool DoubleKeyHashTable::wennDiagramTwoLists(vector<UINT64>* list1, vector<UINT6
 {
 	unsigned int i,j;
 	i=0;j=0;
-	while(i<list1->size()&&j<list2->size())
+	while(list1!=NULL&&list2!=NULL&& i<list1->size()&&j<list2->size())
 	{
 		if(list1->at(i)<list2->at(i))
 		{
@@ -533,14 +539,14 @@ bool DoubleKeyHashTable::wennDiagramTwoLists(vector<UINT64>* list1, vector<UINT6
 		}
 	}
 
-	while(i<list1->size())
+	while(list1!=NULL && i<list1->size())
 	{
 		UINT64 smallvalue = list1->at(i);
 		list1->push_back(smallvalue);
 		i++;
 	}
 
-	while(j<list2->size())
+	while(list2!=NULL && j<list2->size())
 	{
 		UINT64 smallvalue = list2->at(i);
 		list2->push_back(smallvalue);

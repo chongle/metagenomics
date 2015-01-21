@@ -88,7 +88,8 @@ public:
 	// a list of query reads that are contained by the subject read or duplicate with the subject read
 	// when a query is duplicate with a subject read, we compare their names and add the query read to the duplicate read list if its name is greater than the subject read name.
 	vector<QueryRead *> containedOrDeplicateReadList;//It's all for contained read if the duplicated reads are removed from the beginning.
-
+	edge();
+	~edge();
 
 };
 
@@ -102,6 +103,8 @@ public:
 
 	// alignment results
 	vector<Alignment*> queryAlignmentList;
+	SubjectAlignment();
+	~SubjectAlignment();
 
 };
 

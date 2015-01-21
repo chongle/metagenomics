@@ -21,8 +21,8 @@ class SubjectDataset {
 
 	UINT64 chunkSize;
 
-	int currentFileIndex; // the index of the file in sFilenameList, which is currently be processinged loadNextChunk
-	FileType currentFileType = UNDEFINED;
+	UINT8 currentFileIndex; // the index of the file in sFilenameList, which is currently be processinged loadNextChunk
+	FileType currentFileType;
 
 	ifstream currentFileStreamer;
 	UINT64 currentChunkSize;

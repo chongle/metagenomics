@@ -16,12 +16,14 @@ SubjectDataset::SubjectDataset() {
 	outOfDataFlag = false;
 	newFileFlag = true;
 	currentChunkSize = 0;
+	subjectFilenameList.clear();
 
 
 }
 
 SubjectDataset::~SubjectDataset() {
 	// TODO Auto-generated destructor stub
+	subjectFilenameList.clear();
 }
 
 bool SubjectDataset::setFilenameList(const vector<string> & sFilenames){
@@ -61,7 +63,7 @@ bool SubjectDataset::loadNextChunk(vector<SubjectAlignment*> & chunkData)
 	}
 
 	currentChunkSize = 0;
-	for(int k=0;k < chunkSize;k++)
+	for(UINT64 k=0;k < chunkSize;k++)
 	{
 		// if this is end of the file, break out this while loop
 		if(currentFileStreamer.eof())
@@ -155,7 +157,7 @@ bool SubjectDataset::loadNextChunk(vector<edge*> & chunkData)
 	}
 
 	currentChunkSize = 0;
-	for(int k=0;k < chunkSize;k++)
+	for(UINT64 k=0;k < chunkSize;k++)
 	{
 		// if this is end of the file, break out this while loop
 		if(currentFileStreamer.eof())
@@ -249,7 +251,7 @@ bool SubjectDataset::loadNextChunk(vector<SubjectAlignmentPairedEnd*> & chunkDat
 	}
 
 	currentChunkSize = 0;
-	for(int k=0;k < chunkSize;k++)
+	for(UINT64 k=0;k < chunkSize;k++)
 	{
 		// if this is end of the file, break out this while loop
 		if(currentFileStreamer.eof())

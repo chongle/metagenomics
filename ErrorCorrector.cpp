@@ -38,6 +38,7 @@ bool ErrorCorrector::start() {
 	vector<SubjectAlignment*> subjectList;
 	subjectList.clear();
 
+	subject->setFilenameList(Config::subjectFilenameList);
 	while(subject->loadNextChunk(subjectList)){
 		// #pragma omp parallel for
 		for(int i = 0; i < subjectList.size(); i++){

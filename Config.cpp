@@ -22,9 +22,10 @@ string Config::queryFilename = "";
 
 vector<string> Config::subjectFilenameList;
 
+
 UINT16 Config::minimumOverlapLength=40;
 UINT16 Config::hashKeyLength = 32;
-UINT64 Config::streamChunkSize = 100;
+UINT64 Config::streamChunkSize = 40;
 bool Config::isSingleKey = true;
 
 bool Config::isSingleEnd = true; //subject is always treated as single end, while the query is only paired end when using "MergePairedEndReads"
@@ -59,6 +60,8 @@ void Config::printHelp()
 
 bool Config::setConfig(int argc, char **argv)
 {
+	Config::subjectFilenameList.clear();
+
 	vector<string> argumentsList;
 	cout << "PRINTING ARGUMENTS" << endl;
 	for(int i = 0; i < argc; i++)
