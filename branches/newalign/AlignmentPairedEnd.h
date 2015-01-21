@@ -60,6 +60,8 @@ public:
 
 	// alignment results
 	vector<AlignmentPairedEnd*> queryAlignmentList;
+	SubjectAlignmentPairedEnd();
+	~SubjectAlignmentPairedEnd();
 
 };
 
