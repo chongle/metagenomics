@@ -69,7 +69,7 @@ HashTable::~HashTable() {
 	// TODO Auto-generated destructor stub
 	if(hashTable!=NULL)
 	{
-		for(int i=0; i<hashTable->size();i++)
+		for(UINT64 i=0; i<hashTable->size();i++)
 			delete hashTable->at(i);
 		hashTable->clear();
 		delete hashTable;
@@ -170,6 +170,14 @@ bool HashTable::insertIntoHashTable(string keyString, UINT64 readID)
 
 	hashTable->at(hashTableIndex)->dataList->push_back(readID);							// Add the string in the list.
 	hashTable->at(hashTableIndex)->dataList->resize(hashTable->at(hashTableIndex)->dataList->size());		// Resize to reduce space.
+	if(hashTable->at(hashTableIndex)->keystring=="")
+		hashTable->at(hashTableIndex)->keystring = keyString;
+	else if(hashTable->at(hashTableIndex)->keystring!=keyString)
+	{
+		cout<<"contradiction of inserting keystring in function insertIntoHashTable()"<<endl;
+		return false;
+	}
+
 	return insertSuccess;
 
 }
@@ -178,11 +186,13 @@ bool HashTable::getIndexFromHashTable(string subString, UINT64& hashTableIndex)
 {
 	UINT64 currentCollisionNum = 0;
 	hashTableIndex = hashFunction(subString);
+	vector<UINT64> tempvector = (*hashTable->at(hashTableIndex)->dataList);
 	bool isEmpty = hashTable->at(hashTableIndex)->dataList->empty();
 	while(!isEmpty && currentCollisionNum<=maxSingleHashCollision)
 	{
 
-			if(subString == hashTable->at(hashTableIndex)->keystring)
+			string keysequence = hashTable->at(hashTableIndex)->keystring;
+			if(subString == keysequence)
 					return true;
 
 			currentCollisionNum++;

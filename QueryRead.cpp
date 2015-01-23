@@ -101,15 +101,8 @@ string QueryRead::reverseComplement()
 
 bool wayToSort(int i, int j) { return i < j; }
 
-bool QueryRead::printAlignmentToFile(string fileName)
+bool QueryRead::printAlignmentToFile(ofstream & filePointer)
 {
-	ofstream filePointer;
-	filePointer.open(fileName.c_str());
-	if(filePointer == NULL)
-	{
-		cout<<"Unable to open file: "<<endl;
-		return false;
-	}
 
 
 	for(int i =0; i< this->queryAlignmentList.size();i++)
@@ -139,7 +132,7 @@ bool QueryRead::printAlignmentToFile(string fileName)
 	outputString = sstm.str();
 	filePointer<<outputString;
 	}
-	filePointer.close();
+
 	return true;
 }
 /*

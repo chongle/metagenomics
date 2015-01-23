@@ -116,23 +116,32 @@ bool OverlapGraphConstructor::start() {
 	return true;
 }
 
-void OverlapGraphConstructor::printEdgesToFile(bool nonRemovedReads, string outFileName)
+bool OverlapGraphConstructor::printEdgesToFile(bool nonRemovedReads, string outFileName)
 {
+	ofstream filePointer;
+	filePointer.open(outFileName.c_str());
+	if(filePointer == NULL)
+	{
+		cout<<"Unable to open file: "<<endl;
+		return false;
+	}
 	for(UINT64 i = 0; i < queryDataset->queryReadList.size(); i++){
 		if(nonRemovedReads)
 		{
 		if(!queryDataset->queryReadList[i]->flag4Removal)
 		{
-			queryDataset->queryReadList[i]->printAlignmentToFile(outFileName);
+			queryDataset->queryReadList[i]->printAlignmentToFile(filePointer);
 		}
 		}
 		else
 		{
-			queryDataset->queryReadList[i]->printAlignmentToFile(outFileName);
+			queryDataset->queryReadList[i]->printAlignmentToFile(filePointer);
 
 		}
 
 	}
+	filePointer.close();
+	return true;
 }
 
 //either subject is contained in query or query is contained in subject

@@ -142,9 +142,9 @@ bool DoubleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
 	modeList.push_back("reversesuffix");
 	InitializeAllHashTables();
 
-#pragma omp parallel
+//pragma omp parallel
 	{
-		#pragma omp for
+		//pragma omp for
 		for(unsigned int i = 0; i< hashTableNameList.size(); i++)
 		{
 			string stringmode = hashTableNameList.at(i);
@@ -220,6 +220,9 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 	vector<UINT64>* Key1OnlyList = new vector<UINT64>;
 	vector<UINT64>* Key2OnlyList = new vector<UINT64>;
 	vector<UINT64>* BothKeyList = new vector<UINT64>;
+	Key1OnlyList->clear();
+	Key2OnlyList->clear();
+	BothKeyList->clear();
 	wennDiagramTwoLists(LeftIDList,RightIDList,Key1OnlyList, Key2OnlyList, BothKeyList);
 
 	for(unsigned int k=0;k<BothKeyList->size();k++)
@@ -229,7 +232,7 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
-		if(queryName>Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(queryName>=Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
 		if(alignFlag)
 		{
 			Alignment* align = new Alignment();
@@ -249,7 +252,7 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
-		if(queryName>Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(queryName>=Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
 		if(alignFlag)
 		{
 			Alignment* align = new Alignment();
@@ -268,7 +271,7 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
-		if(queryName>Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(queryName>=Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
 		if(alignFlag)
 		{
 			Alignment* align = new Alignment();
@@ -321,7 +324,7 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
-		if(queryName>subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(queryName==subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
 		if(alignFlag)
 		{
 			Alignment* align = new Alignment();
@@ -341,7 +344,7 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
-		if(queryName>subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(queryName==subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
 		if(alignFlag)
 		{
 			Alignment* align = new Alignment();
@@ -360,7 +363,7 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
-		if(queryName>subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(queryName==subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
 		if(alignFlag)
 		{
 			Alignment* align = new Alignment();

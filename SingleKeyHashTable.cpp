@@ -350,7 +350,7 @@ bool SingleKeyHashTable::singleKeySearch(edge & Edge)
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
-		if(queryName>Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(queryName>=Edge.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
 		//however, this will cause missing of the contained read detection/alignment. Accept this reality.
 		if(alignFlag)
 		{
@@ -395,7 +395,7 @@ bool SingleKeyHashTable::singleKeySearch(SubjectAlignment & subjectAlign)
 		string querySequence = queryRead->getSequence();
 		string queryName = queryRead->getName();
 		bool alignFlag = true;
-		if(queryName>subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
+		if(queryName==subjectAlign.subjectReadName)alignFlag = false; //only align when queryName is alphabetical smaller than subject, removing half of the pair-wise alignment redundancy
 		//however, this will cause missing of the contained read detection/alignment. Accept this reality.
 		if(alignFlag)
 		{

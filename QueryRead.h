@@ -39,7 +39,7 @@ public:
 	UINT32 getReadLength();
 	static string reverseComplement(const string & read);
 	string reverseComplement();
-	bool printAlignmentToFile(string fileName);
+	bool printAlignmentToFile(ofstream & filePointer);
 };
 
 #endif /* QUERYREAD_H_ */
