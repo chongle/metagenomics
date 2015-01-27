@@ -142,6 +142,8 @@ bool DoubleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
 	modeList.push_back("reversesuffix");
 	InitializeAllHashTables();
 
+	omp_set_dynamic(0);
+	omp_set_num_threads(Config::numberOfThreads);
 #pragma omp parallel
 	{
 #pragma omp for
