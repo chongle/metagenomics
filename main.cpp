@@ -7,6 +7,10 @@
 int main(int argc, char **argv)
 {
 
+	omp_set_num_threads(Config::numberOfThreads);
+	CLOCKSTART;
+
+
 	// parse command line options:
 	// align.exe -a -q query.fasta -s subject1.fasta ... -o CorrectErrors --single
 	// align.exe -a --query query.fasta --subject subject1.fasta ... --operation CorrectErrors --double
@@ -16,6 +20,7 @@ int main(int argc, char **argv)
 	}
 
 	if (Config::getOperation() == "ConstructGraph"){
+
 		// start graph construction
 		OverlapGraphConstructor* graphconstructor = new OverlapGraphConstructor();
 		if(!graphconstructor->start())
@@ -23,6 +28,7 @@ int main(int argc, char **argv)
 			cout<< "Failed to run OverlapGraphConstructor start()";
 		}
 		delete graphconstructor;
+
 	}
 	else if (Config::getOperation() == "MergePairedEndReads"){
 		// start merge reads
@@ -47,6 +53,8 @@ int main(int argc, char **argv)
 		cout << "Error: invalid operation type."<< endl;
 		return false;
 	}
+
+	CLOCKSTOP;
 	return true;
 }
 

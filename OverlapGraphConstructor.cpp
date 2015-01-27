@@ -76,9 +76,9 @@ bool OverlapGraphConstructor::start() {
 	subject->setFilenameList(Config::subjectFilenameList);
 	while(subject->loadNextChunk(edgeList))
 	{
-//	pragma omp parallel
+#pragma omp parallel
 	{
-//		pragma omp for
+#pragma omp for
 		for(UINT64 i = 0; i < edgeList.size(); i++)
 				searchHashTable(*edgeList[i]);
 
@@ -88,9 +88,13 @@ bool OverlapGraphConstructor::start() {
 
 
 	//filter out contained alignment and mark the contained reads
-		for(UINT64 i = 0; i < edgeList.size(); i++){cout<<i<<endl;
-			for(UINT16 j = 0; j < edgeList[i]->alignmentList.size(); j++){
-				if(!isContainedAlignment(edgeList[i]->alignmentList[j])){
+		for(UINT64 i = 0; i < edgeList.size(); i++)
+		{
+			//cout<<i<<endl;
+			for(UINT16 j = 0; j < edgeList[i]->alignmentList.size(); j++)
+			{
+				if(!isContainedAlignment(edgeList[i]->alignmentList[j]))
+				{
 				edgeList[i]->alignmentList[j]->queryRead->addAlignment( edgeList[i]->alignmentList[j] );//only add non-contained alignment
 				}
 				else if(edgeList[i]->subjectReadSequence.length()>=edgeList[i]->alignmentList[j]->queryRead->getReadLength())//query read is contained in subject read
@@ -111,7 +115,7 @@ bool OverlapGraphConstructor::start() {
 		edgeList.clear();
 
 	}// end of while chunk loop
-	printEdgesToFile(true, "ourgraph.txt");
+	printEdgesToFile(true, Config::outputfilename);
 
 	return true;
 }
@@ -147,9 +151,9 @@ bool OverlapGraphConstructor::printEdgesToFile(bool nonRemovedReads, string outF
 //either subject is contained in query or query is contained in subject
 bool OverlapGraphConstructor::isContainedAlignment(Alignment * subjectAlignment)
 {
-	if(subjectAlignment->subjectStart<=0&&subjectAlignment->subjectEnd>=subjectAlignment->queryEnd&&subjectAlignment->editInfor.empty())
+	if(subjectAlignment->subjectStart<=0&&subjectAlignment->subjectEnd>=subjectAlignment->queryEnd)
 		return true;
-	else if(subjectAlignment->subjectStart>=0&&subjectAlignment->subjectEnd<=subjectAlignment->queryEnd&&subjectAlignment->editInfor.empty())
+	else if(subjectAlignment->subjectStart>=0&&subjectAlignment->subjectEnd<=subjectAlignment->queryEnd)
 		return true;
 	else return false;
 }
