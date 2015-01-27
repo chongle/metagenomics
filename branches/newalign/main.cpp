@@ -7,7 +7,7 @@
 int main(int argc, char **argv)
 {
 
-	omp_set_num_threads(Config::numberOfThreads);
+
 	CLOCKSTART;
 
 
@@ -55,6 +55,8 @@ int main(int argc, char **argv)
 	}
 
 	CLOCKSTOP;
+//    int nthreads = omp_get_num_threads();
+//    cout<<"Number of threads = "<<nthreads<<endl;
 	return true;
 }
 

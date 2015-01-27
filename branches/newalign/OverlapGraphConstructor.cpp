@@ -76,6 +76,8 @@ bool OverlapGraphConstructor::start() {
 	subject->setFilenameList(Config::subjectFilenameList);
 	while(subject->loadNextChunk(edgeList))
 	{
+		omp_set_dynamic(0);
+		omp_set_num_threads(Config::numberOfThreads);
 #pragma omp parallel
 	{
 #pragma omp for
@@ -115,6 +117,11 @@ bool OverlapGraphConstructor::start() {
 		edgeList.clear();
 
 	}// end of while chunk loop
+
+//    int nthreads = omp_get_num_threads();
+//    cout<<"Configured Number of threads = "<<Config::numberOfThreads<<endl;
+//    cout<<"Number of threads = "<<nthreads<<endl;
+
 	printEdgesToFile(true, Config::outputfilename);
 
 	return true;
