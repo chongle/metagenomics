@@ -24,7 +24,7 @@ vector<string> Config::subjectFilenameList;
 
 
 UINT16 Config::minimumOverlapLength=40;
-UINT16 Config::hashKeyLength = 32;
+UINT16 Config::hashKeyLength = 32;//key needs to be smaller than minimumoverlap, if double key, 2*key<minoverlap
 UINT64 Config::streamChunkSize = 40;
 bool Config::isSingleKey = true;
 
@@ -126,6 +126,8 @@ bool Config::setConfig(int argc, char **argv)
 			Config::isSingleKey = true;
 		else if (argumentsList[i] == "--double")
 			Config::isSingleKey = false;
+		else if (argumentsList[i] == "-m")
+					Config::maxMismatch = atoi(argumentsList[++i].c_str());
 		else
 		{
           Config::printHelp();

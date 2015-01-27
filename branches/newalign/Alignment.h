@@ -21,11 +21,13 @@ public:
 	Alignment();
 	virtual ~Alignment();
 
-	QueryRead * queryRead;
+
 
 	// Don't need these two variables for error correction to save memory.
 	string subjectReadSequence;
 	string subjectReadName;
+	//alignment is subject to the subject reads, which is on top of the orientation graph
+	QueryRead * queryRead;
 
 	// orientation of the query read
 	bool queryOrientation;		// true for forward, false for reverse

@@ -77,17 +77,21 @@ Alignment::~Alignment() {
 	//  The following case will have a negative subject start position
 	//  query:        MMMMMMXXXXXXXX
 	//	subject: XXXXXMMMMMM
+
+
+//in our coordinate system, subject is always on the top since it's using sliding window and always going forward,
+//the query strand can be forward or reversed, since both cases are hashed in the hash table.
 int Alignment::orientationTranslate()
 {
 	if(this->subjectStart>0)
 	{
-		if(this->queryOrientation==true) return 0; //read1 = query, read2 = subject
-		else return 3; //read2=query, read1=subject
+		if(this->queryOrientation==true) return 1; //read1 = subject, read2 = query
+		else return 3; //read1 = subject, read2 = query
 	}
 	else if(this->subjectStart<0)
 	{
-		if(this->queryOrientation==true) return 1; //read1 = query, read2 = subject
-		else return 2; //read1=query, read2 = subject
+		if(this->queryOrientation==true) return 0; //read1 = subject, read2 = query
+		else return 2; //read1=subject, read2 = query
 	}
 	else return -1;
 }

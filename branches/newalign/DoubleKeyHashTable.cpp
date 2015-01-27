@@ -181,13 +181,13 @@ bool DoubleKeyHashTable::subjectWindowRange(int& startpoint, int& stoppoint, str
 {
 	if(mode=="forwardprefix" || mode == "reverseprefix")
 	{
-		startpoint = 0;
+		startpoint = 0;// can from -hashKeyLength
 		stoppoint = subjectRead.length()-this->minimumOverlapLength;
 	}
 	else if(mode == "forwardsuffix" || mode == "reversesuffix")
 	{
-		startpoint = this->minimumOverlapLength - hashKeyLength;
-		stoppoint = subjectRead.length()-hashKeyLength;
+		startpoint = this->minimumOverlapLength - hashKeyLength*2;
+		stoppoint = subjectRead.length()-hashKeyLength*2; // can be subjectRead.length()-hashKeyLength
 
 	}
 	else return false;
@@ -200,10 +200,8 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 	string subjectRead = Edge.subjectReadSequence;
 
 
-	for(int i =0; i<this->modeList.size();i++)
+	for(unsigned int i =0; i<this->modeList.size();i++)
 	{
-
-
 	string mode = this->modeList.at(i);
 
 	int startpoint,stoppoint;
@@ -211,6 +209,7 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 
 	for(int j=startpoint;j<=stoppoint;j++)
 	{
+
 	string subStringLeft = subjectRead.substr(j, hashKeyLength);
 	string subStringRight = subjectRead.substr(j+hashKeyLength, hashKeyLength);
 	string modeLeft = mode+"1";
@@ -223,7 +222,9 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 	Key1OnlyList->clear();
 	Key2OnlyList->clear();
 	BothKeyList->clear();
+
 	wennDiagramTwoLists(LeftIDList,RightIDList,Key1OnlyList, Key2OnlyList, BothKeyList);
+
 
 	for(unsigned int k=0;k<BothKeyList->size();k++)
 	{
@@ -239,7 +240,7 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 			align->subjectReadName = Edge.subjectReadName;
 			align->subjectReadSequence = subjectRead;
 			align->queryRead = queryRead;
-			if(createAlignment(align, j, j+this->hashKeyLength, j+this->hashKeyLength-1, mode, 3)==false) delete align;
+			if(createAlignment(align, j, j+this->hashKeyLength, j+this->hashKeyLength+this->hashKeyLength-1, mode, 3)==false) delete align;
 			else Edge.alignmentList.push_back(align);
 
 		}
@@ -259,7 +260,7 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 			align->subjectReadName = Edge.subjectReadName;
 			align->subjectReadSequence = subjectRead;
 			align->queryRead = queryRead;
-			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength-1, mode, 1)==false) delete align;
+			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength+this->hashKeyLength-1, mode, 1)==false) delete align;
 			else Edge.alignmentList.push_back(align);
 
 		}
@@ -278,7 +279,7 @@ bool DoubleKeyHashTable::doubleKeySearch(edge & Edge)
 			align->subjectReadName = Edge.subjectReadName;
 			align->subjectReadSequence = subjectRead;
 			align->queryRead = queryRead;
-			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength-1, mode, 2)==false) delete align;
+			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength+this->hashKeyLength-1, mode, 2)==false) delete align;
 			else Edge.alignmentList.push_back(align);
 
 		}
@@ -295,10 +296,8 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 	string subjectRead = subjectAlign.subjectReadSequence;
 
 
-	for(int i =0; i<this->modeList.size();i++)
+	for(unsigned int i =0; i<this->modeList.size();i++)
 	{
-
-
 	string mode = this->modeList.at(i);
 
 	int startpoint,stoppoint;
@@ -331,7 +330,7 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 			align->subjectReadName = subjectAlign.subjectReadName;
 			align->subjectReadSequence = subjectRead;
 			align->queryRead = queryRead;
-			if(createAlignment(align, j, j+this->hashKeyLength, j+this->hashKeyLength-1, mode, 3)==false) delete align;
+			if(createAlignment(align, j, j+this->hashKeyLength, j+this->hashKeyLength+this->hashKeyLength-1, mode, 3)==false) delete align;
 			else subjectAlign.queryAlignmentList.push_back(align);
 
 		}
@@ -351,7 +350,7 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 			align->subjectReadName = subjectAlign.subjectReadName;
 			align->subjectReadSequence = subjectRead;
 			align->queryRead = queryRead;
-			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength-1, mode, 1)==false) delete align;
+			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength+this->hashKeyLength-1, mode, 1)==false) delete align;
 			else subjectAlign.queryAlignmentList.push_back(align);
 
 		}
@@ -370,7 +369,7 @@ bool DoubleKeyHashTable::doubleKeySearch(SubjectAlignment & subjectAlign)
 			align->subjectReadName = subjectAlign.subjectReadName;
 			align->subjectReadSequence = subjectRead;
 			align->queryRead = queryRead;
-			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength-1, mode, 2)==false) delete align;
+			if(createAlignment(align, j, j+this->hashKeyLength,j+this->hashKeyLength+this->hashKeyLength-1, mode, 2)==false) delete align;
 			else subjectAlign.queryAlignmentList.push_back(align);
 
 		}
@@ -469,20 +468,23 @@ bool DoubleKeyHashTable::createAlignment(Alignment* subjectAlignment, int leftKe
 		}
 		subSubject = subjectString.substr(queryString.length()-maxCompareLength-subjectAlignment->subjectStart,maxCompareLength);
 		subQuery = queryString.substr(queryString.length()-maxCompareLength,maxCompareLength);
+		//int a = subSubject.length();
+		int subQueryLen = subQuery.length();
 		if(keymatchmode ==1)
 		{
-			seedStart = queryString.length()-rightKeyLength-leftKeyLength;
-			seedEnd = queryString.length()-rightKeyLength - 1;
+			seedStart = subQueryLen-rightKeyLength-leftKeyLength;
+			seedEnd = subQueryLen-rightKeyLength - 1;
 		}
 		else if(keymatchmode == 2)
 		{
-			seedStart = queryString.length()-rightKeyLength;
-			seedEnd = queryString.length()-1;
+			seedStart = subQueryLen-rightKeyLength;
+			seedEnd = subQueryLen-1;
 		}
 		else if(keymatchmode == 3)
 		{
-			seedStart = queryString.length()-rightKeyLength-leftKeyLength;
-			seedEnd = queryString.length()-1;
+			seedStart = subQueryLen-rightKeyLength-leftKeyLength;
+			seedEnd = subQueryLen-1;
+
 		}
 		else return false;
 	}
@@ -522,16 +524,16 @@ bool DoubleKeyHashTable::wennDiagramTwoLists(vector<UINT64>* list1, vector<UINT6
 	i=0;j=0;
 	while(list1!=NULL&&list2!=NULL&& i<list1->size()&&j<list2->size())
 	{
-		if(list1->at(i)<list2->at(i))
+		if(list1->at(i)<list2->at(j))
 		{
 			UINT64 smallvalue = list1->at(i);
-			list1->push_back(smallvalue);
+			list1only->push_back(smallvalue);
 			i++;
 		}
-		else if(list1->at(i)>list2->at(i))
+		else if(list1->at(i)>list2->at(j))
 		{
-			UINT64 smallvalue = list2->at(i);
-			list2->push_back(smallvalue);
+			UINT64 smallvalue = list2->at(j);
+			list2only->push_back(smallvalue);
 			j++;
 		}
 		else //same value in both list
@@ -545,14 +547,14 @@ bool DoubleKeyHashTable::wennDiagramTwoLists(vector<UINT64>* list1, vector<UINT6
 	while(list1!=NULL && i<list1->size())
 	{
 		UINT64 smallvalue = list1->at(i);
-		list1->push_back(smallvalue);
+		list1only->push_back(smallvalue);
 		i++;
 	}
 
 	while(list2!=NULL && j<list2->size())
 	{
-		UINT64 smallvalue = list2->at(i);
-		list2->push_back(smallvalue);
+		UINT64 smallvalue = list2->at(j);
+		list2only->push_back(smallvalue);
 		j++;
 	}
 	return true;
