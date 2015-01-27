@@ -120,15 +120,24 @@ bool QueryRead::printAlignmentToFile(ofstream & filePointer)
 	coordinates.push_back(align->queryEnd);
 	coordinates.push_back(align->subjectStart);
 	coordinates.push_back(align->subjectEnd);
+	coordinates.push_back(0);
 	sort(coordinates.begin(), coordinates.end(), wayToSort);
-	int overlapLength = coordinates.at(1)-coordinates.at(0);
-	int subStart = coordinates.at(0)-align->subjectStart;
-	int subEnd = coordinates.at(1)-align->subjectStart;
+	int overlapLength = coordinates.at(2)-coordinates.at(1)+1;
+	int subStart = coordinates.at(1)-align->subjectStart;
+	int subEnd = coordinates.at(2)-align->subjectStart;
 	std::stringstream sstm;
+	// subject print first for good orientation
+	sstm <<  align->subjectReadName + "\t" + this->readName + "\t" <<align->orientationTranslate() <<
+			"," << overlapLength << "," << align->editInfor.size() << "," << align->editInfor.size()
+			<< "," << align->subjectReadSequence.length() << "," << subStart << "," << subEnd <<","
+			<< this->getReadLength() << "," << coordinates.at(1)<< "," << coordinates.at(2)<< ", no error info \r\n"<<endl;
+	//query print first, but orientation is wrong then
+	/*
 	sstm << this->readName + "\t" + align->subjectReadName + "\t" <<align->orientationTranslate() <<
 			"," << overlapLength << "," << align->editInfor.size() << "," << align->editInfor.size()
-			<< "," << this->getReadLength() <<  "," << coordinates.at(0)<<  "," << coordinates.at(1) << ","
+			<< "," << this->getReadLength() <<  "," << coordinates.at(1)<<  "," << coordinates.at(2) << ","
 			<<align->subjectReadSequence.length() << "," << subStart << "," << subEnd << ", no error info \r\n"<<endl;
+			*/
 	outputString = sstm.str();
 	filePointer<<outputString;
 	}
