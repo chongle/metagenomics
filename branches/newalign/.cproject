@@ -65,4 +65,5 @@
 			<resource resourceType="PROJECT" workspacePath="/newalign"/>
 		</configuration>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

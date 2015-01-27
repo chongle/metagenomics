@@ -37,6 +37,10 @@
 #include <map>
 
 
+#define CLOCKSTART clock_t begin = clock(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
+#define CLOCKSTOP clock_t end = clock(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) / CLOCKS_PER_SEC<< " Seconds." << endl << endl;
+
+
 using namespace std;
 
 typedef unsigned char UINT8;
@@ -53,6 +57,7 @@ public:
 	static string operationCode;//"ConstructGraph","MergePairedEndReads","CorrectErrors"
 	static string queryFilename;
 	static vector<string> subjectFilenameList;
+	static string outputfilename;
 
 	static UINT16 minimumOverlapLength;
 	static UINT16 hashKeyLength;
@@ -65,6 +70,8 @@ public:
 	static bool perfectMatch;
 	static UINT16 maxMismatch; //only valid when perfectMatch is set to false
 	static UINT16 maxIndel; //only valid when perfectMatch is set to false
+
+	static UINT16 numberOfThreads;
 
 	static void printHelp();
 

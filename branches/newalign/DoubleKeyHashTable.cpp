@@ -142,9 +142,9 @@ bool DoubleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
 	modeList.push_back("reversesuffix");
 	InitializeAllHashTables();
 
-//pragma omp parallel
+#pragma omp parallel
 	{
-		//pragma omp for
+#pragma omp for
 		for(unsigned int i = 0; i< hashTableNameList.size(); i++)
 		{
 			string stringmode = hashTableNameList.at(i);
