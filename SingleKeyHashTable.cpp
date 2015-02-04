@@ -96,12 +96,12 @@ bool SingleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
 	hashTableNameList.push_back("reverseprefix");
 	hashTableNameList.push_back("reversesuffix");
 	InitializeAllHashTables();
-
+CLOCKSTART;
 omp_set_dynamic(0);
 omp_set_num_threads(Config::numberOfThreads);
 #pragma omp parallel
 	{
-#pragma omp for
+#pragma omp for schedule(dynamic)
 		for(unsigned int i = 0; i< hashTableNameList.size(); i++)
 		{
 			string stringmode = hashTableNameList.at(i);
@@ -114,11 +114,12 @@ omp_set_num_threads(Config::numberOfThreads);
 				insertQueryRead(queryread, stringmode);
 				currentID++;
 			}
-
+			HashTable * currentHashTable = hashTableMap.at(stringmode);
+			cout<<"Hash Table "<<stringmode<<" maximum collision number is: "<< currentHashTable->getMaximumHashTableCollision()<<endl;
 		}
 	}
 
-
+CLOCKSTOP;
 	return true;
 }
 
@@ -127,7 +128,8 @@ bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string mode)
 	UINT64 readID = read->getIdentifier();
 	string keystring = getReadSubstring(mode,readID);
 	HashTable * currentHashTable = hashTableMap.at(mode);
-	return currentHashTable->insertIntoHashTable(keystring,readID);
+	return  currentHashTable->insertIntoHashTable(keystring,readID);
+
 
 }
 

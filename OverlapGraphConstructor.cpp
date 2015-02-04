@@ -57,22 +57,25 @@ bool OverlapGraphConstructor::start() {
 
 	if(Config::isSingleKey)
 	{
+		//CLOCKSTART;
 		if (!singleKeyHashTable->insertQueryDataset(queryDataset)){
 			cout << "Error: cannot build hash table" << endl;
 			return false;
 		}
+		//CLOCKSTOP;
 	}
 	else
-	{
+	{//CLOCKSTART;
 		if (!doubleKeyHashTable->insertQueryDataset(queryDataset)){
 			cout << "Error: cannot build hash table" << endl;
 			return false;
 		}
+		//CLOCKSTOP;
 	}
 
 	vector<edge*> edgeList;
 	edgeList.clear();
-
+CLOCKSTART;
 	subject->setFilenameList(Config::subjectFilenameList);
 	while(subject->loadNextChunk(edgeList))
 	{
@@ -80,11 +83,16 @@ bool OverlapGraphConstructor::start() {
 		omp_set_num_threads(Config::numberOfThreads);
 #pragma omp parallel
 	{
-#pragma omp for
+#pragma omp for schedule(dynamic)
 		for(UINT64 i = 0; i < edgeList.size(); i++)
 				searchHashTable(*edgeList[i]);
-
-
+/*		  int tid = omp_get_thread_num();
+		  if (tid == 0)
+		    {
+		    int nthreads = omp_get_num_threads();
+		    printf("Number of threads = %d\n", nthreads);
+		    }
+*/
 	}
 		// end of omp parallel
 
@@ -117,7 +125,7 @@ bool OverlapGraphConstructor::start() {
 		edgeList.clear();
 
 	}// end of while chunk loop
-
+CLOCKSTOP;
 //    int nthreads = omp_get_num_threads();
 //    cout<<"Configured Number of threads = "<<Config::numberOfThreads<<endl;
 //    cout<<"Number of threads = "<<nthreads<<endl;

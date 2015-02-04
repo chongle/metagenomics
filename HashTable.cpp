@@ -59,6 +59,10 @@ HashTable::HashTable(UINT16 keylength, UINT64 dataSetSize) {
 
 }
 
+UINT64 HashTable::getMaximumHashTableCollision()
+{
+	return this->maxSingleHashCollision;
+}
 void HashTable::InitializeWithDataSize(UINT64 dataSetSize)
 {
 	UINT64 size = getPrimeLargerThanNumber(dataSetSize * 2 + 1);  // Size should be at least twice the number of entries in the hash table to reduce hash collision.
@@ -112,7 +116,7 @@ UINT64 HashTable::getPrimeLargerThanNumber(UINT64 number)
 	vector<UINT64> primeNumbers(array, array + sizeof array / sizeof array[0]);
 	for(UINT64 i = 0; i < primeNumbers.size(); i++)
 		if(primeNumbers.at(i)> number)
-			return primeNumbers.at(i);		// Return the smallest prime in the list larger than number.
+			return primeNumbers.at(i+1);		// Return the smallest prime in the list larger than number.
 	return number + 1;
 }
 
