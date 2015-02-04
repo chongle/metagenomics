@@ -45,6 +45,7 @@ public:
 	void InitializeWithDataSize(UINT64 dataSetSize);//hash table will automatically determine a good hash table size
 	bool insertIntoHashTable(string keyString, UINT64 readID);//handle collision internally
 	vector<UINT64> * getReadIDListOfReads(string subString);
+	UINT64 getMaximumHashTableCollision();
 
 
 

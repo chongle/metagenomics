@@ -25,7 +25,7 @@ string Config::outputfilename = "out.txt";
 
 UINT16 Config::minimumOverlapLength=40;
 UINT16 Config::hashKeyLength = 32;//key needs to be smaller than minimumoverlap, if double key, 2*key<minoverlap
-UINT64 Config::streamChunkSize = 40;
+UINT64 Config::streamChunkSize = 400;
 bool Config::isSingleKey = true;
 
 bool Config::isSingleEnd = true; //subject is always treated as single end, while the query is only paired end when using "MergePairedEndReads"
@@ -53,6 +53,7 @@ void Config::printHelp()
               << "    -k\t hash table key length (default:32)" << std::endl
 			  << "    -m\t maximum allowed mismatch (default:1)" << std::endl
 			  << "    -t\t number of threads (default:1 [single thread])" << std::endl
+			  << "    -z\t stream chunk size of subject read file (default:400)" << std::endl
 			  << "    --out\t output file name (default:out.txt)" << std::endl
 
               << std::endl
@@ -143,6 +144,8 @@ bool Config::setConfig(int argc, char **argv)
 					Config::maxMismatch = atoi(argumentsList[++i].c_str());
 		else if (argumentsList[i] == "-t")
 					Config::numberOfThreads = atoi(argumentsList[++i].c_str());
+		else if (argumentsList[i] == "-z")
+					Config::streamChunkSize = atoi(argumentsList[++i].c_str());
 		else
 		{
           Config::printHelp();
