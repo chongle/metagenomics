@@ -37,6 +37,31 @@ UINT16 Config::maxIndel = 0; //only valid when perfectMatch is set to false
 
 UINT16 Config::numberOfThreads = 1;
 
+// Get the memory usage with a Linux kernel.
+inline unsigned int Config::checkMemoryUsage()
+{
+    // get KB memory into count
+    unsigned int count=0;
+
+   #if defined(__linux__)
+    ifstream f("/proc/self/status"); // read the linux file
+    while(!f.eof()){
+        string key;
+        f>>key;
+        if(key=="VmData:"){     // size of data
+            f>>count;
+        break;
+        }
+
+    }
+    f.close();
+   #endif
+
+    // return MBs memory (size of data)
+    return (count/1024);
+};
+
+
 void Config::printHelp()
 {
     std::cout << std::endl

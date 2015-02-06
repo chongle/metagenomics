@@ -37,13 +37,19 @@
 #include <map>
 
 
-//define CLOCKSTART clock_t begin = clock(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
-//define CLOCKSTOP clock_t end = clock(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) / CLOCKS_PER_SEC<< " Seconds." << endl << endl;
-#define CLOCKSTART clock_t begin = omp_get_wtime(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
-#define CLOCKSTOP clock_t end = omp_get_wtime(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) << " Seconds." << endl << endl;
-
-
 using namespace std;
+
+    //define CLOCKSTART clock_t begin = clock(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
+    //define CLOCKSTOP clock_t end = clock(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) / CLOCKS_PER_SEC<< " Seconds." << endl << endl;
+    #define CLOCKSTART clock_t begin = omp_get_wtime(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
+    #define CLOCKSTOP clock_t end = omp_get_wtime(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) << " Seconds." << endl << endl;
+
+
+
+    // To keep time information of functions.
+    #define MEMORYSTART INT64 mem_start = checkMemoryUsage(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
+    #define MEMORYSTOP INT64 mem_end = checkMemoryUsage(); cout << "Function " << __FUNCTION__ << "() finished . " << "Memory used: " << mem_end << " - " <<  mem_start << " = "<< mem_end - mem_start << " MB."<< endl;
+
 
 typedef unsigned char UINT8;
 typedef unsigned short UINT16;
@@ -72,12 +78,11 @@ public:
 	static bool perfectMatch;
 	static UINT16 maxMismatch; //only valid when perfectMatch is set to false
 	static UINT16 maxIndel; //only valid when perfectMatch is set to false
-
 	static UINT16 numberOfThreads;
 
 	static void printHelp();
 
-
+	static inline unsigned int checkMemoryUsage();
 
 	Config();
 	~Config();
