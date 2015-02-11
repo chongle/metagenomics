@@ -95,3 +95,4 @@ int Alignment::orientationTranslate()
 	}
 	else return -1;
 }
+

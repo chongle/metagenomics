@@ -41,15 +41,35 @@ using namespace std;
 
     //define CLOCKSTART clock_t begin = clock(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
     //define CLOCKSTOP clock_t end = clock(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) / CLOCKS_PER_SEC<< " Seconds." << endl << endl;
-    #define CLOCKSTART clock_t begin = omp_get_wtime(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
-    #define CLOCKSTOP clock_t end = omp_get_wtime(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) << " Seconds." << endl << endl;
+    #define CLOCKSTART double begin = omp_get_wtime(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
+    #define CLOCKSTOP double end = omp_get_wtime(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) << " Seconds." << endl << endl;
 
+// To keep time information of functions.
+#define MEMORYSTART INT64 mem_start = checkMemoryUsage(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
+#define MEMORYSTOP INT64 mem_end = checkMemoryUsage(); cout << "Function " << __FUNCTION__ << "() finished . " << "Memory used: " << mem_end << " - " <<  mem_start << " = "<< mem_end - mem_start << " MB."<< endl;
+// Get the memory usage with a Linux kernel.
+inline unsigned int checkMemoryUsage()
+{
+    // get KB memory into count
+    unsigned int count=0;
 
+   #if defined(__linux__)
+    ifstream f("/proc/self/status"); // read the linux file
+    while(!f.eof()){
+        string key;
+        f>>key;
+        if(key=="VmData:"){     // size of data
+            f>>count;
+        break;
+        }
 
-    // To keep time information of functions.
-    #define MEMORYSTART INT64 mem_start = checkMemoryUsage(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
-    #define MEMORYSTOP INT64 mem_end = checkMemoryUsage(); cout << "Function " << __FUNCTION__ << "() finished . " << "Memory used: " << mem_end << " - " <<  mem_start << " = "<< mem_end - mem_start << " MB."<< endl;
+    }
+    f.close();
+   #endif
 
+    // return MBs memory (size of data)
+    return (count/1024);
+};
 
 typedef unsigned char UINT8;
 typedef unsigned short UINT16;
@@ -105,5 +125,9 @@ public:
 
 
 };
+
+
+
+
 
 #endif /* CONFIG_H_ */
