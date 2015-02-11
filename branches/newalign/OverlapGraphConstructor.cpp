@@ -50,10 +50,12 @@ bool OverlapGraphConstructor::searchHashTable(edge & currentEdge)
 	}
 }
 bool OverlapGraphConstructor::start() {
+MEMORYSTART;
 	if (!queryDataset->buildDataset(Config::getQueryDatasetFilename())){
 		cout << "Error: cannot build query dataset" << endl;
 		return false;
 	}
+MEMORYSTOP;
 
 	if(Config::isSingleKey)
 	{
@@ -85,14 +87,15 @@ CLOCKSTART;
 	{
 #pragma omp for schedule(dynamic)
 		for(UINT64 i = 0; i < edgeList.size(); i++)
+//			cout<<"hi";
 				searchHashTable(*edgeList[i]);
-/*		  int tid = omp_get_thread_num();
-		  if (tid == 0)
-		    {
-		    int nthreads = omp_get_num_threads();
-		    printf("Number of threads = %d\n", nthreads);
-		    }
-*/
+//		  int tid = omp_get_thread_num();
+//		  if (tid == 0)
+//		    {
+//		    int nthreads = omp_get_num_threads();
+//		    printf("Number of threads = %d\n", nthreads);
+//		    }
+
 	}
 		// end of omp parallel
 
