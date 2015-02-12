@@ -196,9 +196,9 @@ bool Dataset::readDataset(string fileName, UINT64 minOverlap, UINT64 datasetNumb
 // Ted: multi-thread this sort later
 void Dataset::sortReads(void)
 {
-	CLOCKSTART;
+
 	sort(reads->begin(),reads->end(), compareReads);	// Sort the reads lexicographically.
-	CLOCKSTOP;
+
 }
 
 

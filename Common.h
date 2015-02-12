@@ -1,4 +1,11 @@
 /*
+ * common.h
+ *
+ *  Created on: Feb 11, 2015
+ *      Author: qy2
+ */
+
+/*
  * Common.h
  *
  * Created on: April 22, 2013
@@ -40,7 +47,7 @@ typedef long long INT64;
 #define aStatisticsThreshold 3
 #define minDelta 1000
 #define deadEndLength 10
-#define minimumSupport 3
+#define minimumSupport 1
 #define loopLimit 15
 
 //	Exit code that displays the place of exit and message.
@@ -49,16 +56,19 @@ typedef long long INT64;
 
 
 // To keep time information of functions.
-#define CLOCKSTART INT64 mem_start = checkMemoryUsage(); clock_t begin = clock(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
-#define CLOCKSTOP INT64 mem_end = checkMemoryUsage(); clock_t end = clock(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) / CLOCKS_PER_SEC<< " Seconds." << endl << "Memory used: " << mem_end << " - " <<  mem_start << " = "<< mem_end - mem_start << " MB."<< endl << endl;
+#define CLOCKSTART clock_t begin = clock(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
+#define CLOCKSTOP clock_t end = clock(); cout << "Function " << __FUNCTION__ << "() finished in " << double(end - begin) / CLOCKS_PER_SEC<< " Seconds." << endl << endl;
 
+// To keep time information of functions.
+#define MEMORYSTART INT64 mem_start = checkMemoryUsage(); cout<<"Currently in file: " << __FILE__ << " Function: "<< __FUNCTION__ << "()" << endl;
+#define MEMORYSTOP INT64 mem_end = checkMemoryUsage(); cout << "Function " << __FUNCTION__ << "() finished . " << "Memory used: " << mem_end << " - " <<  mem_start << " = "<< mem_end - mem_start << " MB."<< endl;
 // Get the memory usage with a Linux kernel.
 inline unsigned int checkMemoryUsage()
 {
     // get KB memory into count
     unsigned int count=0;
 
-    #if defined(__linux__)
+   #if defined(__linux__)
     ifstream f("/proc/self/status"); // read the linux file
     while(!f.eof()){
         string key;
@@ -67,15 +77,13 @@ inline unsigned int checkMemoryUsage()
             f>>count;
         break;
         }
+
     }
     f.close();
-    #endif
+   #endif
 
     // return MBs memory (size of data)
     return (count/1024);
 };
-
-
-
 
 #endif /* COMMON_H_ */

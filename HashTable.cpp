@@ -50,6 +50,7 @@ HashTable::HashTable(void)
 bool HashTable::insertDataset(Dataset* d, UINT64 minOverlapLength)
 {
 	CLOCKSTART;
+	MEMORYSTART;
 	dataSet=d;
 	hashStringLength = minOverlapLength - 1;
 	numberOfHashCollision = 0;
@@ -75,6 +76,8 @@ bool HashTable::insertDataset(Dataset* d, UINT64 minOverlapLength)
 	}
 	cout <<"Longest list size in the hash table is: " << longestSize << endl << "Read: " << endl << this->dataSet->getReadFromID(readID & 0X3FFFFFFFFFFFFFF)->getStringForward() << endl << this->dataSet->getReadFromID(readID & 0X3FFFFFFFFFFFFFF)->getStringReverse() << endl << "Orientation: " << (readID >> 62) << endl;
 
+	cout<< "hashtable size: "<< this->hashTable->size()<<endl;
+	MEMORYSTOP;
 	CLOCKSTOP;
 	return true;
 }
