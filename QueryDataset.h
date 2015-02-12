@@ -20,6 +20,7 @@ class QueryDataset {
 	UINT64 longestReadLength;
 
 	UINT16 dataset_minimumoverlaplength;
+	string dataset_QueryFilename;
 
 	vector<QueryRead *>* queryReadList;
 
@@ -30,12 +31,14 @@ class QueryDataset {
 
 public:
 	QueryDataset();
+	QueryDataset(const string & QueryFilename);
 	~QueryDataset();
 
 
 	static bool qualityFilter(string & sequence);
 
 	bool buildDataset(const string & QueryFilename);
+	bool buildDataset();
 	UINT64 getNumberOfReads(); 						// Get the number of total reads in the database.
 	UINT64 getNumberOfUniqueReads(); 				// Get the number of unique reads in the database.
 

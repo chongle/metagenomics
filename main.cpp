@@ -1,5 +1,7 @@
 #include "Config.h"
 #include "QueryDataset.h"
+//#include "SingleKeyHashTable.h"
+#include "OmegaHashTable.h"
 //#include "OverlapGraphConstructor.h"
 //#include "PairedReadMerger.h"
 //#include "ErrorCorrector.h"
@@ -20,20 +22,52 @@ int main(int argc, char **argv)
 		return false;
 	}
 
-	CLOCKSTOP;
 
+//--------
+	QueryDataset* queryDataset = new QueryDataset(Config::getQueryDatasetFilename());
 	{
 	CLOCKSTART;
 	MEMORYSTART;
-	QueryDataset* queryDataset = new QueryDataset();
-	if (!queryDataset->buildDataset(Config::getQueryDatasetFilename())){
+
+	if (!queryDataset->buildDataset()){
 		cout << "Error: cannot build query dataset" << endl;
 		return false;
 	}
 	MEMORYSTOP;
 	CLOCKSTOP;
-	delete queryDataset;
+
 	}
+//---------
+	/*
+	SingleKeyHashTable* singleKeyHashTable = new SingleKeyHashTable();
+	{
+	CLOCKSTART;
+	MEMORYSTART;
+
+	if (!singleKeyHashTable->insertQueryDataset(queryDataset)){
+		cout << "Error: cannot build hash table" << endl;
+		return false;
+	}
+	MEMORYSTOP;
+	CLOCKSTOP;
+	}*/
+
+//---------
+	OmegaHashTable *omegaHashTable=new OmegaHashTable();
+	{
+	CLOCKSTART;
+	MEMORYSTART;
+	omegaHashTable->insertDataset(queryDataset, Config::minimumOverlapLength);
+	MEMORYSTOP;
+	CLOCKSTOP;
+	}
+
+	MEMORYSTART;
+	delete omegaHashTable;
+	delete queryDataset;
+//	delete singleKeyHashTable;
+	MEMORYSTOP;
+	CLOCKSTOP;
 
 /*
 	if (Config::getOperation() == "ConstructGraph"){
