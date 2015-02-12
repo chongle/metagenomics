@@ -7,7 +7,8 @@
 
 #include "QueryDataset.h"
 
-QueryDataset::QueryDataset() {
+QueryDataset::QueryDataset()
+{
 	// TODO Auto-generated constructor stub
 //	cout << "constructor " << queryReadList.size() << endl;
 	numberOfReads = 0;								// Number of total reads present in the dataset.
@@ -18,9 +19,26 @@ QueryDataset::QueryDataset() {
 	queryReadList=NULL;
 
 	dataset_minimumoverlaplength = Config::getminimumOverlapLength();
+	dataset_QueryFilename = Config::getQueryDatasetFilename();
 }
 
-QueryDataset::~QueryDataset() {
+QueryDataset::QueryDataset(const string & QueryFilename)
+{
+	// TODO Auto-generated constructor stub
+//	cout << "constructor " << queryReadList.size() << endl;
+	numberOfReads = 0;								// Number of total reads present in the dataset.
+	numberOfUniqueReads = 0; 						// number of unique reads in the dataset.
+
+	shortestReadLength = 0xFFFFFFFFFFFFFFFF;
+	longestReadLength = 0;
+	queryReadList=NULL;
+
+	dataset_minimumoverlaplength = Config::getminimumOverlapLength();
+	dataset_QueryFilename = QueryFilename;
+}
+
+QueryDataset::~QueryDataset()
+{
 	if(queryReadList!=NULL)
 	{
 	for(UINT64 i = 0; i < queryReadList->size(); i++){
@@ -178,6 +196,11 @@ void QueryDataset::sortReads()
 	else
 	cout<<"no reads in the dataset";
 
+}
+
+bool QueryDataset::buildDataset()
+{
+	return this->buildDataset(this->dataset_QueryFilename);
 }
 
 
