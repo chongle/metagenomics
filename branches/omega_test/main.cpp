@@ -17,8 +17,8 @@
 #include "Read.h"
 #include "Dataset.h"
 #include "HashTable.h"
-//YAO #include "Edge.h"
-//YAO #include "OverlapGraph.h"
+#include "Edge.h"
+#include "OverlapGraph.h"
 
 
 //=============================================================================
@@ -76,11 +76,21 @@ int main(int argc, char **argv)
 	//YAO 	}
 	//YAO 	else // Build the graph from the scratch
 	{
+				CLOCKSTART;
 				MEMORYSTART;
 				HashTable *hashTable=new HashTable();
 				hashTable->insertDataset(dataSet, minimumOverlapLength);
 				MEMORYSTOP;
-		//YAO 		overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
+				CLOCKSTOP;
+				{
+				CLOCKSTART;
+				MEMORYSTART;
+				OverlapGraph* overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
+		 		MEMORYSTOP;
+		 		CLOCKSTOP;
+		 		delete overlapGraph;
+				}
+				delete hashTable;
 		//YAO 		dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		//YAO 		overlapGraph->sortEdges();
 		//YAO 		overlapGraph->saveGraphToFile(allFileName+"_unitig.unitig");
@@ -141,7 +151,7 @@ int main(int argc, char **argv)
 	overlapGraph->printGraph(allFileName+"_graph4.gdl", allFileName+"_contigs4.fasta");
 */
 	delete dataSet;
-//YAO	delete overlapGraph;
+//	delete overlapGraph;
 
 }
 
