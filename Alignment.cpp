@@ -143,3 +143,26 @@ int Alignment::getEditDistance()
 	else size = 0;
 	return size;
 }
+
+SubjectEdge::SubjectEdge(SubjectRead* sRead)
+{
+	this->subjectRead = sRead;
+	this->alignmentList = NULL;
+}
+SubjectEdge::~SubjectEdge()
+{
+	this->subjectRead = NULL;
+	if(this->alignmentList!=NULL)
+	{
+		this->alignmentList->clear();
+		delete this->alignmentList;
+	}
+}
+
+bool SubjectEdge::addAlignment(Alignment* subjectAlignment)
+{
+	if(this->alignmentList==NULL)
+		this->alignmentList = new vector<Alignment*>();
+	this->alignmentList->push_back(subjectAlignment);
+	return true;
+}

@@ -83,6 +83,7 @@ bool OmegaHashTable::insertDataset(QueryDataset* d, UINT64 minOverlapLength)
 
 	}
 	cout <<"Longest list size in the hash table is: " << longestSize << endl;
+	cout <<"first ReadID from Longest list is: " <<readID << endl;
 	cout<< "hashtable size: "<< this->hashTable->size()<<endl;
 	MEMORYSTOP;
 	CLOCKSTOP;

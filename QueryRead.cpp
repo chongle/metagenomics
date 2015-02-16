@@ -82,6 +82,8 @@ UINT32 QueryRead::getReadLength()
 
 bool QueryRead::addAlignment(Alignment* subjectAlignment)
 {
+	if(this->queryAlignmentList==NULL)
+		this->queryAlignmentList = new vector<Alignment*>();
 	this->queryAlignmentList->push_back(subjectAlignment);
 	return true;
 }

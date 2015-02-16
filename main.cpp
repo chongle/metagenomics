@@ -1,7 +1,10 @@
 #include "Config.h"
 #include "QueryDataset.h"
-//#include "SingleKeyHashTable.h"
+#include "HashTableMethod.h"
+#include "SingleKeyHashTable.h"
+#include "DoubleKeyHashTable.h"
 #include "OmegaHashTable.h"
+#include "OmegaGraphConstructor.h"
 //#include "OverlapGraphConstructor.h"
 //#include "PairedReadMerger.h"
 //#include "ErrorCorrector.h"
@@ -24,6 +27,7 @@ int main(int argc, char **argv)
 
 
 //--------
+
 	QueryDataset* queryDataset = new QueryDataset(Config::getQueryDatasetFilename());
 	{
 	CLOCKSTART;
@@ -37,36 +41,53 @@ int main(int argc, char **argv)
 	CLOCKSTOP;
 
 	}
-//---------
+
+//--------
 	/*
-	SingleKeyHashTable* singleKeyHashTable = new SingleKeyHashTable();
+	HashTableMethod* singleKeyHashTable = new SingleKeyHashTable(queryDataset);
 	{
 	CLOCKSTART;
 	MEMORYSTART;
-
-	if (!singleKeyHashTable->insertQueryDataset(queryDataset)){
-		cout << "Error: cannot build hash table" << endl;
-		return false;
-	}
+	cout << "-------singlekeyhashtable------" << endl;
+	singleKeyHashTable->createHashTables();
+	singleKeyHashTable->insertQueryDataset(queryDataset);
 	MEMORYSTOP;
 	CLOCKSTOP;
-	}*/
+	}
+	*/
+//---------
+	/*
+	HashTableMethod* doubleKeyHashTable = new DoubleKeyHashTable(queryDataset);
+	{
+	CLOCKSTART;
+	MEMORYSTART;
+	cout << "-------doublekeyhashtable------" << endl;
+	doubleKeyHashTable->createHashTables();
+	doubleKeyHashTable->insertQueryDataset(queryDataset);
+	MEMORYSTOP;
+	CLOCKSTOP;
+	}
+	*/
 
 //---------
+
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
 	{
 	CLOCKSTART;
 	MEMORYSTART;
+	cout << "-------omegahashtable------" << endl;
 	omegaHashTable->insertDataset(queryDataset, Config::minimumOverlapLength);
 	MEMORYSTOP;
 	CLOCKSTOP;
 	}
+	OmegaGraphConstructor * omegaGraph = new OmegaGraphConstructor(omegaHashTable);
+	omegaGraph->start();
 
-	MEMORYSTART;
 	delete omegaHashTable;
 	delete queryDataset;
 //	delete singleKeyHashTable;
-	MEMORYSTOP;
+//	delete doubleKeyHashTable;
+
 	CLOCKSTOP;
 
 /*

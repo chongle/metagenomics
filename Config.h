@@ -89,6 +89,8 @@ public:
 
 	static UINT16 minimumOverlapLength;
 	static UINT16 hashKeyLength;
+	static UINT16 hashKeyLength_left;
+	static UINT16 hashKeyLength_right;
 	static UINT64 streamChunkSize;
 	static bool isSingleKey;
 

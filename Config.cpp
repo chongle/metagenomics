@@ -24,7 +24,9 @@ vector<string> Config::subjectFilenameList;
 string Config::outputfilename = "out.txt";
 
 UINT16 Config::minimumOverlapLength=40;
-UINT16 Config::hashKeyLength = 32;//key needs to be smaller than minimumoverlap, if double key, 2*key<minoverlap
+UINT16 Config::hashKeyLength = 39;//key needs to be smaller than minimumoverlap, if double key, 2*key<minoverlap
+UINT16 Config::hashKeyLength_left = 19;
+UINT16 Config::hashKeyLength_right = 20;
 UINT64 Config::streamChunkSize = 400;
 bool Config::isSingleKey = true;
 

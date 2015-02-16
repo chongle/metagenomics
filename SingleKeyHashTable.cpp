@@ -6,85 +6,149 @@
  */
 
 #include "SingleKeyHashTable.h"
-/*
+
 SingleKeyHashTable::SingleKeyHashTable() {
 	// TODO Auto-generated constructor stub
 	this->minimumOverlapLength = Config::minimumOverlapLength;
 	this->hashKeyLength = Config::hashKeyLength;
 	this->maxMismatch = Config::maxMismatch;
-	queryDataSet = NULL;
-	hashTableMap.clear();
-	hashTableNameList.clear();
+	this->numberOfMode = 4;
+	this->dataSet = NULL;
+	this->hashTable = NULL;
+	numberOfHashCollision = 0;
+	maxSingleHashCollision = 0;
+}
+
+SingleKeyHashTable::SingleKeyHashTable(QueryDataset * qDataset) {
+	// TODO Auto-generated constructor stub
+	this->minimumOverlapLength = Config::minimumOverlapLength;
+	this->hashKeyLength = Config::hashKeyLength;
+	this->maxMismatch = Config::maxMismatch;
+	this->numberOfMode = 4;
+	this->dataSet = qDataset;
+	this->hashTable = NULL;
+	numberOfHashCollision = 0;
+	maxSingleHashCollision = 0;
 }
 
 SingleKeyHashTable::~SingleKeyHashTable() {
 	// TODO Auto-generated destructor stub
-	for(unsigned int i = 0; i< hashTableNameList.size(); i++)
-	{
-		string stringmode = hashTableNameList.at(i);
-		delete hashTableMap.at(stringmode);
-	}
-	hashTableMap.clear();
-	hashTableNameList.clear();
+	if(this->hashTable!=NULL)
+	delete hashTable;
+	this->dataSet = NULL;//we don't delete dataSet here
 }
 
-string SingleKeyHashTable::getReadSubstring(string mode, UINT64 readID)
+bool SingleKeyHashTable::createHashTables()
 {
-	string subString="";
-	string readString="";
-	QueryRead * read = queryDataSet->getReadFromID(readID);
-	if(mode=="forwardprefix")
+	if(this->dataSet==NULL)
 	{
+		cout<<"no data set"<<endl;
+		return false;
+	}
+	else if(this->hashTable!=NULL)
+	{
+		cout<<"Hash Table already exists."<<endl;
+		return false;
+	}
+	else
+	{
+		this->hashTable = new HashTable(this->hashKeyLength,  this->dataSet, this->numberOfMode);
 
-		if(read!=NULL)
-		{
-			readString = read->getSequence();
-			subString = readString.substr(0,hashKeyLength);
-		}
+		return true;
 	}
-	else if(mode == "forwardsuffix")
-	{
-
-		if(read!=NULL)
-		{
-			readString = read->getSequence();
-			subString = readString.substr(readString.length() - hashKeyLength, hashKeyLength);
-		}
-
-	}
-	else if(mode == "reverseprefix")
-	{
-		if(read!=NULL)
-		{
-			readString = read->reverseComplement();
-			subString = readString.substr(0,hashKeyLength);
-		}
-	}
-	else if(mode == "reversesuffix")
-	{
-		if(read!=NULL)
-		{
-			readString = read->reverseComplement();
-			subString = readString.substr(readString.length() - hashKeyLength, hashKeyLength);
-		}
-	}
-	else cout<< "mode is illegal"<<endl;
-	return subString;
 }
 
-bool SingleKeyHashTable::InitializeAllHashTables()
+// 00 = 0 means prefix of the forward string.
+// 01 = 1 means suffix of the forward string.
+// 10 = 2 means prefix of the reverse string.
+// 11 = 3 means suffix of the reverse string.
+string SingleKeyHashTable::getReadSubstring(UINT64 readID, int mode)
 {
-	if(hashTableNameList.empty() || queryDataSet == NULL) return false;
+	QueryRead * read = this->dataSet->getReadFromID(readID);
+	string str = (mode == 0 || mode == 1) ? read->getSequence() : read->reverseComplement();
+	string subStr = (mode == 0 || mode == 2) ? str.substr(0,this->hashKeyLength) : str.substr(str.length() - this->hashKeyLength, this->hashKeyLength);
 
-	for(unsigned int i = 0; i< hashTableNameList.size(); i++)
+	return subStr;
+}
+
+
+bool SingleKeyHashTable::insertQueryDataset(QueryDataset* d)
+{
+	if(this->hashTable==NULL)
 	{
-		string stringmode = hashTableNameList.at(i);
-		HashTable *currentHashtable = new HashTable(this->hashKeyLength);
-		currentHashtable->InitializeWithDataSize(queryDataSet->getNumberOfUniqueReads());
-		hashTableMap.insert(std::pair<string, HashTable*>(stringmode, currentHashtable));
+		cout<<"Hash Table hasn't been created yet."<<endl;
+		return false;
+	}
+	else
+	{
+		UINT64 datasetsize = this->dataSet->getNumberOfUniqueReads();
+//		omp_set_dynamic(0);
+//		omp_set_num_threads(Config::numberOfThreads);
+//		#pragma omp parallel
+//			{
+//		#pragma omp for schedule(dynamic)
+		UINT64 currentID = 1;
+		while(currentID<=datasetsize)
+		{
+			if(currentID%1000000 == 0)
+				cout << setw(10) << currentID << " reads inserted in the hash table. " << endl;
+			QueryRead * read = this->dataSet->getReadFromID(currentID);
+			string forwardRead = read->getSequence();
+			string reverseRead = read->reverseComplement();
+			string prefixForward = forwardRead.substr(0,this->hashKeyLength); 											// Prefix of the forward string.
+			string suffixForward = forwardRead.substr(forwardRead.length() - this->hashKeyLength,this->hashKeyLength);	// Suffix of the forward string.
+			string prefixReverse = reverseRead.substr(0,this->hashKeyLength);											// Prefix of the reverse string.
+			string suffixReverse = reverseRead.substr(reverseRead.length() - this->hashKeyLength,this->hashKeyLength);	// Suffix of the reverse string.
+			insertQueryRead(read, prefixForward, 0);
+			insertQueryRead(read, suffixForward, 1);
+			insertQueryRead(read, prefixReverse, 2);
+			insertQueryRead(read, suffixReverse, 3);
+			currentID++;
+		}
+		cout<<"Hash Table "<<" maximum collision number is: "<< this->numberOfHashCollision<<endl;
+		cout<<"Hash Table "<<" maximum single read collision number is: "<< this->maxSingleHashCollision<<endl;
+
+
+//			}//end of parallel
+
+		return true;
+
+	}
+}
+bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string subString, int mode)
+{
+	UINT64 currentCollision =0;
+
+	UINT64 index = this->hashTable->hashFunction(subString);
+	while(!hashTable->isEmptyAt(index))
+	{
+		map<int,vector<UINT64>*>::iterator p=hashTable->getDataVectorsAt(index)->begin();
+		int keymode = p->first;
+		UINT64 keyreadID = p->second->at(0);
+
+		string keyStr = this->getReadSubstring(keyreadID,keymode);
+
+
+		if(keyStr == subString)
+				break;
+		numberOfHashCollision++;
+		currentCollision++;
+		index = (index == hashTable->getHashTableSize() - 1) ? 0: index + 1; 	// Increment the index
+	}
+	hashTable->insertValueAt(index,mode,this->numberOfMode,read->getIdentifier());							// Add the string in the list.
+
+	if(currentCollision> this->maxSingleHashCollision)
+		this->maxSingleHashCollision = currentCollision;
+	if(currentCollision > 1000)
+	{
+		cout << currentCollision << " collisions for read " << read->getIdentifier() << " " << subString << " " << mode << endl;
 	}
 	return true;
 }
+
+/*
+
+
 
 bool SingleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
 {
