@@ -10,46 +10,70 @@
 
 #include "Config.h"
 #include "QueryDataset.h"
-
-
-struct DataVector
+/*
+class DataVector
 {
+public:
 	vector<UINT64>** dataList;
 	//	string keystring;
+	DataVector(int n)
+	{dataList = new vector<UINT64>*[n]();
+	for(int i=0;i<n;i++)
+		dataList[i] = NULL;
+	};
+	~DataVector(){delete[] dataList;};
 };
+*/
 
+//Since there is no internal keystring stored, we cannot handle the collision internally
 class HashTable {
-public:
+
+//there are three variables which are potentially useless which can be taken off.
+//hashKeyLength
+//numberOfHashCollision
+//maxSingleHashCollision
+//because the collsion is not handled here.
+//and the key squence and extraction step is not handled here.
+private:
 	QueryDataset * dataSet;							// Pointer of the dataset.
 	string hashTableName;
 
 	UINT64 hashTableSize; 					// Size of hash table, primer number usually.
 	UINT16 hashKeyLength;					// Length of the substring of the reads to hash. It's also the key length.
 												// It has the 64 bps limit. See the comments in the hashFunction().
-	UINT64 numberOfHashCollision;				// Counted total number of hash collisions. For debugging only.
-	UINT64 maxSingleHashCollision;				// Counted maximal number of hash collision for a single case.
 
 
 	int dataVectorSize;
-	vector <DataVector *> *hashTable; 		// Main structure of hashtable, storing read identifiers.
+//	vector <DataVector *> *hashTable; 		// Main structure of hashtable, storing read identifiers.
+	vector <map<int,vector<UINT64>*> *> *hashTable; 		// Main structure of hashtable, storing read identifiers.
 
-	UINT64 hashFunction(const string & subString);
+
 	UINT64 getPrimeLargerThanNumber(UINT64 number);
 	void setHashTableSizeAndInitialize(UINT64 size);
-	bool findInsertIndex(string keyString, UINT64& hashTableIndex);
-	bool getIndexFromHashTable(string subString, UINT64& hashTableIndex);
-	string getHashKeyFromIndex(UINT64 hashTableIndex);
+
 
 public:
+	UINT64 numberOfHashCollision;				// Counted total number of hash collisions. For debugging only.
+	UINT64 maxSingleHashCollision;				// Counted maximal number of hash collision for a single case.
+
 	HashTable(int insertSize);
 	HashTable(UINT16 keylength,int insertSize);
 	HashTable(UINT16 keylength, string name, int insertSize);
 	HashTable(UINT16 keylength,  UINT64 size, int insertSize);
-	virtual ~HashTable();
+	HashTable(UINT16 keylength,  QueryDataset * dataset, int insertSize);
+	~HashTable();
+	UINT64 hashFunction(const string & subString);
 	void InitializeWithDataSize(UINT64 dataSetSize);//hash table will automatically determine a good hash table size
-	bool insertIntoHashTable(string keyString, UINT64 readID);//handle collision internally
-	vector<UINT64> * getReadIDListOfReads(string subString);
+
 	UINT64 getMaximumHashTableCollision();
+	UINT64 getTotalHashTableCollision();
+	UINT64 getHashTableSize();
+
+
+	bool isEmptyAt(UINT64 hashTableIndex);
+	map<int,vector<UINT64>*>* getDataVectorsAt(UINT64 hashTableIndex);
+	vector<UINT64> * getReadIDListAt(UINT64 hashTableIndex, int dataVectorNum);
+	bool insertValueAt(UINT64 hashTableIndex, int dataVectorNum, int dataVecorSize, UINT64 value);
 
 
 
