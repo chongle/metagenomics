@@ -19,6 +19,7 @@ OverlapGraph::OverlapGraph(void)
 	numberOfNodes = 0;
 	numberOfEdges = 0;
 	flowComputed = false;
+
 }
 
 
@@ -34,6 +35,7 @@ OverlapGraph::OverlapGraph(HashTable *ht)
 	numberOfEdges = 0;
 	flowComputed = false;
 	buildOverlapGraphFromHashTable(ht);
+
 }
 
 
@@ -61,6 +63,8 @@ OverlapGraph::~OverlapGraph()
 **********************************************************************************************************************/
 bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 {
+	this->totaledgenumber = 0;
+	filePointer.open("omegatemp.txt");
 	CLOCKSTART;
 	estimatedGenomeSize = 0;
 	numberOfNodes = 0;
@@ -128,7 +132,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 //YAO						markTransitiveEdges(read1, markedNodes); // Mark transitive edges
 						exploredReads->at(read1) = EXPLORED_AND_TRANSITIVE_EDGES_MARKED;
 					}
-					if(exploredReads->at(read1) == EXPLORED_AND_TRANSITIVE_EDGES_MARKED)
+/*					if(exploredReads->at(read1) == EXPLORED_AND_TRANSITIVE_EDGES_MARKED)
 					{
 						for(UINT64 index1 = 0; index1 < graph->at(read1)->size(); index1++) 				// Then explore all neighbour's neighbors
 						{
@@ -150,7 +154,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 							}
 						}
 //YAO						removeTransitiveEdges(read1); // Remove the transitive edges
-					}
+					}*/
 				}
 				if(counter%100000==0)	// Show the progress.
 					cout<<"counter: " << setw(10) << counter << " Nodes: " << setw(10) << numberOfNodes << " Edges: " << setw(10) << numberOfEdges/2 << endl;
@@ -158,10 +162,11 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 		}
 	}
 	cout<<"total counter: " << setw(10) << counter << " Nodes: " << setw(10) << numberOfNodes << " Edges: " << setw(10) << numberOfEdges/2 << endl;
-
+	cout<<"total edge number: "<<this->totaledgenumber<<endl;
 	delete exploredReads;
 	delete queue;
 	delete markedNodes;
+	filePointer.close();
 //YAO	delete hashTable;	// Do not need the hash table any more.
 	//YAO
 	//do
@@ -243,6 +248,7 @@ void OverlapGraph::markContainedReads(void)
 	}
 	cout<< endl << setw(10) << nonContainedReads << " Non-contained reads. (Keep as is)" << endl;
 	cout<< setw(10) << containedReads << " contained reads. (Need to change their mate-pair information)" << endl;
+
 	CLOCKSTOP;
 }
 
@@ -349,7 +355,9 @@ bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * ex
 	Read *read1 = dataSet->getReadFromID(readNumber); 	// Get the current read read1.
 	string readString = read1->getStringForward(); 		// Get the forward string of read1.
 	string subString;
-	for(UINT64 j = 1; j < read1->getReadLength()-hashTable->getHashStringLength(); j++) // For each proper substring of length getHashStringLength of read1
+//YAO	for(UINT64 j = 1; j < read1->getReadLength()-hashTable->getHashStringLength(); j++) // For each proper substring of length getHashStringLength of read1
+
+	for(UINT64 j = 0; j <= read1->getReadLength()-hashTable->getHashStringLength(); j++) // For each proper substring of length getHashStringLength of read1
 	{
 		subString = readString.substr(j,hashTable->getHashStringLength());  // Get the proper substring s of read1.
 		vector<UINT64> * listOfReads=hashTable->getListOfReads(subString); // Search the string in the hash table.
@@ -364,7 +372,17 @@ bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * ex
 				if(exploredReads->at(read2->getReadNumber())!= UNEXPLORED) 			// No need to discover the same edge again. All edges of read2 is already inserted in the graph.
 						continue;
 				if(read1->superReadID == 0 && read2->superReadID == 0 && checkOverlap(read1,read2,(data >> 62),j)) // Both read need to be non contained.
-				{
+				{					std::stringstream sstm;
+
+				int orientation = data>>62;
+				cout<<read1->getReadNumber() <<" "<< " >>> " << read2->getReadNumber() <<" orientation: "<<orientation<<" position: "<<j<<endl;
+
+				if(read1->getStringForward()<read2->getStringForward())
+				sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read1->getStringForward()<<"||||"<<read2->getStringForward()<<endl;
+				else
+					sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read2->getStringForward()<<"||||"<<read1->getStringForward()<<endl;
+				filePointer<<sstm.str();
+					this->totaledgenumber++;
 					switch (data >> 62) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
 					{
 						case 0: orientation = 3; overlapOffset = read1->getReadLength() - j; break; 				// 3 = r1>------->r2
