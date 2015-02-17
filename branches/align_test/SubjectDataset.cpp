@@ -112,7 +112,14 @@ bool SubjectDataset::loadNextChunk(vector<SubjectRead*> * chunkData)
 		    *p = toupper(*p);
 		if(line1.length() > Config::getminimumOverlapLength() && QueryDataset::qualityFilter(line1) ) // Test the read is of good quality.
 		{
-			SubjectRead * subjectRead= new SubjectRead(line1, readname);
+
+			SubjectRead * subjectRead= new SubjectRead();
+			subjectRead->setName(readname);
+			line1ReverseComplement = subjectRead->reverseComplement(line1);
+			if(line1.compare(line1ReverseComplement) < 0) // Store lexicographically smaller between the read and its reverse complement.
+				subjectRead->setSequence(line1);
+			else
+				subjectRead->setSequence(line1ReverseComplement);
 			chunkData->push_back(subjectRead);
 			currentChunkSize++;
 		}
