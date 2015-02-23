@@ -54,6 +54,7 @@ void parseArguments(int argc, char **argv, vector<string> & pairedEndFileNames, 
 int main(int argc, char **argv)
 {
 	CLOCKSTART;
+
 	MEMORYSTART;
 	UINT64 minimumOverlapLength;
 	vector<string> pairedEndFileNames, singleEndFileNames;
@@ -86,16 +87,17 @@ int main(int argc, char **argv)
 				CLOCKSTART;
 				MEMORYSTART;
 				OverlapGraph* overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
+
+		 		delete overlapGraph;
 		 		MEMORYSTOP;
 		 		CLOCKSTOP;
-		 		delete overlapGraph;
 				}
 				delete hashTable;
 		//YAO 		dataSet->saveReads(allFileName+"_sortedReads.fasta");
 		//YAO 		overlapGraph->sortEdges();
 		//YAO 		overlapGraph->saveGraphToFile(allFileName+"_unitig.unitig");
 	}
-	CLOCKSTOP;
+
 /*YAO
 	overlapGraph->calculateFlow(allFileName+"_flow.input", allFileName+"_flow.output");
 	cout << "nodes: " << overlapGraph->getNumberOfNodes() << " edges: " << overlapGraph->getNumberOfEdges() << endl;
@@ -152,7 +154,7 @@ int main(int argc, char **argv)
 */
 	delete dataSet;
 //	delete overlapGraph;
-
+	CLOCKSTOP;
 }
 
 

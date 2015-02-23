@@ -54,6 +54,7 @@ class OverlapGraph
 		~OverlapGraph();											// Destructor.
 		bool markTransitiveEdges(UINT64 readNumber, vector<markType> * markedNodes); // Mark transitive edges of a read.
 		bool buildOverlapGraphFromHashTable(HashTable *ht);			// Build the overlap graph using hashtable.
+		bool removeContainedReadsFromHashTable(HashTable *ht);       //remove contained reads and output a clean read list.
 		bool insertEdge(Edge * edge); 								// Insert an edge in the overlap graph.
 		bool insertEdge(Read *read1, Read *read2,  UINT8 orient, UINT16 overlapOffset); // Insert an edge in the overlap graph.
 		UINT64 contractCompositePaths(void); 						// Contract composite paths in the overlap graph.
