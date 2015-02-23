@@ -21,6 +21,8 @@ public:
 	bool start();
 	bool searchHashTable(SubjectEdge * subjectEdge);
 	bool checkOverlap(SubjectRead *read1, QueryRead *read2, UINT64 orient, UINT64 start);
+	bool checkOverlap(QueryRead *read1, QueryRead *read2, UINT64 orient, UINT64 start);
+	bool insertAllEdgesOfRead(UINT64 readNumber, vector<int> * exploredReads);
 };
 
 #endif /* OMEGAGRAPHCONSTRUCTOR_H_ */
