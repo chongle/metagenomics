@@ -34,6 +34,7 @@ OverlapGraph::OverlapGraph(HashTable *ht)
 	numberOfNodes = 0;
 	numberOfEdges = 0;
 	flowComputed = false;
+//	removeContainedReadsFromHashTable(ht);
 	buildOverlapGraphFromHashTable(ht);
 
 }
@@ -56,6 +57,44 @@ OverlapGraph::~OverlapGraph()
 	}
 	delete graph;
 }
+/**********************************************************************************************************************
+	Contained reads removal from hash table
+**********************************************************************************************************************/
+bool OverlapGraph::removeContainedReadsFromHashTable(HashTable *ht)
+{
+	this->totaledgenumber = 0;
+	filePointer.open("cleantest.fasta");
+	CLOCKSTART;
+	estimatedGenomeSize = 0;
+	numberOfNodes = 0;
+	numberOfEdges = 0;
+	flowComputed = false;
+	hashTable = ht;
+	dataSet = ht->getDataset();
+	UINT64 counter = 0;
+
+
+	graph = new vector< vector<Edge *> * >;
+	graph->reserve(dataSet->getNumberOfUniqueReads()+1);
+
+
+
+	for(UINT64 i = 0; i <= dataSet->getNumberOfUniqueReads(); i++) // Initialization
+	{
+		vector<Edge *> *newList = new vector<Edge *>;
+		graph->push_back(newList);
+
+	}
+
+	markContainedReads();
+
+
+	filePointer.close();
+//YAO	delete hashTable;	// Do not need the hash table any more.
+
+	CLOCKSTOP;
+	return true;
+}
 
 
 /**********************************************************************************************************************
@@ -65,7 +104,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 {
 	this->totaledgenumber = 0;
 	filePointer.open("omegatemp.txt");
-	CLOCKSTART;
+
 	estimatedGenomeSize = 0;
 	numberOfNodes = 0;
 	numberOfEdges = 0;
@@ -175,7 +214,7 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 	//	 counter += removeDeadEndNodes();
 	//} while (counter > 0);
 	//////////////////////////////
-	CLOCKSTOP;
+
 	return true;
 }
 
@@ -186,13 +225,13 @@ bool OverlapGraph::buildOverlapGraphFromHashTable(HashTable *ht)
 **********************************************************************************************************************/
 void OverlapGraph::markContainedReads(void)
 {
-	CLOCKSTART;
-	if(dataSet->longestReadLength == dataSet->shortestReadLength) // If all reads are of same length, then no need to do look for contained reads.
-	{
-		cout << "All reads are of same length. No contained reads." << endl;
-		CLOCKSTOP;
-		return;
-	}
+
+//YAO	if(dataSet->longestReadLength == dataSet->shortestReadLength) // If all reads are of same length, then no need to do look for contained reads.
+//YAO	{
+//YAO		cout << "All reads are of same length. No contained reads." << endl;
+//YAO		CLOCKSTOP;
+//YAO		return;
+//YAO	}
 	UINT64 counter = 0;
 	for(UINT64 i = 1; i < graph->size(); i++) // For each read
 	{
@@ -242,14 +281,21 @@ void OverlapGraph::markContainedReads(void)
 	{
 		Read *rr = dataSet->getReadFromID(i);
 		if(rr->superReadID == 0) // Count the number of reads that are not contained by some other reads.
+		{
 			nonContainedReads++;
+			std::stringstream sstm;
+
+			sstm<<">"<<rr->getReadNumber()<<endl;
+			sstm<<rr->getStringForward()<<endl;
+			filePointer<<sstm.str();
+		}
 		else					// Count the number of reads that are contained by some other read.
 			containedReads++;
 	}
 	cout<< endl << setw(10) << nonContainedReads << " Non-contained reads. (Keep as is)" << endl;
 	cout<< setw(10) << containedReads << " contained reads. (Need to change their mate-pair information)" << endl;
 
-	CLOCKSTOP;
+
 }
 
 
@@ -361,6 +407,7 @@ bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * ex
 	{
 		subString = readString.substr(j,hashTable->getHashStringLength());  // Get the proper substring s of read1.
 		vector<UINT64> * listOfReads=hashTable->getListOfReads(subString); // Search the string in the hash table.
+
 		if(!listOfReads->empty()) // If there are some reads that contain s as prefix or suffix of the read or their reverse complement
 		{
 			for(UINT64 k = 0; k < listOfReads->size(); k++) // For each such reads.
@@ -372,16 +419,17 @@ bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * ex
 				if(exploredReads->at(read2->getReadNumber())!= UNEXPLORED) 			// No need to discover the same edge again. All edges of read2 is already inserted in the graph.
 						continue;
 				if(read1->superReadID == 0 && read2->superReadID == 0 && checkOverlap(read1,read2,(data >> 62),j)) // Both read need to be non contained.
-				{					std::stringstream sstm;
+				{
+				std::stringstream sstm;
 
 				int orientation = data>>62;
-				cout<<read1->getReadNumber() <<" "<< " >>> " << read2->getReadNumber() <<" orientation: "<<orientation<<" position: "<<j<<endl;
+//				cout<<read1->getReadNumber() <<" "<< " >>> " << read2->getReadNumber() <<" orientation: "<<orientation<<" position: "<<j<<endl;
 
-				if(read1->getStringForward()<read2->getStringForward())
-				sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read1->getStringForward()<<"||||"<<read2->getStringForward()<<endl;
-				else
-					sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read2->getStringForward()<<"||||"<<read1->getStringForward()<<endl;
-				filePointer<<sstm.str();
+//				if(read1->getStringForward()<read2->getStringForward())
+//				sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read1->getStringForward()<<"||||"<<read2->getStringForward()<<endl;
+//				else
+//					sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read2->getStringForward()<<"||||"<<read1->getStringForward()<<endl;
+//				filePointer<<sstm.str();
 					this->totaledgenumber++;
 					switch (data >> 62) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
 					{
