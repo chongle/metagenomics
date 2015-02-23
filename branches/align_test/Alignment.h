@@ -90,6 +90,13 @@ private:
 	map<int, char>* editInfor;
 };
 
+class Edge{
+public:
+	QueryRead* source;
+	QueryRead* destination;
+	Edge(){source = NULL; destination = NULL;};
+	~Edge(){};
+};
 
 //class edge is used by OverlapGraphConstructor
 class SubjectEdge{

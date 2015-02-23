@@ -36,6 +36,25 @@ bool SubjectDataset::setFilenameList(const vector<string> & sFilenames){
 
 }
 
+
+bool SubjectDataset::loadNextChunk(vector<SubjectRead*> * chunkData, QueryDataset * querydataset)
+{
+	if(currentFileIndex>querydataset->getNumberOfUniqueReads())return false;
+	for(UINT64 k=0;k < chunkSize;k++)
+	{
+		currentFileIndex++;
+		if(currentFileIndex>querydataset->getNumberOfUniqueReads())break;
+		SubjectRead * subjectRead= new SubjectRead();
+		string readname = querydataset->getReadFromID(currentFileIndex)->getName();
+		string readseq = querydataset->getReadFromID(currentFileIndex)->getSequence();
+		subjectRead->setName(readname);
+		subjectRead->setSequence(readseq);
+		chunkData->push_back(subjectRead);
+
+	}
+	return true;
+}
+/*
 bool SubjectDataset::loadNextChunk(vector<SubjectRead*> * chunkData)
 {
 	if(this->outOfDataFlag) return false;
@@ -130,6 +149,7 @@ bool SubjectDataset::loadNextChunk(vector<SubjectRead*> * chunkData)
 
 	return true;
 }
+*/
 /*
 bool SubjectDataset::loadNextChunk(vector<SubjectAlignment*> & chunkData)
 {
