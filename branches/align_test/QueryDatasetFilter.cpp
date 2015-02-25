@@ -18,7 +18,7 @@ QueryDatasetFilter::QueryDatasetFilter(OmegaHashTable * omegaHashTable) {
 
 	this->superReadLength = NULL;
 }
-/*
+
 QueryDatasetFilter::~QueryDatasetFilter() {
 	// TODO Auto-generated destructor stub
 	if(this->tagList!=NULL)
@@ -36,11 +36,12 @@ QueryDatasetFilter::~QueryDatasetFilter() {
 		this->superReadLength->clear();
 		delete this->superReadLength;
 	}
+	this->dataset = NULL;
 }
 
 bool QueryDatasetFilter::start()
 {
-	filePointer.open("tempoutput.txt");
+	filePointer.open("temp.fasta");
 	CLOCKSTART;
 	MEMORYSTART;
 
@@ -51,7 +52,7 @@ bool QueryDatasetFilter::start()
 	}
 	if(this->superNameList==NULL)
 	{
-		this->superNameList = new vector<string&>;
+		this->superNameList = new vector<string>;
 		this->superNameList->reserve(dataset->getNumberOfUniqueReads()+1);
 	}
 	if(this->superReadLength==NULL)
@@ -61,7 +62,7 @@ bool QueryDatasetFilter::start()
 	}
 
 
-	string emptystring = 0;
+	string emptystring = "";
 	for(UINT64 i = 0; i <= dataset->getNumberOfUniqueReads(); i++) // Initialization
 	{
 		this->tagList->push_back(0);
@@ -74,7 +75,7 @@ bool QueryDatasetFilter::start()
 
 	SubjectDataset *subjectDataset = new SubjectDataset();
 	subjectDataset->setFilenameList(Config::subjectFilenameList);
-	while(subjectDataset->loadNextChunk(subjectReadList,this->omegaHashTable->getDataset()))
+	while(subjectDataset->loadNextChunk(subjectReadList))
 	{
 		vector<SubjectEdge*>* subjectEdgeList = new  vector<SubjectEdge*>();
 		for(UINT64 i = 0; i < subjectReadList->size(); i++)
@@ -102,6 +103,21 @@ bool QueryDatasetFilter::start()
 		for(UINT64 i = 0; i < subjectEdgeList->size(); i++)
 		{
 			SubjectEdge * subjectEdge = subjectEdgeList->at(i);
+			SubjectRead * thisSubjectread = subjectEdge->subjectRead;
+			if(subjectEdge->DuplicateReadList!=NULL)
+			{
+				for(UINT16 j = 0; j < subjectEdge->DuplicateReadList->size(); j++)
+				{
+					 QueryRead * thisQueryRead=  subjectEdge->DuplicateReadList->at(j);
+					 if(thisSubjectread->getName()>=thisQueryRead->getName())
+						 {
+						 	 UINT64 queryID = thisQueryRead->getIdentifier();
+						 	 UINT8 tag = this->tagList->at(queryID);
+						 	 this->tagList->at(queryID)= tag|0X01;
+						 }
+					 thisQueryRead->setFrequency(thisQueryRead->getFrequency()+1);
+				}
+			}
 			if(subjectEdge->alignmentList==NULL)
 			{
 				delete subjectEdge->subjectRead;
@@ -114,8 +130,24 @@ bool QueryDatasetFilter::start()
 				{
 					 Alignment * alignment= subjectEdge->alignmentList->at(j);
 					 alignment->queryRead->addAlignment(alignment);
+				 	 UINT64 queryID = alignment->queryRead->getIdentifier();
+				 	 UINT8 tag = this->tagList->at(queryID);
+				 	 this->tagList->at(queryID)= tag|0X02;
+				 	 if((int)alignment->subjectRead->getReadLength() >  this->superReadLength->at(queryID))
+				 	 {
+				 		this->superReadLength->at(queryID)=alignment->subjectRead->getReadLength();
+				 		this->superNameList->at(queryID) = alignment->subjectRead->getName();
+				 	 }
+				 	 else if((int)alignment->subjectRead->getReadLength() == this->superReadLength->at(queryID))
+				 	 {
+				 		 if(this->superNameList->at(queryID) < alignment->subjectRead->getName())
+				 			this->superNameList->at(queryID) = alignment->subjectRead->getName();
+				 	 }
+
 				}
+				subjectDataset->addSubjectRead(subjectEdge->subjectRead);
 			}
+
 			delete subjectEdge;
 
 		}
@@ -128,6 +160,11 @@ bool QueryDatasetFilter::start()
 		subjectReadList->resize(0);
 
 	}// end of while chunk loop
+	this->printToFile();
+
+	delete subjectReadList;
+	delete subjectDataset;
+
 	MEMORYSTOP;
 	CLOCKSTOP;
 
@@ -135,12 +172,33 @@ filePointer.close();
 	return true;
 }
 
-bool OmegaGraphConstructor::searchHashTable(SubjectEdge * subjectEdge)
+void QueryDatasetFilter::printToFile()
 {
-	SubjectRead *sRead = subjectEdge->subjectRead; 	// Get the current read subject read.
-	string subjectReadString = sRead->getSequence(); 		// Get the forward string of subject read.
+	UINT64 count = 0;
+	for(UINT64 i = 1; i <= dataset->getNumberOfUniqueReads(); i++)
+	{
+		QueryRead *queryRead = dataset->getReadFromID(i);
+		int tag = this->tagList->at(i);
+		if(tag==0)
+		{
+			count++;
+			std::stringstream sstm;
+			sstm<<">"<<queryRead->getName()<<endl;
+			sstm<<queryRead->getSequence()<<endl;
+			this->filePointer<<sstm.str();
+			if(count%100000==0)	// Show the progress.
+				cout<<"counter: " << setw(10) << count << " Reads Written. " << setw(10) << endl;
+		}
+	}
+	cout<<"Total counter: " << setw(10) << count << " Reads Written. " << setw(10) << endl;
+}
+
+bool QueryDatasetFilter::searchHashTable(SubjectEdge * subjectEdge)
+{
+	SubjectRead *subjectRead = subjectEdge->subjectRead; 	// Get the current read subject read.
+	string subjectReadString = subjectRead->getSequence(); 		// Get the forward string of subject read.
 	string subString;
-	for(UINT64 j = 0; j <= sRead->getReadLength()-this->omegaHashTable->getHashStringLength(); j++)
+	for(UINT64 j = 0; j <= subjectRead->getReadLength()-this->omegaHashTable->getHashStringLength(); j++)
 	{
 		subString = subjectReadString.substr(j,this->omegaHashTable->getHashStringLength());
 		vector<UINT64> * listOfReads=this->omegaHashTable->getListOfReads(subString); // Search the string in the hash table.
@@ -150,16 +208,17 @@ bool OmegaGraphConstructor::searchHashTable(SubjectEdge * subjectEdge)
 			{
 				UINT64 data = listOfReads->at(k);			// We used bit operations in the hash table. Most significant 2 bits store orientation and least significant 62 bits store read ID.
 //				UINT16 overlapOffset;
-//				UINT8 orientation;
-				QueryRead *qRead = this->omegaHashTable->getDataset()->getReadFromID(data & 0X3FFFFFFFFFFFFFFF); 	// Least significant 62 bits store the read number.
+				UINT64 orientation = (data >> 62);
+				QueryRead *queryRead = this->omegaHashTable->getDataset()->getReadFromID(data & 0X3FFFFFFFFFFFFFFF); 	// Least significant 62 bits store the read number.
 
-				if(checkIdenticalRead(sRead,qRead,(data >> 62),j))
+				if(subjectRead->getName()==queryRead->getName())continue;
+				if(subjectRead->getReadLength()==queryRead->getReadLength())
 				{
-					string subjectName = sRead->getName();
-					if(subjectName>=qRead->getName())
-				}
+					if(checkIdenticalRead(subjectRead,queryRead,orientation,j))
+					subjectEdge->addDuplicateList(queryRead);
 
-				if(checkOverlapForContainedRead(sRead,qRead,(data >> 62),j)) // Both read need to be non contained.
+				}
+				else if(checkOverlapForContainedRead(subjectRead,queryRead,orientation,j)) // Both read need to be non contained.
 				{
 //YAO				int orientation = data >> 62;
 //YAO					cout<<sRead->getName() <<" "<< " >>> " << qRead->getName() <<" orientation: "<<orientation<<" position: "<<j<<endl;
@@ -172,33 +231,55 @@ bool OmegaGraphConstructor::searchHashTable(SubjectEdge * subjectEdge)
 //YAO					else
 //YAO					sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<qRead->getSequence()<<"||||"<<sRead->getSequence()<<endl;
 //YAO				filePointer<<sstm.str();
-					this->totaledgenumber++;
-					switch (data >> 62) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
+					Alignment *subjectAlignment = new Alignment(subjectRead, queryRead);
+					switch (orientation) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
 					{
-						case 0: orientation = 3; overlapOffset = read1->getReadLength() - j; break; 				// 3 = r1>------->r2
-						case 1: orientation = 0; overlapOffset = hashTable->getHashStringLength() + j; break; 		// 0 = r1<-------<r2
-						case 2: orientation = 2; overlapOffset = read1->getReadLength() - j; break; 				// 2 = r1>-------<r2
-						case 3: orientation = 1; overlapOffset = hashTable->getHashStringLength() + j; break; 		// 1 = r2<------->r2
+					case 0:
+						subjectAlignment->queryOrientation = true;
+						subjectAlignment->subjectStart = -j;
+						subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+						subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+						break;
+					case 1:
+						subjectAlignment->queryOrientation = true;
+						subjectAlignment->subjectStart = queryRead->getReadLength()-this->omegaHashTable->getHashStringLength()-j;
+						subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+						subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+						break;
+					case 2:
+						subjectAlignment->queryOrientation = false;
+						subjectAlignment->subjectStart = -j;
+						subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+						subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+						break;
+					case 3:
+						subjectAlignment->queryOrientation = false;
+						subjectAlignment->subjectStart = queryRead->getReadLength()-this->omegaHashTable->getHashStringLength()-j;
+						subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+						subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+						break;
+					default:;
 					}
-					insertEdge(read1,read2,orientation,read1->getStringForward().length()-overlapOffset); 			// Insert the edge in the graph.
+					subjectEdge->addAlignment(subjectAlignment);
 
 				}
 			}
 		}
 	}
-//YAO	if(graph->at(readNumber)->size() != 0)
-//YAO		sort(graph->at(readNumber)->begin(),graph->at(readNumber)->end(), compareEdges); // Sort the list of edges of the current node according to the overlap offset (ascending).
 	return true;
 }
 bool QueryDatasetFilter::checkIdenticalRead(SubjectRead *read1, QueryRead *read2, UINT64 orient, UINT64 start)
 {
+	//containing redundancy
+//	if(start!=0 || start!=read1->getReadLength()-this->omegaHashTable->getHashStringLength())return false;
 	if(start!=0)return false;
 	string string1=read1->getSequence();
 	string string2 = (orient == 0 || orient== 1) ? read2->getSequence() : read2->reverseComplement();
 	if(string1 == string2) return true;
+	else return false;
 }
 
-*/
+
 
 /**********************************************************************************************************************
 	Hash table search found that a proper substring of read1 is a prefix or suffix of read2 or reverse complement of

@@ -114,7 +114,60 @@ bool OmegaHashTable::hashRead(QueryRead *read)
 	return true;
 }
 
+bool OmegaHashTable::insertDataset_half(QueryDataset* d, UINT64 minOverlapLength)
+{
+	CLOCKSTART;
+	MEMORYSTART;
+	dataSet=d;
+	hashStringLength = minOverlapLength - 1;
+	numberOfHashCollision = 0;
+	UINT64 size = getPrimeLargerThanNumber(d->getNumberOfUniqueReads() * 4 + 1);  // Size should be at least twice the number of entries in the hash table to reduce hash collision.
+	setHashTableSize(size);
+	for(UINT64 i = 1; i <= d->getNumberOfUniqueReads(); i++)		// For each read in the dataset
+	{
+		hashRead_half(d->getReadFromID(i)); 								// Insert the read in the hash table.
+		if(i%1000000 == 0)
+			cout << setw(10) << i << " reads inserted in the hash table. Hash collisions: " << setw(10) << numberOfHashCollision << endl;	// Print some statistics.
+	}
+	cout << endl << "Total Hash collisions: " << numberOfHashCollision << endl;
 
+	UINT64 longestSize = 0, readID;
+	for(UINT64 i = 0 ; i < this->hashTableSize; i++)
+	{
+		if(hashTable->at(i)->size() > longestSize)	// Longest list in the hash table.
+		{
+			longestSize = hashTable->at(i)->size();
+			readID = hashTable->at(i)->at(0);
+		}
+
+	}
+	cout <<"Longest list size in the hash table is: " << longestSize << endl;
+	cout <<"first ReadID from Longest list is: " <<readID << endl;
+	cout<< "hashtable size: "<< this->hashTable->size()<<endl;
+	MEMORYSTOP;
+	CLOCKSTOP;
+	return true;
+}
+
+
+
+
+/**********************************************************************************************************************
+	Insert a read in the hashTable
+**********************************************************************************************************************/
+bool OmegaHashTable::hashRead_half(QueryRead *read)
+{
+	string forwardRead = read->getSequence();
+	string reverseRead = read->reverseComplement();
+
+	string prefixForward = forwardRead.substr(0,hashStringLength); 											// Prefix of the forward string.
+	string prefixReverse = reverseRead.substr(0,hashStringLength);											// Prefix of the reverse string.
+
+	insertIntoTable(read, prefixForward, 0); // Insert the prefix of the forward string in the hash table.
+	insertIntoTable(read, prefixReverse, 2); // Insert the prefix of the reverse string in the hash table.
+
+	return true;
+}
 
 
 

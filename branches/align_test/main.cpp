@@ -5,6 +5,7 @@
 #include "DoubleKeyHashTable.h"
 #include "OmegaHashTable.h"
 #include "OmegaGraphConstructor.h"
+#include "QueryDatasetFilter.h"
 //#include "OverlapGraphConstructor.h"
 //#include "PairedReadMerger.h"
 //#include "ErrorCorrector.h"
@@ -70,7 +71,7 @@ int main(int argc, char **argv)
 	*/
 
 //---------
-
+/*
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
 	{
 	CLOCKSTART;
@@ -82,6 +83,23 @@ int main(int argc, char **argv)
 	}
 	OmegaGraphConstructor * omegaGraph = new OmegaGraphConstructor(omegaHashTable);
 	omegaGraph->start();
+	delete omegaGraph;
+*/
+//---------
+
+	OmegaHashTable *omegaHashTable=new OmegaHashTable();
+	{
+	CLOCKSTART;
+	MEMORYSTART;
+	cout << "-------remove contained reads omegahashtable------" << endl;
+	omegaHashTable->insertDataset_half(queryDataset, Config::minimumOverlapLength);
+	MEMORYSTOP;
+	CLOCKSTOP;
+	}
+	QueryDatasetFilter * filter = new QueryDatasetFilter(omegaHashTable);
+	filter->start();
+	delete filter;
+
 
 	delete omegaHashTable;
 	delete queryDataset;

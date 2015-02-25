@@ -17,6 +17,7 @@ SubjectDataset::SubjectDataset() {
 	newFileFlag = true;
 	currentChunkSize = 0;
 	subjectFilenameList.clear();
+	this->subjectReadList=NULL;
 
 
 }
@@ -25,7 +26,17 @@ SubjectDataset::~SubjectDataset() {
 	// TODO Auto-generated destructor stub
 
 	subjectFilenameList.clear();
+	if(subjectReadList!=NULL)
+	{
+	for(UINT64 i = 0; i < subjectReadList->size(); i++)
+	{
+//		cout<<"deleting: "<<i<<"/"<<subjectReadList->size()<<" "<<subjectReadList->at(i)->getName()<<endl;
+		delete subjectReadList->at(i);
+	}
 
+	subjectReadList->clear();
+	delete subjectReadList;
+	}
 }
 
 bool SubjectDataset::setFilenameList(const vector<string> & sFilenames){
@@ -36,6 +47,13 @@ bool SubjectDataset::setFilenameList(const vector<string> & sFilenames){
 
 }
 
+bool SubjectDataset::addSubjectRead(SubjectRead* subjectRead)
+{
+	if(this->subjectReadList==NULL)
+		this->subjectReadList = new vector<SubjectRead*>;
+	this->subjectReadList->push_back(subjectRead);
+	return true;
+}
 
 bool SubjectDataset::loadNextChunk(vector<SubjectRead*> * chunkData, QueryDataset * querydataset)
 {
@@ -54,7 +72,7 @@ bool SubjectDataset::loadNextChunk(vector<SubjectRead*> * chunkData, QueryDatase
 	}
 	return true;
 }
-/*
+
 bool SubjectDataset::loadNextChunk(vector<SubjectRead*> * chunkData)
 {
 	if(this->outOfDataFlag) return false;
@@ -149,7 +167,7 @@ bool SubjectDataset::loadNextChunk(vector<SubjectRead*> * chunkData)
 
 	return true;
 }
-*/
+
 /*
 bool SubjectDataset::loadNextChunk(vector<SubjectAlignment*> & chunkData)
 {

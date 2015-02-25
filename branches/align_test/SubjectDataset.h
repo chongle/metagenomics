@@ -32,7 +32,7 @@ class SubjectDataset {
 	bool outOfDataFlag;
 	bool newFileFlag;
 
-
+	vector<SubjectRead *>* subjectReadList;
 public:
 	SubjectDataset();
 	~SubjectDataset();
@@ -46,6 +46,7 @@ public:
 //	bool loadNextChunk(vector<SubjectAlignment*> & chunkData);
 //	bool loadNextChunk(vector<edge*> & chunkData);
 //	bool loadNextChunk(vector<SubjectAlignmentPairedEnd*> & chunkData);
+	bool addSubjectRead(SubjectRead* subjectRead);
 
 };
 

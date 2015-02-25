@@ -22,12 +22,14 @@ class OmegaHashTable{
 		UINT64 numberOfHashCollision;				// Counter to count the number of hash collisions. For debugging only.
 		bool insertIntoTable(QueryRead *read, string substring, UINT64 orientation);	// Insert a string in the hash table.
 		bool hashRead(QueryRead *read); 					// Ted: Hash prefix and suffix of the read and its reverse complement in the hash table. Turn over to the constant
+		bool hashRead_half(QueryRead *read); 					// Ted: Hash prefix and suffix of the read and its reverse complement in the hash table. Turn over to the constant
 		void setHashTableSize(UINT64 size); 		// Set the size of the hash table.
 	public:
 		OmegaHashTable(void);							// Default constructor.
 		OmegaHashTable(QueryDataset *d);						// Another constructor.
 		~OmegaHashTable();								// Destructor.
 		bool insertDataset(QueryDataset *d, UINT64 minOverlapLength);	// Insert the dataset in the hash table.
+		bool insertDataset_half(QueryDataset *d, UINT64 minOverlapLength);	// Insert the dataset in the hash table.
 		vector<UINT64> * getListOfReads(string subString); 			// Get the list of reads that contain subString as prefix or suffix.
 		UINT64 hashFunction(string subString); 						// Hash function.
 		UINT64 getHashTableSize(void){return hashTableSize;}		// Get the size of the hash table.

@@ -314,5 +314,6 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 	sortReads();
 	duplicateFilter();
 
+
 	return true;
 }
