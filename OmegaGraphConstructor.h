@@ -15,6 +15,7 @@ class OmegaGraphConstructor {
 	OmegaHashTable * omegaHashTable;
 	UINT64 totaledgenumber;
 	ofstream filePointer;
+	UINT16 minimumOverlapLength;
 public:
 	OmegaGraphConstructor(OmegaHashTable * omegaHashTable);
 	~OmegaGraphConstructor();

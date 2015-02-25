@@ -141,7 +141,7 @@ bool SubjectDataset::loadNextChunk(vector<SubjectRead*> * chunkData)
 
 		//remove the > if it appears in the title or name
 		string readname="";
-		if(line0[0] == '>')
+		if(line0[0] == '>'|| line0[0] == '@')
 			readname = line0.substr(1);
 		else readname = line0;
 

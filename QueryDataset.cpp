@@ -138,7 +138,19 @@ bool QueryDataset::qualityFilter(string & sequence)
 		return true;
 
 }
+/*
+bool QueryDataset::qualityFilter(string & sequence)
+{
+	UINT64 readLength = sequence.length();
+		for(UINT64 i = 0; i < readLength; i++) // Count the number of A's, C's , G's and T's in the string.
+		{
+			if(sequence[i]!= 'A' && sequence[i] != 'C' && sequence[i] != 'G' && sequence[i] != 'T')
+				return false;
+		}
+		return true;
 
+}
+*/
 bool QueryDataset::duplicateFilter()
 {
 	if(queryReadList!=NULL)
@@ -265,7 +277,7 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 
 		//remove the > if it appears in the title or name
 		string readname="";
-		if(line0[0] == '>')
+		if(line0[0] == '>' || line0[0] == '@')
 			readname = line0.substr(1);
 		else readname = line0;
 
