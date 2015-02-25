@@ -10,6 +10,7 @@
 
 #include "Config.h"
 #include "OmegaHashTable.h"
+#include "SubjectDataset.h"
 
 class QueryDatasetFilter {
 	OmegaHashTable * omegaHashTable;
@@ -23,7 +24,7 @@ class QueryDatasetFilter {
 	//contained reads	+2
 	vector<UINT8> * tagList;
 	//store the super reads name of this contained read
-	vector<string&> * superNameList;
+	vector<string> * superNameList;
 	//store the length of the super containing reads
 	vector<int> * superReadLength;
 
@@ -34,6 +35,8 @@ public:
 	bool start();
 	bool searchHashTable(SubjectEdge * subjectEdge);
 	bool checkOverlapForContainedRead(SubjectRead *read1, QueryRead *read2, UINT64 orient, UINT64 start);
+	bool checkIdenticalRead(SubjectRead *read1, QueryRead *read2, UINT64 orient, UINT64 start);
+	void printToFile();
 };
 
 #endif /* QUERYDATASETFILTER_H_ */

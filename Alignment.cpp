@@ -71,6 +71,9 @@ Alignment::~Alignment() {
 		delete editInfor;
 	}
 	queryRead = NULL;
+	subjectRead = NULL;
+//	if(this->subjectRead!=NULL)
+//		delete this->subjectRead;
 }
 
 //******OMEGA original definition for the alignment orientation******
@@ -148,6 +151,7 @@ SubjectEdge::SubjectEdge(SubjectRead* sRead)
 {
 	this->subjectRead = sRead;
 	this->alignmentList = NULL;
+	this->DuplicateReadList = NULL;
 }
 SubjectEdge::~SubjectEdge()
 {
@@ -157,6 +161,11 @@ SubjectEdge::~SubjectEdge()
 		this->alignmentList->clear();
 		delete this->alignmentList;
 	}
+	if(this->DuplicateReadList!=NULL)
+	{
+		this->DuplicateReadList->clear();
+		delete this->DuplicateReadList;
+	}
 }
 
 bool SubjectEdge::addAlignment(Alignment* subjectAlignment)
@@ -164,5 +173,13 @@ bool SubjectEdge::addAlignment(Alignment* subjectAlignment)
 	if(this->alignmentList==NULL)
 		this->alignmentList = new vector<Alignment*>();
 	this->alignmentList->push_back(subjectAlignment);
+	return true;
+}
+
+bool SubjectEdge::addDuplicateList(QueryRead* queryRead)
+{
+	if(this->DuplicateReadList==NULL)
+		this->DuplicateReadList = new vector<QueryRead*>();
+	this->DuplicateReadList->push_back(queryRead);
 	return true;
 }
