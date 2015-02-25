@@ -87,9 +87,9 @@ int main(int argc, char **argv)
 				CLOCKSTART;
 				MEMORYSTART;
 				OverlapGraph* overlapGraph=new OverlapGraph(hashTable); //hashTable deleted by this function after building the graph
-
+				MEMORYSTOP;
 		 		delete overlapGraph;
-		 		MEMORYSTOP;
+
 		 		CLOCKSTOP;
 				}
 				delete hashTable;
