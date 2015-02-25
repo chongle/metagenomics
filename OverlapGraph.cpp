@@ -401,9 +401,9 @@ bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * ex
 	Read *read1 = dataSet->getReadFromID(readNumber); 	// Get the current read read1.
 	string readString = read1->getStringForward(); 		// Get the forward string of read1.
 	string subString;
-//YAO	for(UINT64 j = 1; j < read1->getReadLength()-hashTable->getHashStringLength(); j++) // For each proper substring of length getHashStringLength of read1
 
-	for(UINT64 j = 0; j <= read1->getReadLength()-hashTable->getHashStringLength(); j++) // For each proper substring of length getHashStringLength of read1
+	//this window [1, len-key-1] is to remove the redundancy, also make sure the minimumoverlap = key -1 is fulfilled
+	for(UINT64 j = 1; j < read1->getReadLength()-hashTable->getHashStringLength(); j++) // For each proper substring of length getHashStringLength of read1
 	{
 		subString = readString.substr(j,hashTable->getHashStringLength());  // Get the proper substring s of read1.
 		vector<UINT64> * listOfReads=hashTable->getListOfReads(subString); // Search the string in the hash table.
@@ -414,7 +414,7 @@ bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * ex
 			{
 				UINT64 data = listOfReads->at(k);			// We used bit operations in the hash table. Most significant 2 bits store orientation and least significant 62 bits store read ID.
 				UINT16 overlapOffset;
-				UINT8 orientation;
+
 				Read *read2 = dataSet->getReadFromID(data & 0X3FFFFFFFFFFFFFFF); 	// Least significant 62 bits store the read number.
 				if(exploredReads->at(read2->getReadNumber())!= UNEXPLORED) 			// No need to discover the same edge again. All edges of read2 is already inserted in the graph.
 						continue;
@@ -423,13 +423,13 @@ bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * ex
 				std::stringstream sstm;
 
 				int orientation = data>>62;
-//				cout<<read1->getReadNumber() <<" "<< " >>> " << read2->getReadNumber() <<" orientation: "<<orientation<<" position: "<<j<<endl;
+				cout<<read1->getReadNumber() <<" "<< " >>> " << read2->getReadNumber() <<" orientation: "<<orientation<<" position: "<<j<<endl;
 
-//				if(read1->getStringForward()<read2->getStringForward())
-//				sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read1->getStringForward()<<"||||"<<read2->getStringForward()<<endl;
-//				else
-//					sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read2->getStringForward()<<"||||"<<read1->getStringForward()<<endl;
-//				filePointer<<sstm.str();
+				if(read1->getStringForward()<read2->getStringForward())
+				sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read1->getStringForward()<<"||||"<<read2->getStringForward()<<endl;
+				else
+					sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read2->getStringForward()<<"||||"<<read1->getStringForward()<<endl;
+				filePointer<<sstm.str();
 					this->totaledgenumber++;
 					switch (data >> 62) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
 					{
