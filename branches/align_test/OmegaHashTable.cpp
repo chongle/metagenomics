@@ -121,7 +121,7 @@ bool OmegaHashTable::insertDataset_half(QueryDataset* d, UINT64 minOverlapLength
 	dataSet=d;
 	hashStringLength = minOverlapLength - 1;
 	numberOfHashCollision = 0;
-	UINT64 size = getPrimeLargerThanNumber(d->getNumberOfUniqueReads() * 4 + 1);  // Size should be at least twice the number of entries in the hash table to reduce hash collision.
+	UINT64 size = getPrimeLargerThanNumber(d->getNumberOfUniqueReads() * 8 + 1);  // Size should be at least twice the number of entries in the hash table to reduce hash collision.
 	setHashTableSize(size);
 	for(UINT64 i = 1; i <= d->getNumberOfUniqueReads(); i++)		// For each read in the dataset
 	{

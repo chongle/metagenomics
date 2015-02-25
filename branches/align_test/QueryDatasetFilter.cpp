@@ -84,11 +84,11 @@ bool QueryDatasetFilter::start()
 			SubjectEdge * subjectEdge = new SubjectEdge(subjectRead);
 			subjectEdgeList->push_back(subjectEdge);
 		}
-//omp_set_dynamic(0);
-//omp_set_num_threads(Config::numberOfThreads);
-//#pragma omp parallel
+omp_set_dynamic(0);
+omp_set_num_threads(Config::numberOfThreads);
+#pragma omp parallel
 	{
-//#pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic)
 		for(UINT64 i = 0; i < subjectEdgeList->size(); i++)
 		{
 			SubjectEdge * subjectEdge = subjectEdgeList->at(i);
@@ -198,8 +198,10 @@ bool QueryDatasetFilter::searchHashTable(SubjectEdge * subjectEdge)
 	SubjectRead *subjectRead = subjectEdge->subjectRead; 	// Get the current read subject read.
 	string subjectReadString = subjectRead->getSequence(); 		// Get the forward string of subject read.
 	string subString;
-	for(UINT64 j = 0; j <= subjectRead->getReadLength()-this->omegaHashTable->getHashStringLength(); j++)
+	for(UINT64 j = 0; j<=subjectRead->getReadLength()-this->omegaHashTable->getHashStringLength(); j++)
 	{
+//		if(subjectRead->getReadLength()==35)
+//		cout<<"name: "<<subjectRead->getName()<<" len "<<subjectRead->getReadLength()<<" j "<<j<<" key "<<this->omegaHashTable->getHashStringLength()<<endl;
 		subString = subjectReadString.substr(j,this->omegaHashTable->getHashStringLength());
 		vector<UINT64> * listOfReads=this->omegaHashTable->getListOfReads(subString); // Search the string in the hash table.
 		if(!listOfReads->empty()) // If there are some reads that contain subString as prefix or suffix of the read or their reverse complement
@@ -308,6 +310,11 @@ bool QueryDatasetFilter::checkOverlapForContainedRead(SubjectRead *read1, QueryR
 		lengthRemaining2 = string2.length() - hashStringLength; 	// This is the remaining of read2
 		if(lengthRemaining1 >= lengthRemaining2)
 		{
+//			cout<<"UP: "<<"read1 "<<read1->getName()<<" len "<<read1->getReadLength()<<"substr: "<<start + hashStringLength<<"||"<<lengthRemaining2<<endl;
+//			cout<<"UP: "<<"read2 "<<read2->getName()<<" len "<<read2->getReadLength()<<"substr: "<<hashStringLength<<"||"<<lengthRemaining2<<endl;
+//			cout<<"---"<<string1.substr(start + hashStringLength, lengthRemaining2)<<endl;
+//			cout<<"---"<<string2.substr(hashStringLength, lengthRemaining2)<<endl;
+
 			return string1.substr(start + hashStringLength, lengthRemaining2) == string2.substr(hashStringLength, lengthRemaining2); // If the remaining of the string match, then read2 is contained in read1
 		}
 	}
@@ -323,6 +330,9 @@ bool QueryDatasetFilter::checkOverlapForContainedRead(SubjectRead *read1, QueryR
 		lengthRemaining2 = string2.length() - hashStringLength;
 		if(lengthRemaining1 >= lengthRemaining2)
 		{
+//			cout<<"DOWN: "<<"read1 "<<read1->getName()<<" len "<<read1->getReadLength()<<"substr: "<<start - lengthRemaining2<<"||"<<lengthRemaining2<<endl;
+//			cout<<"DOWN: "<<"read2 "<<read2->getName()<<" len "<<read2->getReadLength()<<"substr: "<<'0'<<"||"<<lengthRemaining2<<endl;
+
 			return string1.substr(start - lengthRemaining2, lengthRemaining2) == string2.substr(0, lengthRemaining2); // If the remaining of the string match, then read2 is contained in read1
 		}
 	}

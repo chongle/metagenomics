@@ -110,7 +110,7 @@ bool wayToSort(int i, int j) { return i < j; }
 bool QueryRead::printAlignmentToFile(ofstream & filePointer)
 {
 
-
+	if(this->queryAlignmentList==NULL)return false;
 	for(UINT64 i =0; i< this->queryAlignmentList->size();i++)
 	{
 	string outputString;
@@ -136,7 +136,7 @@ bool QueryRead::printAlignmentToFile(ofstream & filePointer)
 	sstm <<  align->subjectRead->getName() << "\t" + this->readName + "\t" <<align->orientationTranslate() <<
 			"," << overlapLength << "," << align->getEditDistance() << "," << align->getEditDistance()
 			<< "," << align->subjectRead->getReadLength() << "," << subStart << "," << subEnd <<","
-			<< this->getReadLength() << "," << coordinates.at(1)<< "," << coordinates.at(2)<< ", no error info \r\n"<<endl;
+			<< this->getReadLength() << "," << coordinates.at(1)<< "," << coordinates.at(2)<< ", no error info "<<endl;
 	//query print first, but orientation is wrong then
 	/*
 	sstm << this->readName + "\t" + align->subjectReadName + "\t" <<align->orientationTranslate() <<

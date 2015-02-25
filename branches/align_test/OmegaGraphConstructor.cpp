@@ -12,6 +12,7 @@ OmegaGraphConstructor::OmegaGraphConstructor(OmegaHashTable * omegaHashTable)
 	// TODO Auto-generated constructor stub
 	this->omegaHashTable = omegaHashTable;
 	this->totaledgenumber = 0;
+	this->minimumOverlapLength = Config::minimumOverlapLength;
 }
 
 OmegaGraphConstructor::~OmegaGraphConstructor() {
@@ -304,7 +305,9 @@ bool OmegaGraphConstructor::searchHashTable(SubjectEdge * subjectEdge)
 	SubjectRead *subjectRead = subjectEdge->subjectRead; 	// Get the current read subject read.
 	string subjectReadString = subjectRead->getSequence(); 		// Get the forward string of subject read.
 	string subString;
-	for(UINT64 j = 0; j <= subjectRead->getReadLength()-this->omegaHashTable->getHashStringLength(); j++)
+//	for(UINT64 j = 0; j <= subjectRead->getReadLength()-this->omegaHashTable->getHashStringLength(); j++)
+	for(UINT64 j = 1; j < subjectRead->getReadLength()-this->omegaHashTable->getHashStringLength(); j++)
+//avoid self non trivial alignment
 	{
 		subString = subjectReadString.substr(j,this->omegaHashTable->getHashStringLength());
 		vector<UINT64> * listOfReads=this->omegaHashTable->getListOfReads(subString); // Search the string in the hash table.
@@ -403,6 +406,7 @@ bool OmegaGraphConstructor::checkOverlap(SubjectRead *read1, QueryRead *read2, U
 										//	 >---*****MMMMMMMMMMMMMMM*************> 			read1
 										//		      MMMMMMMMMMMMMMM*************-------<	    Reverese complement of read2
 	{
+		if(string1.length()-start<this->minimumOverlapLength)return false;
 		if(string1.length()- start - hashStringLength >= string2.length() - hashStringLength) // The overlap must continue till the end.
 			return false;
 		return string1.substr(start + hashStringLength, string1.length()-(start + hashStringLength)) == string2.substr(hashStringLength,  string1.length()-(start + hashStringLength)); // If the remaining strings match.
@@ -415,6 +419,7 @@ bool OmegaGraphConstructor::checkOverlap(SubjectRead *read1, QueryRead *read2, U
 										//	 	>********MMMMMMMMMMMMMMM-------------> 			read1
 										//	<----********MMMMMMMMMMMMMMM						Reverse Complement of Read2
 	{
+		if(start+hashStringLength<this->minimumOverlapLength)return false;
 		if(string2.length()-hashStringLength < start)
 			return false;
 		return string1.substr(0, start) == string2.substr(string2.length()-hashStringLength-start, start); // If the remaining strings match.
@@ -434,6 +439,7 @@ bool OmegaGraphConstructor::checkOverlap(QueryRead *read1, QueryRead *read2, UIN
 										//	 >---*****MMMMMMMMMMMMMMM*************> 			read1
 										//		      MMMMMMMMMMMMMMM*************-------<	    Reverese complement of read2
 	{
+		if(string1.length()-start<this->minimumOverlapLength)return false;
 		if(string1.length()- start - hashStringLength >= string2.length() - hashStringLength) // The overlap must continue till the end.
 			return false;
 		return string1.substr(start + hashStringLength, string1.length()-(start + hashStringLength)) == string2.substr(hashStringLength,  string1.length()-(start + hashStringLength)); // If the remaining strings match.
@@ -446,6 +452,7 @@ bool OmegaGraphConstructor::checkOverlap(QueryRead *read1, QueryRead *read2, UIN
 										//	 	>********MMMMMMMMMMMMMMM-------------> 			read1
 										//	<----********MMMMMMMMMMMMMMM						Reverse Complement of Read2
 	{
+		if(start+hashStringLength<this->minimumOverlapLength)return false;
 		if(string2.length()-hashStringLength < start)
 			return false;
 		return string1.substr(0, start) == string2.substr(string2.length()-hashStringLength-start, start); // If the remaining strings match.
