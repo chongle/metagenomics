@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	}
 
 //--------
-	/*
+/*
 	HashTableMethod* singleKeyHashTable = new SingleKeyHashTable(queryDataset);
 	{
 	CLOCKSTART;
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 	MEMORYSTOP;
 	CLOCKSTOP;
 	}
-	*/
+*/
 //---------
 	/*
 	HashTableMethod* doubleKeyHashTable = new DoubleKeyHashTable(queryDataset);
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 	*/
 
 //---------
-/*
+
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
 	{
 	CLOCKSTART;
@@ -84,9 +84,9 @@ int main(int argc, char **argv)
 	OmegaGraphConstructor * omegaGraph = new OmegaGraphConstructor(omegaHashTable);
 	omegaGraph->start();
 	delete omegaGraph;
-*/
-//---------
 
+//---------
+/*
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
 	{
 	CLOCKSTART;
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 	QueryDatasetFilter * filter = new QueryDatasetFilter(omegaHashTable);
 	filter->start();
 	delete filter;
-
+*/
 
 	delete omegaHashTable;
 	delete queryDataset;

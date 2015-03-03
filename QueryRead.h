@@ -14,6 +14,7 @@ class Alignment;
 class QueryRead {
 	vector<Alignment*>* queryAlignmentList;
 	string readSequence;
+	string readRevSequence;
 	string readName;
 	UINT64 readID; 		// Unique Identification of the read. start from one. zero means a new read.This is used in hashtable.
 	UINT32 frequency; 	// Frequency of the read. Number of times this read is present in the dataset. Used in some statistical analysis.
@@ -30,6 +31,7 @@ public:
 	bool needRemoval();
 	void setName(string & name);
 	void setSequence(string & sequence);
+	void setSequence(string & sequence, string & reverseSequence);
 	void setFrequency(UINT32 number);
 	void setIdentifier(UINT64 id);
 	string getName();

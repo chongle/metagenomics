@@ -10,6 +10,7 @@
 QueryRead::QueryRead() {
 
 	readSequence = "";
+	readRevSequence = "";
 	readName = "";
 	readID = 0;
 	frequency = 0;
@@ -20,12 +21,14 @@ QueryRead::QueryRead() {
 QueryRead::QueryRead(string& sequence, string& name)
 {
 	readSequence = sequence;
+	readRevSequence = "";
 	readName = name;
 	readID = 0;
 	frequency = 1;
 	flag4Removal = false;
 	queryAlignmentList=NULL;
 }
+
 
 QueryRead::~QueryRead() {
 	// TODO Auto-generated destructor stub
@@ -50,6 +53,14 @@ void QueryRead::setSequence(string & sequence)
 {
 	readSequence = sequence;
 }
+
+void QueryRead::setSequence(string & sequence, string & reverseSequence)
+{
+	readSequence = sequence;
+	readRevSequence = reverseSequence;
+
+}
+
 void QueryRead::setFrequency(UINT32 number)
 {
 	frequency = number;
@@ -102,7 +113,9 @@ string QueryRead::reverseComplement(const string & read)
 }
 string QueryRead::reverseComplement()
 {
-	return QueryRead::reverseComplement(this->readSequence);
+	if(this->readRevSequence=="")
+		this->readRevSequence = this->QueryRead::reverseComplement(this->readSequence);
+	return this->readRevSequence;
 }
 
 bool wayToSort(int i, int j) { return i < j; }

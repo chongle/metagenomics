@@ -151,6 +151,7 @@ SubjectEdge::SubjectEdge(SubjectRead* sRead)
 {
 	this->subjectRead = sRead;
 	this->alignmentList = NULL;
+	this->contained_alignmentList = NULL;
 	this->DuplicateReadList = NULL;
 }
 SubjectEdge::~SubjectEdge()
@@ -182,4 +183,27 @@ bool SubjectEdge::addDuplicateList(QueryRead* queryRead)
 		this->DuplicateReadList = new vector<QueryRead*>();
 	this->DuplicateReadList->push_back(queryRead);
 	return true;
+}
+bool SubjectEdge::addContainedAlignment(ContainedAlignment* subjectAlignment)
+{
+	if(this->contained_alignmentList==NULL)
+		this->contained_alignmentList = new vector<ContainedAlignment*>();
+	this->contained_alignmentList->push_back(subjectAlignment);
+	return true;
+}
+
+ContainedAlignment::ContainedAlignment(SubjectRead* sRead, QueryRead* qRead)
+{
+	// TODO Auto-generated constructor stub
+	subjectRead = sRead;
+	queryRead = qRead;
+
+}
+
+ContainedAlignment::~ContainedAlignment() {
+	// TODO Auto-generated destructor stub
+
+	queryRead = NULL;
+	subjectRead = NULL;
+
 }

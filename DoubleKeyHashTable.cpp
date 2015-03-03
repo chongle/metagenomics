@@ -14,6 +14,8 @@ DoubleKeyHashTable::DoubleKeyHashTable() {
 	this->hashKeyLength_right = Config::hashKeyLength_right;
 	this->maxMismatch = Config::maxMismatch;
 	this->numberOfMode = 8;
+	this->numberOfMSB = 3;
+	this->numberOfLSB = 61;
 	this->dataSet = NULL;
 	this->hashTable = NULL;
 	numberOfHashCollision = 0;
@@ -27,6 +29,8 @@ DoubleKeyHashTable::DoubleKeyHashTable(QueryDataset * qDataset) {
 	this->hashKeyLength_right = Config::hashKeyLength_right;
 	this->maxMismatch = Config::maxMismatch;
 	this->numberOfMode = 8;
+	this->numberOfMSB = 3;
+	this->numberOfLSB = 61;
 	this->dataSet = qDataset;
 	this->hashTable = NULL;
 	numberOfHashCollision = 0;
@@ -54,7 +58,7 @@ bool DoubleKeyHashTable::createHashTables()
 	}
 	else
 	{
-		this->hashTable = new HashTable(this->hashKeyLength_left+this->hashKeyLength_right,  this->dataSet, this->numberOfMode);
+		this->hashTable = new HashTable(16*this->dataSet->getNumberOfUniqueReads());
 
 		return true;
 	}
@@ -70,7 +74,7 @@ bool DoubleKeyHashTable::createHashTables()
 // 101 = 5 means suffix of the forward string.
 // 110 = 6 means prefix of the reverse string.
 // 111 = 7 means suffix of the reverse string.
-string DoubleKeyHashTable::getReadSubstring(UINT64 readID, int mode)
+string DoubleKeyHashTable::getReadSubstring(UINT64 readID, UINT8 mode)
 {
 	QueryRead * read = this->dataSet->getReadFromID(readID);
 	string str = (mode == 0 || mode == 1 || mode == 4 || mode == 5) ? read->getSequence() : read->reverseComplement();
@@ -111,11 +115,7 @@ bool DoubleKeyHashTable::insertQueryDataset(QueryDataset* d)
 	else
 	{
 		UINT64 datasetsize = this->dataSet->getNumberOfUniqueReads();
-//		omp_set_dynamic(0);
-//		omp_set_num_threads(Config::numberOfThreads);
-//		#pragma omp parallel
-//			{
-//		#pragma omp for schedule(dynamic)
+
 		UINT64 currentID = 1;
 		while(currentID<=datasetsize)
 		{
@@ -148,8 +148,6 @@ bool DoubleKeyHashTable::insertQueryDataset(QueryDataset* d)
 		cout<<"Hash Table "<<" maximum single read collision number is: "<< this->maxSingleHashCollision<<endl;
 
 
-//			}//end of parallel
-
 		return true;
 
 	}
@@ -161,11 +159,14 @@ bool DoubleKeyHashTable::insertQueryRead(QueryRead *read, string subString, int 
 	UINT64 index = this->hashTable->hashFunction(subString);
 	while(!hashTable->isEmptyAt(index))
 	{
-		map<int,vector<UINT64>*>::iterator p=hashTable->getDataVectorsAt(index)->begin();
-		int keymode = p->first;
-		UINT64 keyreadID = p->second->at(0);
+		vector<UINT64>* readList = this->hashTable->getReadIDListAt(index);
+		UINT64 data = readList->at(0);
+		UINT64 keyreadID = data & 0X7FFFFFFFFFFFFFFF;
+		UINT64 keymode = data >> this->numberOfLSB;
+
 
 		string keyStr = this->getReadSubstring(keyreadID,keymode);
+
 
 		if(keyStr == subString)
 				break;
@@ -173,7 +174,8 @@ bool DoubleKeyHashTable::insertQueryRead(QueryRead *read, string subString, int 
 		currentCollision++;
 		index = (index == hashTable->getHashTableSize() - 1) ? 0: index + 1; 	// Increment the index
 	}
-	hashTable->insertValueAt(index,mode,this->numberOfMode,read->getIdentifier());							// Add the string in the list.
+	UINT64 combinedID = read->getIdentifier() | (mode << this->numberOfLSB);
+	hashTable->insertReadIDAt(index,combinedID);							// Add the string in the list.
 
 	if(currentCollision> this->maxSingleHashCollision)
 		this->maxSingleHashCollision = currentCollision;
@@ -183,3 +185,30 @@ bool DoubleKeyHashTable::insertQueryRead(QueryRead *read, string subString, int 
 	}
 	return true;
 }
+
+vector<UINT64> * DoubleKeyHashTable::getListOfReads(string subString)
+{
+
+	UINT64 currentCollision =0;
+
+	UINT64 index = this->hashTable->hashFunction(subString);	// Get the index using the hash function.
+	while(!hashTable->isEmptyAt(index))
+	{
+		vector<UINT64>* readList = this->hashTable->getReadIDListAt(index);
+		UINT64 data = readList->at(0);
+		UINT64 keyreadID = data & 0X7FFFFFFFFFFFFFFF;
+		UINT64 keymode = data >> this->numberOfLSB;
+		string keyStr = this->getReadSubstring(keyreadID,keymode);
+
+
+		if(keyStr == subString)
+				break;
+
+		currentCollision++;
+		if(currentCollision>this->maxSingleHashCollision)return NULL;
+		index = (index == hashTable->getHashTableSize() - 1) ? 0: index + 1; 	// Increment the index
+	}
+
+	return hashTable->getReadIDListAt(index);	// return the index.
+}
+
