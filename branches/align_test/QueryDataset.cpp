@@ -290,9 +290,9 @@ bool QueryDataset::buildDataset(const string & QueryFilename)
 			r1->setName(readname);
 			line1ReverseComplement = r1->reverseComplement(line1);
 			if(line1.compare(line1ReverseComplement) < 0) // Store lexicographically smaller between the read and its reverse complement.
-				r1->setSequence(line1);
+				r1->setSequence(line1,line1ReverseComplement);
 			else
-				r1->setSequence(line1ReverseComplement);
+				r1->setSequence(line1ReverseComplement,line1);
 			r1->setFrequency(1);
 
 			UINT64 len = r1->getReadLength();

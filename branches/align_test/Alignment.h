@@ -98,6 +98,27 @@ public:
 	~Edge(){};
 };
 
+class ContainedAlignment {
+
+
+
+public:
+
+	ContainedAlignment(SubjectRead* sRead, QueryRead* qRead);
+	~ContainedAlignment();
+
+	/*
+	// Don't need these two variables for error correction to save memory.
+	string subjectReadSequence;
+	string subjectReadName;
+	*/
+	SubjectRead * subjectRead;
+	//alignment is subject to the subject reads, which is on top of the orientation graph
+
+	QueryRead * queryRead;
+};
+
+
 //class edge is used by OverlapGraphConstructor
 class SubjectEdge{
 public:
@@ -106,6 +127,7 @@ public:
 
 	// alignment results
 	vector<Alignment*>* alignmentList;
+	vector<ContainedAlignment*>* contained_alignmentList;
 
 	// a list of query reads that are duplicated with the subject read
 	// when a query is duplicate with a subject read, we compare their names and add the query read to the duplicate read list if its name is greater than the subject read name.
@@ -113,23 +135,9 @@ public:
 	SubjectEdge(SubjectRead* sRead);
 	~SubjectEdge();
 	bool addAlignment(Alignment* subjectAlignment);
+	bool addContainedAlignment(ContainedAlignment* subjectAlignment);
 	bool addDuplicateList(QueryRead* queryRead);
 
 };
 
-/*
-//class SubjectAlignment is used by ErrorCorrector
-class SubjectAlignment {
-public:
-	// alignment input
-	string subjectReadSequence;
-	string subjectReadName;
-
-	// alignment results
-	vector<Alignment*> queryAlignmentList;
-	SubjectAlignment();
-	~SubjectAlignment();
-
-};
-*/
 #endif /* ALIGNMENT_H_ */

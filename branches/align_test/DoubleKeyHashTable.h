@@ -27,17 +27,22 @@ class DoubleKeyHashTable : public HashTableMethod {
 	// 101 = 5 means suffix of the forward string.
 	// 110 = 6 means prefix of the reverse string.
 	// 111 = 7 means suffix of the reverse string.
-	int numberOfMode;
+
+//	0000444444*******1111155555
+//	2222666666*******3333377777
+	UINT8 numberOfMode;
+	UINT8 numberOfMSB;
+	UINT8 numberOfLSB;
 
 	UINT16 minimumOverlapLength;
 	UINT16 hashKeyLength_left;
 	UINT16 hashKeyLength_right;
-	int maxMismatch;
+	UINT8 maxMismatch;
 
 
 
 
-	string getReadSubstring(UINT64 readID, int mode);// mode ={0: forwardprefix, 1: forwardsuffix, 2: reverseprefix, 3: reversesuffix}
+	string getReadSubstring(UINT64 readID, UINT8 mode);// mode ={0: forwardprefix, 1: forwardsuffix, 2: reverseprefix, 3: reversesuffix}
 //	bool doAlignment(Alignment* align, string mode, int subjectStart);
 //	bool checkForContainedAlignment(Alignment* align, string mode, int subjectStart);
 //	bool subjectWindowRange(int& startpoint, int& stoppoint, string mode, string& subjectRead);
@@ -48,7 +53,8 @@ public:
 	~DoubleKeyHashTable();
 	bool createHashTables();
 	bool insertQueryDataset(QueryDataset* d);
-	bool insertQueryRead(QueryRead *read, string subString, int mode);
+	bool insertQueryRead(QueryRead *read, string subString, UINT8 mode);
+	vector<UINT64> * getListOfReads(string subString);
 //	bool doubleKeySearch(edge & Edge);
 //	bool doubleKeySearch(SubjectAlignment & subjectAlign);
 //	bool doubleKeySearch(SubjectAlignmentPairedEnd & subjectAlignment);

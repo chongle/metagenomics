@@ -13,6 +13,8 @@ SingleKeyHashTable::SingleKeyHashTable() {
 	this->hashKeyLength = Config::hashKeyLength;
 	this->maxMismatch = Config::maxMismatch;
 	this->numberOfMode = 4;
+	this->numberOfMSB = 2;
+	this->numberOfLSB = 62;
 	this->dataSet = NULL;
 	this->hashTable = NULL;
 	numberOfHashCollision = 0;
@@ -25,6 +27,8 @@ SingleKeyHashTable::SingleKeyHashTable(QueryDataset * qDataset) {
 	this->hashKeyLength = Config::hashKeyLength;
 	this->maxMismatch = Config::maxMismatch;
 	this->numberOfMode = 4;
+	this->numberOfMSB = 2;
+	this->numberOfLSB = 62;
 	this->dataSet = qDataset;
 	this->hashTable = NULL;
 	numberOfHashCollision = 0;
@@ -52,7 +56,7 @@ bool SingleKeyHashTable::createHashTables()
 	}
 	else
 	{
-		this->hashTable = new HashTable(this->hashKeyLength,  this->dataSet, this->numberOfMode);
+		this->hashTable = new HashTable(8*this->dataSet->getNumberOfUniqueReads());
 
 		return true;
 	}
@@ -62,7 +66,7 @@ bool SingleKeyHashTable::createHashTables()
 // 01 = 1 means suffix of the forward string.
 // 10 = 2 means prefix of the reverse string.
 // 11 = 3 means suffix of the reverse string.
-string SingleKeyHashTable::getReadSubstring(UINT64 readID, int mode)
+string SingleKeyHashTable::getReadSubstring(UINT64 readID, UINT8 mode)
 {
 	QueryRead * read = this->dataSet->getReadFromID(readID);
 	string str = (mode == 0 || mode == 1) ? read->getSequence() : read->reverseComplement();
@@ -82,11 +86,6 @@ bool SingleKeyHashTable::insertQueryDataset(QueryDataset* d)
 	else
 	{
 		UINT64 datasetsize = this->dataSet->getNumberOfUniqueReads();
-//		omp_set_dynamic(0);
-//		omp_set_num_threads(Config::numberOfThreads);
-//		#pragma omp parallel
-//			{
-//		#pragma omp for schedule(dynamic)
 		UINT64 currentID = 1;
 		while(currentID<=datasetsize)
 		{
@@ -109,22 +108,24 @@ bool SingleKeyHashTable::insertQueryDataset(QueryDataset* d)
 		cout<<"Hash Table "<<" maximum single read collision number is: "<< this->maxSingleHashCollision<<endl;
 
 
-//			}//end of parallel
 
 		return true;
 
 	}
 }
-bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string subString, int mode)
+
+bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string subString, UINT8 mode)
 {
 	UINT64 currentCollision =0;
 
 	UINT64 index = this->hashTable->hashFunction(subString);
 	while(!hashTable->isEmptyAt(index))
 	{
-		map<int,vector<UINT64>*>::iterator p=hashTable->getDataVectorsAt(index)->begin();
-		int keymode = p->first;
-		UINT64 keyreadID = p->second->at(0);
+		vector<UINT64>* readList = this->hashTable->getReadIDListAt(index);
+		UINT64 data = readList->at(0);
+		UINT64 keyreadID = data & 0X3FFFFFFFFFFFFFFF;
+		UINT64 keymode = data >> this->numberOfLSB;
+
 
 		string keyStr = this->getReadSubstring(keyreadID,keymode);
 
@@ -135,7 +136,8 @@ bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string subString, int 
 		currentCollision++;
 		index = (index == hashTable->getHashTableSize() - 1) ? 0: index + 1; 	// Increment the index
 	}
-	hashTable->insertValueAt(index,mode,this->numberOfMode,read->getIdentifier());							// Add the string in the list.
+	UINT64 combinedID = read->getIdentifier() | (mode << this->numberOfLSB);
+	hashTable->insertReadIDAt(index,combinedID);							// Add the string in the list.
 
 	if(currentCollision> this->maxSingleHashCollision)
 		this->maxSingleHashCollision = currentCollision;
@@ -146,74 +148,186 @@ bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string subString, int 
 	return true;
 }
 
-/*
-
-
-
-bool SingleKeyHashTable::insertQueryDataset(QueryDataset* querydataset)
+vector<UINT64> * SingleKeyHashTable::getListOfReads(string subString)
 {
 
-	queryDataSet = querydataset;
-	UINT64 datasetsize = queryDataSet->getNumberOfUniqueReads();
-	hashTableNameList.push_back("forwardprefix");
-//	hashTableNameList.push_back("forwardsuffix");
-//	hashTableNameList.push_back("reverseprefix");
-//	hashTableNameList.push_back("reversesuffix");
-	InitializeAllHashTables();
+	UINT64 currentCollision =0;
 
-CLOCKSTART;
-omp_set_dynamic(0);
-omp_set_num_threads(Config::numberOfThreads);
-#pragma omp parallel
+	UINT64 index = this->hashTable->hashFunction(subString);	// Get the index using the hash function.
+	while(!hashTable->isEmptyAt(index))
 	{
-#pragma omp for schedule(dynamic)
-		for(unsigned int i = 0; i< hashTableNameList.size(); i++)
-		{
-			string stringmode = hashTableNameList.at(i);
-			UINT64 currentID = 1;
-			while(currentID<=datasetsize)
-			{
-				if(currentID%1000000 == 0)
-					cout << setw(10) << currentID << " reads inserted in the hash table. " << endl;
-				QueryRead * queryread = queryDataSet->getReadFromID(currentID);
-				insertQueryRead(queryread, stringmode);
-				currentID++;
-			}
-			HashTable * currentHashTable = hashTableMap.at(stringmode);
-			cout<<"Hash Table "<<stringmode<<" maximum collision number is: "<< currentHashTable->numberOfHashCollision<<endl;
-			cout<<"Hash Table "<<stringmode<<" maximum single read collision number is: "<< currentHashTable->maxSingleHashCollision<<endl;
-//--------
-// clean up hash table
-// ---------
-			vector <DataVector *> *hashTableData = currentHashTable->hashTable;
-			for(UINT64 k=0;k<hashTableData->size();k++)
-			{
-				DataVector *datavector = hashTableData->at(k);
-				if(datavector->keystring=="")
-				{
-					delete datavector;
-					hashTableData->at(k) = NULL;
-				}
-				else datavector->keystring = "";
-			}
-// ---------
-		}
+		vector<UINT64>* readList = this->hashTable->getReadIDListAt(index);
+		UINT64 data = readList->at(0);
+		UINT64 keyreadID = data & 0X3FFFFFFFFFFFFFFF;
+		UINT64 keymode = data >> this->numberOfLSB;
+		string keyStr = this->getReadSubstring(keyreadID,keymode);
+
+
+		if(keyStr == subString)
+				break;
+
+		currentCollision++;
+		if(currentCollision>this->maxSingleHashCollision)return NULL;
+		index = (index == hashTable->getHashTableSize() - 1) ? 0: index + 1; 	// Increment the index
 	}
 
-CLOCKSTOP;
+	return hashTable->getReadIDListAt(index);	// return the index.
+}
+
+bool SingleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
+{
+	SubjectRead *subjectRead = subjectEdge->subjectRead; 	// Get the current read subject read.
+	string subjectReadString = subjectRead->getSequence(); 		// Get the forward string of subject read.
+	string subString;
+	for(UINT64 j = 0; j <= subjectRead->getReadLength()-this->hashKeyLength; j++)
+	{
+		subString = subjectReadString.substr(j,this->hashKeyLength);
+		vector<UINT64> * listOfReads=this->getListOfReads(subString); // Search the string in the hash table.
+		if(listOfReads!=NULL || !listOfReads->empty()) // If there are some reads that contain subString as prefix or suffix of the read or their reverse complement
+		{
+			for(UINT64 k = 0; k < listOfReads->size(); k++) // For each such reads.
+			{
+				UINT64 data = listOfReads->at(k);			// We used bit operations in the hash table. Most significant 2 bits store orientation and least significant 62 bits store read ID.
+				UINT64 queryReadID = data & 0X3FFFFFFFFFFFFFFF;
+				UINT64 queryMode = data >> this->numberOfLSB;
+				QueryRead *queryRead = this->dataSet->getReadFromID(queryReadID); 	// Least significant 62 bits store the read number.
+				if(subjectRead->getName()<queryRead->getName()) 			// No need to discover the same edge again. Only need to explore half of the combinations
+				{
+					continue;
+				}
+				else
+				{
+//					cout << sRead->getName() << " >>> " << qRead->getName() << " ????? " <<j<<" and " << k << endl;
+
+				}
+
+				if(subjectRead->flag4Removal==false && queryRead->flag4Removal==false) // Both read need to be non contained.
+				{
+					Alignment *subjectAlignment = new Alignment(subjectRead, queryRead);
+
+					if(this->doAlignment(subjectAlignment, queryMode, j))
+					{
+					subjectEdge->addAlignment(subjectAlignment);
+					}
+					else
+						delete subjectAlignment;
+				}
+			}
+		}
+	}
 	return true;
 }
 
-bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string mode)
+bool SingleKeyHashTable::doAlignment(Alignment* subjectAlignment, UINT8 queryMode, UINT64 subjectKeyStart)
 {
-	UINT64 readID = read->getIdentifier();
-	string keystring = getReadSubstring(mode,readID);
-	HashTable * currentHashTable = hashTableMap.at(mode);
-	return  currentHashTable->insertIntoHashTable(keystring,readID);
-
-
+	QueryRead* queryRead = subjectAlignment->queryRead;
+	SubjectRead* subjectRead = subjectAlignment->subjectRead;
+	switch (queryMode) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
+	{
+	case 0:
+		subjectAlignment->queryOrientation = true;
+		subjectAlignment->subjectStart = -subjectKeyStart;
+		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+		string queryString = queryRead->getSequence();
+		int remainStart = this->hashKeyLength;
+		int remainEnd = (subjectAlignment->subjectEnd <= subjectAlignment->queryEnd)?subjectAlignment->subjectEnd:subjectAlignment->queryEnd;
+		if(remainEnd-remainStart+1+this->hashKeyLength>=this->minimumOverlapLength)
+		{
+			int currentMismatchCount = 0;
+			for(int i=remainStart;i<=remainEnd;i++)
+			{
+				char queryBase = queryString.at(i);
+				char subjectBase = subjectRead->getSequence().at(i-subjectAlignment->subjectStart);
+				if(queryBase!=subjectBase)
+				{
+					currentMismatchCount++;
+					if(currentMismatchCount>maxMismatch)return false;
+					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
+				}
+			}
+		}
+		else return false;
+		break;
+	case 1:
+		subjectAlignment->queryOrientation = true;
+		subjectAlignment->subjectStart = queryRead->getReadLength()-this->hashKeyLength-subjectKeyStart;
+		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+		string queryString = queryRead->getSequence();
+		int remainStart = (0>=subjectAlignment->subjectStart)?0:subjectAlignment->subjectStart;
+		int remainEnd = subjectAlignment->queryEnd - this->hashKeyLength;
+		if(remainEnd-remainStart+1+this->hashKeyLength>=this->minimumOverlapLength)
+		{
+			int currentMismatchCount = 0;
+			for(int i=remainStart;i<=remainEnd;i++)
+			{
+				char queryBase = queryString.at(i);
+				char subjectBase = subjectRead->getSequence().at(i-subjectAlignment->subjectStart);
+				if(queryBase!=subjectBase)
+				{
+					currentMismatchCount++;
+					if(currentMismatchCount>maxMismatch)return false;
+					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
+				}
+			}
+		}
+		else return false;
+		break;
+	case 2:
+		subjectAlignment->queryOrientation = false;
+		subjectAlignment->subjectStart = -subjectKeyStart;
+		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+		string queryString = queryRead->reverseComplement();
+		int remainStart = this->hashKeyLength;
+		int remainEnd = (subjectAlignment->subjectEnd <= subjectAlignment->queryEnd)?subjectAlignment->subjectEnd:subjectAlignment->queryEnd;
+		if(remainEnd-remainStart+1+this->hashKeyLength>=this->minimumOverlapLength)
+		{
+			int currentMismatchCount = 0;
+			for(int i=remainStart;i<=remainEnd;i++)
+			{
+				char queryBase = queryString.at(i);
+				char subjectBase = subjectRead->getSequence().at(i-subjectAlignment->subjectStart);
+				if(queryBase!=subjectBase)
+				{
+					currentMismatchCount++;
+					if(currentMismatchCount>maxMismatch)return false;
+					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
+				}
+			}
+		}
+		else return false;
+		break;
+	case 3:
+		subjectAlignment->queryOrientation = false;
+		subjectAlignment->subjectStart = queryRead->getReadLength()-this->hashKeyLength-subjectKeyStart;
+		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+		string queryString = queryRead->reverseComplement();
+		int remainStart = (0>=subjectAlignment->subjectStart)?0:subjectAlignment->subjectStart;
+		int remainEnd = subjectAlignment->queryEnd - this->hashKeyLength;
+		if(remainEnd-remainStart+1+this->hashKeyLength>=this->minimumOverlapLength)
+		{
+			int currentMismatchCount = 0;
+			for(int i=remainStart;i<=remainEnd;i++)
+			{
+				char queryBase = queryString.at(i);
+				char subjectBase = subjectRead->getSequence().at(i-subjectAlignment->subjectStart);
+				if(queryBase!=subjectBase)
+				{
+					currentMismatchCount++;
+					if(currentMismatchCount>maxMismatch)return false;
+					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
+				}
+			}
+		}
+		else return false;
+		break;
+	default: return false;
+	}
+	return true;
 }
-*/
 
 /*
 bool SingleKeyHashTable::doAlignment(Alignment* align, string mode, int subjectStart)

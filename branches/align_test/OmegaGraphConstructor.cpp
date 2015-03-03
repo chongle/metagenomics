@@ -221,11 +221,11 @@ bool OmegaGraphConstructor::start()
 			SubjectEdge * sEdge = new SubjectEdge(sRead);
 			subjectEdgeList->push_back(sEdge);
 		}
-//omp_set_dynamic(0);
-//omp_set_num_threads(Config::numberOfThreads);
-//#pragma omp parallel
+omp_set_dynamic(0);
+omp_set_num_threads(Config::numberOfThreads);
+#pragma omp parallel
 	{
-//#pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic)
 		for(UINT64 i = 0; i < subjectEdgeList->size(); i++)
 		{
 			SubjectEdge * subjectEdge = subjectEdgeList->at(i);

@@ -118,6 +118,7 @@ omp_set_num_threads(Config::numberOfThreads);
 					 thisQueryRead->setFrequency(thisQueryRead->getFrequency()+1);
 				}
 			}
+			/*
 			if(subjectEdge->alignmentList==NULL)
 			{
 				delete subjectEdge->subjectRead;
@@ -146,6 +147,41 @@ omp_set_num_threads(Config::numberOfThreads);
 
 				}
 				subjectDataset->addSubjectRead(subjectEdge->subjectRead);
+			}
+
+			*/
+
+			if(subjectEdge->contained_alignmentList==NULL)
+			{
+				delete subjectEdge->subjectRead;
+				subjectEdge->subjectRead = NULL;
+			}
+			else
+			{
+				//add alignments to the query reads before the edges are destroyed.
+				for(UINT16 j = 0; j < subjectEdge->contained_alignmentList->size(); j++)
+				{
+					 ContainedAlignment * alignment= subjectEdge->contained_alignmentList->at(j);
+
+				 	 UINT64 queryID = alignment->queryRead->getIdentifier();
+				 	 UINT8 tag = this->tagList->at(queryID);
+				 	 this->tagList->at(queryID)= tag|0X02;
+				 	 if((int)alignment->subjectRead->getReadLength() >  this->superReadLength->at(queryID))
+				 	 {
+				 		this->superReadLength->at(queryID)=alignment->subjectRead->getReadLength();
+				 		this->superNameList->at(queryID) = alignment->subjectRead->getName();
+				 	 }
+				 	 else if((int)alignment->subjectRead->getReadLength() == this->superReadLength->at(queryID))
+				 	 {
+				 		 if(this->superNameList->at(queryID) < alignment->subjectRead->getName())
+				 			this->superNameList->at(queryID) = alignment->subjectRead->getName();
+				 	 }
+				 	 delete alignment;
+
+				}
+
+				delete subjectEdge->subjectRead;
+				subjectEdge->subjectRead = NULL;
 			}
 
 			delete subjectEdge;
@@ -233,7 +269,8 @@ bool QueryDatasetFilter::searchHashTable(SubjectEdge * subjectEdge)
 //YAO					else
 //YAO					sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<qRead->getSequence()<<"||||"<<sRead->getSequence()<<endl;
 //YAO				filePointer<<sstm.str();
-					Alignment *subjectAlignment = new Alignment(subjectRead, queryRead);
+					ContainedAlignment *subjectAlignment = new ContainedAlignment(subjectRead, queryRead);
+/*					Alignment *subjectAlignment = new Alignment(subjectRead, queryRead);
 					switch (orientation) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
 					{
 					case 0:
@@ -262,7 +299,8 @@ bool QueryDatasetFilter::searchHashTable(SubjectEdge * subjectEdge)
 						break;
 					default:;
 					}
-					subjectEdge->addAlignment(subjectAlignment);
+					*/
+					subjectEdge->addContainedAlignment(subjectAlignment);
 
 				}
 			}

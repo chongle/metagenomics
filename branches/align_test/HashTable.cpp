@@ -8,174 +8,72 @@
 #include "HashTable.h"
 
 
-HashTable::HashTable(int insertSize) {
+HashTable::HashTable(UINT64 size) {
 	// TODO Auto-generated constructor stub
-	hashKeyLength = Config::hashKeyLength;
-	hashTableName = "";
-	numberOfHashCollision = 0;
-	maxSingleHashCollision = 0;
-	hashTableSize = 0;
+
+	hashTableSize = size;
 	hashTable = NULL;
-	dataSet = NULL;
-	dataVectorSize = insertSize;
-}
-HashTable::HashTable(UINT16 keylength,int insertSize) {
-	// TODO Auto-generated constructor stub
-	hashKeyLength = keylength;
-	hashTableName = "";
-	numberOfHashCollision = 0;
-	maxSingleHashCollision = 0;
-	hashTableSize = 0;
-	hashTable = NULL;
-	dataSet = NULL;
-	dataVectorSize = insertSize;
-
-}
-HashTable::HashTable(UINT16 keylength, string name, int insertSize) {
-	// TODO Auto-generated constructor stub
-	hashKeyLength = keylength;
-	hashTableName = name;
-	numberOfHashCollision = 0;
-	maxSingleHashCollision = 0;
-	hashTableSize = 0;
-	hashTable = NULL;
-	dataSet = NULL;
-	dataVectorSize = insertSize;
-
-}
-
-
-HashTable::HashTable(UINT16 keylength, UINT64 dataSetSize, int insertSize) {
-	// TODO Auto-generated constructor stub
-	hashKeyLength = keylength;
-	hashTableName = "";
-	numberOfHashCollision = 0;
-	maxSingleHashCollision = 0;
-	hashTableSize = 0;
-	hashTable = NULL;
-	dataSet = NULL;
-	dataVectorSize = insertSize;
-	InitializeWithDataSize(dataSetSize);
-
-}
-
-HashTable::HashTable(UINT16 keylength,  QueryDataset * dataset, int insertSize)
-{
-	hashKeyLength = keylength;
-	hashTableName = "";
-	numberOfHashCollision = 0;
-	maxSingleHashCollision = 0;
-	hashTableSize = 0;
-	hashTable = NULL;
-	dataSet = dataset;
-	dataVectorSize = insertSize;
-	InitializeWithDataSize(this->dataSet->getNumberOfUniqueReads());
-	//insertIntoHashTable();
-}
-HashTable::~HashTable() {
-	// TODO Auto-generated destructor stub
-	if(hashTable!=NULL)
-	{
-		for(UINT64 i=0; i<hashTable->size();i++)
-		{
-			map<int,vector<UINT64>*> * datavector = hashTable->at(i);
-			if(datavector!=NULL)
-			{
-
-			for(map<int,vector<UINT64>*>::iterator p=datavector->begin();p!=datavector->end();p++)
-			{
-				vector<UINT64>* tempvector = p->second;
-				if(tempvector!=NULL)
-				{
-					tempvector->clear();
-					delete tempvector;
-				}
-			}
-			datavector->clear();
-			delete datavector;
-			}
-		}
-		hashTable->clear();
-		delete hashTable;
-	}
-}
-/*
-HashTable::~HashTable() {
-	// TODO Auto-generated destructor stub
-	if(hashTable!=NULL)
-	{
-		for(UINT64 i=0; i<hashTable->size();i++)
-		{
-			DataVector* datavector = hashTable->at(i);
-			if(datavector!=NULL)
-			{
-			vector<UINT64>** dataList = datavector->dataList;
-			for(int j=0; j<dataVectorSize; j++)
-			{
-				vector<UINT64>* tempvector = dataList[j];
-				if(tempvector!=NULL)
-				{
-				tempvector->clear();
-				delete tempvector;
-				}
-			}
-
-			delete datavector;
-			}
-		}
-		hashTable->clear();
-		delete hashTable;
-	}
-}
-*/
-
-void HashTable::InitializeWithDataSize(UINT64 dataSetSize)
-{
-	UINT64 size = getPrimeLargerThanNumber(dataSetSize*2*this->dataVectorSize + 1);  // Size should be at least twice the number of entries in the hash table to reduce hash collision.
 	setHashTableSizeAndInitialize(size);
 }
 
+
+HashTable::~HashTable() {
+	// TODO Auto-generated destructor stub
+	if(hashTable!=NULL)
+	{
+		for(UINT64 i=0;i<hashTable->size();i++)
+		{
+			vector<UINT64> * temp = hashTable->at(i);
+			if(temp!=NULL)
+			{
+				temp->clear();
+				delete temp;
+			}
+		}
+
+		hashTable->clear();
+		delete hashTable;
+	}
+}
+
+
 void HashTable::setHashTableSizeAndInitialize(UINT64 size)
 {
 	cout << "Hash Table size set to: " << size << endl;
 	hashTableSize=size;
 
-	hashTable = new vector<map<int,vector<UINT64>*>*>();
+	hashTable = new vector<vector<UINT64>*>();
 	hashTable->reserve(size);
 
 	for(UINT64 i = 0; i < hashTable->capacity(); i++) // Initialize the hash table.
 	{
-		hashTable->push_back(NULL);
+		vector<UINT64> * newList = new vector<UINT64>;
+		newList->resize(newList->size());
+		hashTable->push_back(newList);
 	}
 }
-/*
-void HashTable::setHashTableSizeAndInitialize(UINT64 size)
-{
-	cout << "Hash Table size set to: " << size << endl;
-	hashTableSize=size;
 
-	hashTable = new vector < DataVector *>();
-	hashTable->reserve(size);
 
-	for(UINT64 i = 0; i < hashTable->capacity(); i++) // Initialize the hash table.
-	{
-		DataVector * dataVector = NULL;
-		hashTable->push_back(dataVector);
-	}
-}
-*/
-UINT64 HashTable::getMaximumHashTableCollision()
-{
-	return this->maxSingleHashCollision;
-}
-
-UINT64 HashTable::getTotalHashTableCollision()
-{
-	return this->numberOfHashCollision;
-}
 UINT64 HashTable::getHashTableSize()
 {
 	return this->hashTableSize;
+}
+
+bool HashTable::isEmptyAt(UINT64 hashTableIndex)
+{
+	return hashTable->at(hashTableIndex)->empty();
+}
+
+vector<UINT64>* HashTable::getReadIDListAt(UINT64 hashTableIndex)
+{
+	return hashTable->at(hashTableIndex);
+
+}
+
+bool HashTable::insertReadIDAt(UINT64 hashTableIndex, UINT64 readID)
+{
+	hashTable->at(hashTableIndex)->push_back(readID);
+	return true;
 }
 
 //This hash function only takes care of the first 32 bps and the last 32 bps of the total key length.
@@ -255,144 +153,5 @@ UINT64 HashTable::getPrimeLargerThanNumber(UINT64 number)
 	return number + 1;
 }
 
-bool HashTable::isEmptyAt(UINT64 hashTableIndex)
-{
-	return hashTable->at(hashTableIndex)==NULL;
-}
 
-map<int,vector<UINT64>*>* HashTable::getDataVectorsAt(UINT64 hashTableIndex)
-{
-	return hashTable->at(hashTableIndex);
-
-}
-/*
-vector<UINT64>** HashTable::getDataVectorsAt(UINT64 hashTableIndex)
-{
-	if(hashTable->at(hashTableIndex)==NULL)
-		return NULL;
-	else return hashTable->at(hashTableIndex)->dataList;
-
-}
-*/
-vector<UINT64> * HashTable::getReadIDListAt(UINT64 hashTableIndex, int dataVectorNum)
-{
-	map<int,vector<UINT64>*>* datalist = getDataVectorsAt(hashTableIndex);
-	if(datalist!=NULL)
-	{
-		if(datalist->find(dataVectorNum)!=datalist->end())
-		return datalist->at(dataVectorNum);
-		else return NULL;
-	}
-	else return NULL;
-}
-/*
-bool HashTable::insertValueAt(UINT64 hashTableIndex, int dataVectorNum, int dataVecorSize, UINT64 value)
-{
-	vector<UINT64>** datavector = getDataVectorsAt(hashTableIndex);
-	if(datavector==NULL)
-	{
-		DataVector* current_datavector = new DataVector(dataVecorSize);
-		current_datavector->dataList[dataVectorNum] = new vector<UINT64>();
-		current_datavector->dataList[dataVectorNum]->push_back(value);
-		hashTable->at(hashTableIndex) = current_datavector;
-	}
-	else
-	{
-		if(datavector[dataVectorNum]==NULL)
-		{
-			datavector[dataVectorNum] = new vector<UINT64>();
-			datavector[dataVectorNum]->push_back(value);
-		}
-		else
-		{
-			datavector[dataVectorNum]->push_back(value);
-		}
-	}
-	return true;
-}
-*/
-bool HashTable::insertValueAt(UINT64 hashTableIndex, int dataVectorNum, int dataVecorSize, UINT64 value)
-{
-	map<int,vector<UINT64>*>* datavector = getDataVectorsAt(hashTableIndex);
-	if(datavector==NULL)
-	{
-		map<int,vector<UINT64>*>* current_datavector = new map<int,vector<UINT64>*>();
-		vector<UINT64>* current_vector = new vector<UINT64>();
-		current_vector->push_back(value);
-		current_datavector->insert(std::pair<int,vector<UINT64>*>(dataVectorNum, current_vector));
-		hashTable->at(hashTableIndex) = current_datavector;
-	}
-	else
-	{
-		if(datavector->find(dataVectorNum)==datavector->end())
-		{
-			vector<UINT64>* current_vector = new vector<UINT64>();
-			current_vector->push_back(value);
-			datavector->insert(std::pair<int,vector<UINT64>*>(dataVectorNum, current_vector));
-
-		}
-		else
-		{
-			datavector->at(dataVectorNum)->push_back(value);
-		}
-	}
-	return true;
-}
-/*
-bool HashTable::findInsertIndex(string keyString, UINT64& hashTableIndex)
-{
-	UINT64 currentCollisionNum = 0;
-
-	hashTableIndex = hashFunction(keyString);
-	bool isEmpty = hashTable->at(hashTableIndex)->dataList->empty();
-	while(!isEmpty)
-	{
-		if(currentCollisionNum>1000 || currentCollisionNum>hashTableSize)
-		{
-			cout<<"Too much collision, need to enlarge the hashTableSize"<<endl;
-			return false;
-		}
-		if(keyString == hashTable->at(hashTableIndex)->keystring)
-				break;
-		numberOfHashCollision++;
-		currentCollisionNum++;
-		hashTableIndex = (hashTableIndex == hashTableSize - 1) ? 0: hashTableIndex + 1; 	// Increment the index
-		isEmpty = hashTable->at(hashTableIndex)->dataList->empty();
-	}
-
-	if(currentCollisionNum> this->maxSingleHashCollision)
-		this->maxSingleHashCollision = currentCollisionNum;
-
-	return true;
-}
-
-
-bool HashTable::getIndexFromHashTable(string subString, UINT64& hashTableIndex)
-{
-	UINT64 currentCollisionNum = 0;
-	hashTableIndex = hashFunction(subString);
-	vector<UINT64> tempvector = (*hashTable->at(hashTableIndex)->dataList);
-	bool isEmpty = hashTable->at(hashTableIndex)->dataList->empty();
-	while(!isEmpty && currentCollisionNum<=maxSingleHashCollision)
-	{
-
-			string keysequence = hashTable->at(hashTableIndex)->keystring;
-			if(subString == keysequence)
-					return true;
-
-			currentCollisionNum++;
-			hashTableIndex = (hashTableIndex == hashTableSize - 1) ? 0: hashTableIndex + 1; 	// Increment the index
-			isEmpty = hashTable->at(hashTableIndex)->dataList->empty();
-	}
-	return false;
-}
-string HashTable::getHashKeyFromIndex(UINT64 hashTableIndex)
-{
-	string keyString;
-	DataVector * datavector = hashTable->at(hashTableIndex);
-
-	return keyString;
-}
-
-*/
 

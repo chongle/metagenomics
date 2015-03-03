@@ -12,6 +12,7 @@
 #include "QueryDataset.h"
 #include "HashTable.h"
 #include "QueryRead.h"
+#include "Alignment.h"
 
 class HashTableMethod {
 protected:
@@ -25,9 +26,11 @@ public:
 	virtual ~HashTableMethod();
 
 	virtual bool createHashTables()=0;
-	virtual string getReadSubstring(UINT64 readID, int mode)=0;
+	virtual string getReadSubstring(UINT64 readID, UINT8 mode)=0;
 	virtual bool insertQueryDataset(QueryDataset* d)=0;
-	virtual bool insertQueryRead(QueryRead *read,string subString, int mode)=0;
+	virtual bool insertQueryRead(QueryRead *read,string subString, UINT8 mode)=0;
+	virtual vector<UINT64> * getListOfReads(string subString)=0;
+	virtual bool searchHashTable(SubjectEdge * subjectEdge)=0;
 };
 
 #endif /* HASHTABLEMETHOD_H_ */
