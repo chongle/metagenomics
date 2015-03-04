@@ -34,8 +34,8 @@ OverlapGraph::OverlapGraph(HashTable *ht)
 	numberOfNodes = 0;
 	numberOfEdges = 0;
 	flowComputed = false;
-//	removeContainedReadsFromHashTable(ht);
-	buildOverlapGraphFromHashTable(ht);
+	removeContainedReadsFromHashTable(ht);
+//	buildOverlapGraphFromHashTable(ht);
 
 }
 
@@ -71,7 +71,6 @@ bool OverlapGraph::removeContainedReadsFromHashTable(HashTable *ht)
 	flowComputed = false;
 	hashTable = ht;
 	dataSet = ht->getDataset();
-	UINT64 counter = 0;
 
 
 	graph = new vector< vector<Edge *> * >;
