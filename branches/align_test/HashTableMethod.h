@@ -31,6 +31,7 @@ public:
 	virtual bool insertQueryRead(QueryRead *read,string subString, UINT8 mode)=0;
 	virtual vector<UINT64> * getListOfReads(string subString)=0;
 	virtual bool searchHashTable(SubjectEdge * subjectEdge)=0;
+	QueryDataset* getDataset(){return this->dataSet;};
 };
 
 #endif /* HASHTABLEMETHOD_H_ */
