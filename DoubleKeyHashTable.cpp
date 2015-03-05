@@ -328,7 +328,7 @@ bool DoubleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 		subjectAlignment->subjectStart = queryRead->getReadLength()-hashKeyLength-subjectKeyStart;
 		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
 		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
-		string queryString = queryRead->getSequence();
+		queryString = queryRead->getSequence();
 		start = (0>=subjectAlignment->subjectStart)?0:subjectAlignment->subjectStart;
 		end = subjectAlignment->queryEnd;
 		switch(keymatchmode)
@@ -353,7 +353,7 @@ bool DoubleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 		subjectAlignment->subjectStart = -subjectKeyStart;
 		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
 		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
-		string queryString = queryRead->reverseComplement();
+		queryString = queryRead->reverseComplement();
 		start = 0;
 		end = (subjectAlignment->subjectEnd <= subjectAlignment->queryEnd)?subjectAlignment->subjectEnd:subjectAlignment->queryEnd;
 		switch(keymatchmode)
@@ -378,7 +378,7 @@ bool DoubleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 		subjectAlignment->subjectStart = queryRead->getReadLength()-hashKeyLength-subjectKeyStart;
 		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
 		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
-		string queryString = queryRead->reverseComplement();
+		queryString = queryRead->reverseComplement();
 		start = (0>=subjectAlignment->subjectStart)?0:subjectAlignment->subjectStart;
 		end = subjectAlignment->queryEnd;
 		switch(keymatchmode)

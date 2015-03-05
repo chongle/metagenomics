@@ -226,6 +226,7 @@ bool SingleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 	switch (queryMode) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
 	{
 	case 0:
+	{
 		subjectAlignment->queryOrientation = true;
 		subjectAlignment->subjectStart = -subjectKeyStart;
 		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
@@ -236,7 +237,9 @@ bool SingleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 		bool alignsucess = this->doAlignment(subjectAlignment, queryString, subjectString, remainStart, remainEnd);
 		return alignsucess;
 		break;
+	}
 	case 1:
+	{
 		subjectAlignment->queryOrientation = true;
 		subjectAlignment->subjectStart = queryRead->getReadLength()-this->hashKeyLength-subjectKeyStart;
 		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
@@ -247,7 +250,9 @@ bool SingleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 		bool alignsucess = this->doAlignment(subjectAlignment, queryString, subjectString, remainStart, remainEnd);
 		return alignsucess;
 		break;
+	}
 	case 2:
+	{
 		subjectAlignment->queryOrientation = false;
 		subjectAlignment->subjectStart = -subjectKeyStart;
 		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
@@ -258,7 +263,9 @@ bool SingleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 		bool alignsucess = this->doAlignment(subjectAlignment, queryString, subjectString, remainStart, remainEnd);
 		return alignsucess;
 		break;
+	}
 	case 3:
+	{
 		subjectAlignment->queryOrientation = false;
 		subjectAlignment->subjectStart = queryRead->getReadLength()-this->hashKeyLength-subjectKeyStart;
 		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
@@ -269,6 +276,7 @@ bool SingleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 		bool alignsucess = this->doAlignment(subjectAlignment, queryString, subjectString, remainStart, remainEnd);
 		return alignsucess;
 		break;
+	}
 	default: return false;
 	}
 

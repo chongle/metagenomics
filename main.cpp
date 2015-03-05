@@ -5,6 +5,7 @@
 #include "DoubleKeyHashTable.h"
 #include "OmegaHashTable.h"
 #include "OmegaGraphConstructor.h"
+#include "OverlapGraphConstructor.h"
 #include "QueryDatasetFilter.h"
 //#include "OverlapGraphConstructor.h"
 //#include "PairedReadMerger.h"
@@ -44,7 +45,7 @@ int main(int argc, char **argv)
 	}
 
 //--------
-/*
+
 	HashTableMethod* singleKeyHashTable = new SingleKeyHashTable(queryDataset);
 	{
 	CLOCKSTART;
@@ -54,8 +55,20 @@ int main(int argc, char **argv)
 	singleKeyHashTable->insertQueryDataset(queryDataset);
 	MEMORYSTOP;
 	CLOCKSTOP;
+
+		{
+		CLOCKSTART;
+		MEMORYSTART;
+		cout << "-------overlapgraph constructing------" << endl;
+		OverlapGraphConstructor * overlapgraphConstructor = new OverlapGraphConstructor(singleKeyHashTable);
+		overlapgraphConstructor->start();
+		MEMORYSTOP;
+		CLOCKSTOP;
+		}
 	}
-*/
+
+
+
 //---------
 	/*
 	HashTableMethod* doubleKeyHashTable = new DoubleKeyHashTable(queryDataset);
@@ -71,7 +84,7 @@ int main(int argc, char **argv)
 	*/
 
 //---------
-
+/*
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
 	{
 	CLOCKSTART;
@@ -84,7 +97,7 @@ int main(int argc, char **argv)
 	OmegaGraphConstructor * omegaGraph = new OmegaGraphConstructor(omegaHashTable);
 	omegaGraph->start();
 	delete omegaGraph;
-
+*/
 //---------
 /*
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
@@ -101,7 +114,7 @@ int main(int argc, char **argv)
 	delete filter;
 */
 
-	delete omegaHashTable;
+//	delete omegaHashTable;
 	delete queryDataset;
 //	delete singleKeyHashTable;
 //	delete doubleKeyHashTable;
