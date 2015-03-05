@@ -179,13 +179,13 @@ bool SingleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 	SubjectRead *subjectRead = subjectEdge->subjectRead; 	// Get the current read subject read.
 	string subjectReadString = subjectRead->getSequence(); 		// Get the forward string of subject read.
 	string subString;
-	for(UINT64 j = 0; j <= subjectRead->getReadLength()-this->hashKeyLength; j++)
+	for(INT64 j = 0; j <= subjectRead->getReadLength()-this->hashKeyLength; j++)
 	{
 		subString = subjectReadString.substr(j,this->hashKeyLength);
 		vector<UINT64> * listOfReads=this->getListOfReads(subString); // Search the string in the hash table.
 		if(listOfReads!=NULL || !listOfReads->empty()) // If there are some reads that contain subString as prefix or suffix of the read or their reverse complement
 		{
-			for(UINT64 k = 0; k < listOfReads->size(); k++) // For each such reads.
+			for(INT64 k = 0; k < listOfReads->size(); k++) // For each such reads.
 			{
 				UINT64 data = listOfReads->at(k);			// We used bit operations in the hash table. Most significant 2 bits store orientation and least significant 62 bits store read ID.
 				UINT64 queryReadID = data & 0X3FFFFFFFFFFFFFFF;
@@ -205,7 +205,7 @@ bool SingleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 				{
 					Alignment *subjectAlignment = new Alignment(subjectRead, queryRead);
 
-					if(this->doAlignment(subjectAlignment, queryMode, j))
+					if(this->createAlignment(subjectAlignment, queryMode, j))
 					{
 					subjectEdge->addAlignment(subjectAlignment);
 					}
@@ -218,10 +218,11 @@ bool SingleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 	return true;
 }
 
-bool SingleKeyHashTable::doAlignment(Alignment* subjectAlignment, UINT8 queryMode, UINT64 subjectKeyStart)
+bool SingleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 queryMode, UINT64 subjectKeyStart)
 {
 	QueryRead* queryRead = subjectAlignment->queryRead;
 	SubjectRead* subjectRead = subjectAlignment->subjectRead;
+	string subjectString = subjectRead->getSequence();
 	switch (queryMode) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
 	{
 	case 0:
@@ -232,22 +233,8 @@ bool SingleKeyHashTable::doAlignment(Alignment* subjectAlignment, UINT8 queryMod
 		string queryString = queryRead->getSequence();
 		int remainStart = this->hashKeyLength;
 		int remainEnd = (subjectAlignment->subjectEnd <= subjectAlignment->queryEnd)?subjectAlignment->subjectEnd:subjectAlignment->queryEnd;
-		if(remainEnd-remainStart+1+this->hashKeyLength>=this->minimumOverlapLength)
-		{
-			int currentMismatchCount = 0;
-			for(int i=remainStart;i<=remainEnd;i++)
-			{
-				char queryBase = queryString.at(i);
-				char subjectBase = subjectRead->getSequence().at(i-subjectAlignment->subjectStart);
-				if(queryBase!=subjectBase)
-				{
-					currentMismatchCount++;
-					if(currentMismatchCount>maxMismatch)return false;
-					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
-				}
-			}
-		}
-		else return false;
+		bool alignsucess = this->doAlignment(subjectAlignment, queryString, subjectString, remainStart, remainEnd);
+		return alignsucess;
 		break;
 	case 1:
 		subjectAlignment->queryOrientation = true;
@@ -257,22 +244,8 @@ bool SingleKeyHashTable::doAlignment(Alignment* subjectAlignment, UINT8 queryMod
 		string queryString = queryRead->getSequence();
 		int remainStart = (0>=subjectAlignment->subjectStart)?0:subjectAlignment->subjectStart;
 		int remainEnd = subjectAlignment->queryEnd - this->hashKeyLength;
-		if(remainEnd-remainStart+1+this->hashKeyLength>=this->minimumOverlapLength)
-		{
-			int currentMismatchCount = 0;
-			for(int i=remainStart;i<=remainEnd;i++)
-			{
-				char queryBase = queryString.at(i);
-				char subjectBase = subjectRead->getSequence().at(i-subjectAlignment->subjectStart);
-				if(queryBase!=subjectBase)
-				{
-					currentMismatchCount++;
-					if(currentMismatchCount>maxMismatch)return false;
-					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
-				}
-			}
-		}
-		else return false;
+		bool alignsucess = this->doAlignment(subjectAlignment, queryString, subjectString, remainStart, remainEnd);
+		return alignsucess;
 		break;
 	case 2:
 		subjectAlignment->queryOrientation = false;
@@ -282,22 +255,8 @@ bool SingleKeyHashTable::doAlignment(Alignment* subjectAlignment, UINT8 queryMod
 		string queryString = queryRead->reverseComplement();
 		int remainStart = this->hashKeyLength;
 		int remainEnd = (subjectAlignment->subjectEnd <= subjectAlignment->queryEnd)?subjectAlignment->subjectEnd:subjectAlignment->queryEnd;
-		if(remainEnd-remainStart+1+this->hashKeyLength>=this->minimumOverlapLength)
-		{
-			int currentMismatchCount = 0;
-			for(int i=remainStart;i<=remainEnd;i++)
-			{
-				char queryBase = queryString.at(i);
-				char subjectBase = subjectRead->getSequence().at(i-subjectAlignment->subjectStart);
-				if(queryBase!=subjectBase)
-				{
-					currentMismatchCount++;
-					if(currentMismatchCount>maxMismatch)return false;
-					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
-				}
-			}
-		}
-		else return false;
+		bool alignsucess = this->doAlignment(subjectAlignment, queryString, subjectString, remainStart, remainEnd);
+		return alignsucess;
 		break;
 	case 3:
 		subjectAlignment->queryOrientation = false;
@@ -307,26 +266,33 @@ bool SingleKeyHashTable::doAlignment(Alignment* subjectAlignment, UINT8 queryMod
 		string queryString = queryRead->reverseComplement();
 		int remainStart = (0>=subjectAlignment->subjectStart)?0:subjectAlignment->subjectStart;
 		int remainEnd = subjectAlignment->queryEnd - this->hashKeyLength;
-		if(remainEnd-remainStart+1+this->hashKeyLength>=this->minimumOverlapLength)
-		{
-			int currentMismatchCount = 0;
-			for(int i=remainStart;i<=remainEnd;i++)
-			{
-				char queryBase = queryString.at(i);
-				char subjectBase = subjectRead->getSequence().at(i-subjectAlignment->subjectStart);
-				if(queryBase!=subjectBase)
-				{
-					currentMismatchCount++;
-					if(currentMismatchCount>maxMismatch)return false;
-					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
-				}
-			}
-		}
-		else return false;
+		bool alignsucess = this->doAlignment(subjectAlignment, queryString, subjectString, remainStart, remainEnd);
+		return alignsucess;
 		break;
 	default: return false;
 	}
-	return true;
+
+}
+
+bool SingleKeyHashTable::doAlignment(Alignment* subjectAlignment,string& queryString, string& subjectString, int remainStart, int remainEnd)
+{
+	if(remainEnd-remainStart+1+this->hashKeyLength>=this->minimumOverlapLength)
+	{
+		int currentMismatchCount = 0;
+		for(int i=remainStart;i<=remainEnd;i++)
+		{
+			char queryBase = queryString.at(i);
+			char subjectBase = subjectString.at(i-subjectAlignment->subjectStart);
+			if(queryBase!=subjectBase)
+			{
+				currentMismatchCount++;
+				if(currentMismatchCount>maxMismatch)return false;
+				subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
+			}
+		}
+		return true;
+	}
+	else return false;
 }
 
 /*

@@ -41,6 +41,7 @@ class DoubleKeyHashTable : public HashTableMethod {
 
 
 
+	bool wennDiagramTwoLists(vector<UINT64>* list1, vector<UINT64>* list2, vector<UINT64>* list1only, vector<UINT64>* list2only, vector<UINT64>* list12);
 
 	string getReadSubstring(UINT64 readID, UINT8 mode);// mode ={0: forwardprefix, 1: forwardsuffix, 2: reverseprefix, 3: reversesuffix}
 //	bool doAlignment(Alignment* align, string mode, int subjectStart);
@@ -55,6 +56,9 @@ public:
 	bool insertQueryDataset(QueryDataset* d);
 	bool insertQueryRead(QueryRead *read, string subString, UINT8 mode);
 	vector<UINT64> * getListOfReads(string subString);
+	bool searchHashTable(SubjectEdge * subjectEdge);
+	bool createAlignment(Alignment* subjectAlignment, UINT8 querymode , UINT8 keymatchmode, UINT64 subjectKeyStart);
+	bool doAlignmentWithSeed(Alignment* subjectAlignment,string& queryString, string& subjectString, int start, int end, int seedStart, int seedEnd);
 //	bool doubleKeySearch(edge & Edge);
 //	bool doubleKeySearch(SubjectAlignment & subjectAlign);
 //	bool doubleKeySearch(SubjectAlignmentPairedEnd & subjectAlignment);

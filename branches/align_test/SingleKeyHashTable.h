@@ -46,7 +46,8 @@ public:
 	bool insertQueryRead(QueryRead *read, string subString, UINT8 mode);
 	vector<UINT64> * getListOfReads(string subString);
 	bool searchHashTable(SubjectEdge * subjectEdge);
-	bool doAlignment(Alignment* subjectAlignment, UINT8 queryMode, UINT64 subjectKeyStart);
+	bool createAlignment(Alignment* subjectAlignment, UINT8 queryMode, UINT64 subjectKeyStart);
+	bool doAlignment(Alignment* subjectAlignment,string& queryString, string& subjectString, int remainStart, int remainEnd);
 //	bool singleKeySearch(edge & Edge);
 //	bool singleKeySearch(SubjectAlignment & subjectAlign);
 //	bool singleKeySearch(SubjectAlignmentPairedEnd & subjectAlignment);
