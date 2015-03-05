@@ -152,7 +152,7 @@ bool DoubleKeyHashTable::insertQueryDataset(QueryDataset* d)
 
 	}
 }
-bool DoubleKeyHashTable::insertQueryRead(QueryRead *read, string subString, int mode)
+bool DoubleKeyHashTable::insertQueryRead(QueryRead *read, string subString, UINT8 mode)
 {
 	UINT64 currentCollision =0;
 
@@ -161,7 +161,7 @@ bool DoubleKeyHashTable::insertQueryRead(QueryRead *read, string subString, int 
 	{
 		vector<UINT64>* readList = this->hashTable->getReadIDListAt(index);
 		UINT64 data = readList->at(0);
-		UINT64 keyreadID = data & 0X7FFFFFFFFFFFFFFF;
+		UINT64 keyreadID = data & 0X1FFFFFFFFFFFFFFF;
 		UINT64 keymode = data >> this->numberOfLSB;
 
 
@@ -196,7 +196,7 @@ vector<UINT64> * DoubleKeyHashTable::getListOfReads(string subString)
 	{
 		vector<UINT64>* readList = this->hashTable->getReadIDListAt(index);
 		UINT64 data = readList->at(0);
-		UINT64 keyreadID = data & 0X7FFFFFFFFFFFFFFF;
+		UINT64 keyreadID = data & 0X1FFFFFFFFFFFFFFF;
 		UINT64 keymode = data >> this->numberOfLSB;
 		string keyStr = this->getReadSubstring(keyreadID,keymode);
 
@@ -212,3 +212,322 @@ vector<UINT64> * DoubleKeyHashTable::getListOfReads(string subString)
 	return hashTable->getReadIDListAt(index);	// return the index.
 }
 
+bool DoubleKeyHashTable::doAlignmentWithSeed(Alignment* subjectAlignment,string& queryString, string& subjectString, int start, int end, int seedStart, int seedEnd)
+{
+	if(end-start+1>=this->minimumOverlapLength)
+	{
+		int currentMismatchCount=0;
+		int i = start;
+		while(i<=end)
+		{
+			if(i==seedStart)
+			{
+				i = seedEnd;
+
+			}
+			else
+			{
+				char queryBase = queryString.at(i);
+				char subjectBase = subjectString.at(i-subjectAlignment->subjectStart);
+				if(queryBase!=subjectBase)
+				{
+					currentMismatchCount++;
+					if(currentMismatchCount>maxMismatch)return false;
+					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
+				}
+			}
+			i++;
+		}
+		return true;
+	}
+	else return false;
+}
+
+bool DoubleKeyHashTable::wennDiagramTwoLists(vector<UINT64>* list1, vector<UINT64>* list2, vector<UINT64>* list1only, vector<UINT64>* list2only, vector<UINT64>* list12)//sorted from smaller to larger ID in the list
+{
+	unsigned int i,j;
+	i=0;j=0;
+	while(list1!=NULL&&list2!=NULL&& i<list1->size()&&j<list2->size())
+	{
+		if(list1->at(i)<list2->at(j))
+		{
+			UINT64 smallvalue = list1->at(i);
+			list1only->push_back(smallvalue);
+			i++;
+		}
+		else if(list1->at(i)>list2->at(j))
+		{
+			UINT64 smallvalue = list2->at(j);
+			list2only->push_back(smallvalue);
+			j++;
+		}
+		else //same value in both list
+		{
+			UINT64 value = list1->at(i);
+			list12->push_back(value);
+			i++;j++;
+		}
+	}
+
+	while(list1!=NULL && i<list1->size())
+	{
+		UINT64 smallvalue = list1->at(i);
+		list1only->push_back(smallvalue);
+		i++;
+	}
+
+	while(list2!=NULL && j<list2->size())
+	{
+		UINT64 smallvalue = list2->at(j);
+		list2only->push_back(smallvalue);
+		j++;
+	}
+	return true;
+}
+
+//keymatchmode = 1(only left key matched),2(only right key matched),3(both matched)
+bool DoubleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 querymode , UINT8 keymatchmode, UINT64 subjectKeyStart)
+{
+	QueryRead* queryRead = subjectAlignment->queryRead;
+	SubjectRead* subjectRead = subjectAlignment->subjectRead;
+	string subjectString = subjectRead->getSequence();
+	string queryString;
+	int hashKeyLength = this->hashKeyLength_left+this->hashKeyLength_right;
+	int start,end =0;
+	int seedStart, seedEnd = 0;
+	switch (querymode) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
+	{
+	case 0:
+		subjectAlignment->queryOrientation = true;
+		subjectAlignment->subjectStart = -subjectKeyStart;
+		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+		queryString = queryRead->getSequence();
+		start = 0;
+		end = (subjectAlignment->subjectEnd <= subjectAlignment->queryEnd)?subjectAlignment->subjectEnd:subjectAlignment->queryEnd;
+		switch(keymatchmode)
+		{
+		case 1:
+			seedStart = 0;
+			seedEnd = this->hashKeyLength_left-1;
+			break;
+		case 2:
+			seedStart = this->hashKeyLength_left;
+			seedEnd = hashKeyLength-1;
+			break;
+		case 3:
+			seedStart = 0;
+			seedEnd = hashKeyLength-1;
+			break;
+		default: return false;
+		}
+
+		break;
+	case 1:
+		subjectAlignment->queryOrientation = true;
+		subjectAlignment->subjectStart = queryRead->getReadLength()-hashKeyLength-subjectKeyStart;
+		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+		string queryString = queryRead->getSequence();
+		start = (0>=subjectAlignment->subjectStart)?0:subjectAlignment->subjectStart;
+		end = subjectAlignment->queryEnd;
+		switch(keymatchmode)
+		{
+		case 1:
+			seedStart = subjectAlignment->queryEnd-hashKeyLength;
+			seedEnd = subjectAlignment->queryEnd-this->hashKeyLength_right-1;
+			break;
+		case 2:
+			seedStart = subjectAlignment->queryEnd-this->hashKeyLength_right;
+			seedEnd = subjectAlignment->queryEnd-1;
+			break;
+		case 3:
+			seedStart = subjectAlignment->queryEnd-hashKeyLength;
+			seedEnd = subjectAlignment->queryEnd-1;
+			break;
+		default: return false;
+		}
+		break;
+	case 2:
+		subjectAlignment->queryOrientation = false;
+		subjectAlignment->subjectStart = -subjectKeyStart;
+		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+		string queryString = queryRead->reverseComplement();
+		start = 0;
+		end = (subjectAlignment->subjectEnd <= subjectAlignment->queryEnd)?subjectAlignment->subjectEnd:subjectAlignment->queryEnd;
+		switch(keymatchmode)
+		{
+		case 1:
+			seedStart = 0;
+			seedEnd = this->hashKeyLength_left-1;
+			break;
+		case 2:
+			seedStart = this->hashKeyLength_left;
+			seedEnd = hashKeyLength-1;
+			break;
+		case 3:
+			seedStart = 0;
+			seedEnd = hashKeyLength-1;
+			break;
+		default: return false;
+		}
+		break;
+	case 3:
+		subjectAlignment->queryOrientation = false;
+		subjectAlignment->subjectStart = queryRead->getReadLength()-hashKeyLength-subjectKeyStart;
+		subjectAlignment->queryEnd = queryRead->getReadLength()-1;
+		subjectAlignment->subjectEnd = subjectAlignment->subjectStart + subjectRead->getReadLength() -1;
+		string queryString = queryRead->reverseComplement();
+		start = (0>=subjectAlignment->subjectStart)?0:subjectAlignment->subjectStart;
+		end = subjectAlignment->queryEnd;
+		switch(keymatchmode)
+		{
+		case 1:
+			seedStart = subjectAlignment->queryEnd-hashKeyLength;
+			seedEnd = subjectAlignment->queryEnd-this->hashKeyLength_right-1;
+			break;
+		case 2:
+			seedStart = subjectAlignment->queryEnd-this->hashKeyLength_right;
+			seedEnd = subjectAlignment->queryEnd-1;
+			break;
+		case 3:
+			seedStart = subjectAlignment->queryEnd-hashKeyLength;
+			seedEnd = subjectAlignment->queryEnd-1;
+			break;
+		default: return false;
+		}
+		break;
+	default: return false;
+	}
+	bool alignsuccess = this->doAlignmentWithSeed(subjectAlignment,queryString, subjectString,start, end, seedStart, seedEnd);
+	return alignsuccess;
+}
+
+bool DoubleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
+{
+	SubjectRead *subjectRead = subjectEdge->subjectRead; 	// Get the current read subject read.
+	string subjectReadString = subjectRead->getSequence(); 		// Get the forward string of subject read.
+	string subLeftString, subRightString;
+	for(INT64 j = 0; j <= subjectRead->getReadLength()-this->hashKeyLength_left-this->hashKeyLength_right; j++)
+	{
+		subLeftString = subjectReadString.substr(j,this->hashKeyLength_left);
+		subRightString = subjectReadString.substr(j+this->hashKeyLength_left, this->hashKeyLength_right);
+		vector<UINT64> * listOfReads_left=this->getListOfReads(subLeftString);
+		vector<UINT64> * listOfReads_right=this->getListOfReads(subRightString);
+		vector<UINT64> * listOfReadsList[8];
+		for(int i=0;i<8;i++)
+			listOfReadsList[i] = new vector<UINT64>();
+
+		if(listOfReads_left!=NULL || !listOfReads_left->empty())
+		{
+			for(INT64 k = 0; k < listOfReads_left->size(); k++) // For each such reads.
+			{
+				UINT64 data = listOfReads_left->at(k);
+				UINT64 queryReadID = data & 0X1FFFFFFFFFFFFFFF;
+				UINT64 queryMode = data >> this->numberOfLSB;
+				if(queryMode == 0 || queryMode == 1 || queryMode == 2 || queryMode == 3)
+				{
+					QueryRead *queryRead = this->dataSet->getReadFromID(queryReadID);
+					if(subjectRead->getName()<queryRead->getName()) 			// No need to discover the same edge again. Only need to explore half of the combinations
+					{
+						listOfReadsList[queryMode]->push_back(queryReadID);
+					}
+				}
+			}
+		}
+		if(listOfReads_right!=NULL || !listOfReads_right->empty())
+		{
+			for(INT64 k = 0; k < listOfReads_right->size(); k++) // For each such reads.
+			{
+				UINT64 data = listOfReads_right->at(k);
+				UINT64 queryReadID = data & 0X1FFFFFFFFFFFFFFF;
+				UINT64 queryMode = data >> this->numberOfLSB;
+				if(queryMode == 4 || queryMode == 5 || queryMode == 6 || queryMode == 7)
+				{
+					QueryRead *queryRead = this->dataSet->getReadFromID(queryReadID);
+					if(subjectRead->getName()<queryRead->getName()) 			// No need to discover the same edge again. Only need to explore half of the combinations
+					{
+						listOfReadsList[queryMode]->push_back(queryReadID);
+					}
+				}
+			}
+		}
+
+		for(UINT8 i =0;i<=3;i++)
+		{
+			if(listOfReadsList[i]->empty()==false && listOfReadsList[i+4]->empty()==false)
+			{
+			vector<UINT64>* KeyLeftOnlyList = new vector<UINT64>;
+			vector<UINT64>* KeyRightOnlyList = new vector<UINT64>;
+			vector<UINT64>* BothKeyList = new vector<UINT64>;
+			this->wennDiagramTwoLists(listOfReadsList[i],listOfReadsList[i+4],KeyLeftOnlyList, KeyRightOnlyList, BothKeyList);
+
+				for(unsigned int k=0;k<BothKeyList->size();k++)
+				{
+					UINT64 currentID = BothKeyList->at(k);
+					QueryRead* queryRead = this->dataSet->getReadFromID(currentID);
+//					string queryString = (i==0 || i==1)?queryRead->getSequence():queryRead->reverseComplement();
+
+
+					Alignment *subjectAlignment = new Alignment(subjectRead, queryRead);
+					UINT8 keyMatchMode = 3;
+
+					if(this->createAlignment(subjectAlignment, i, keyMatchMode, j))
+					{
+					subjectEdge->addAlignment(subjectAlignment);
+					}
+					else
+						delete subjectAlignment;
+
+				}
+
+				for(unsigned int k=0;k<KeyLeftOnlyList->size();k++)
+				{
+					UINT64 currentID = KeyLeftOnlyList->at(k);
+					QueryRead* queryRead = this->dataSet->getReadFromID(currentID);
+//					string queryString = (i==0 || i==1)?queryRead->getSequence():queryRead->reverseComplement();
+
+
+					Alignment *subjectAlignment = new Alignment(subjectRead, queryRead);
+					UINT8 keyMatchMode = 1;
+
+					if(this->createAlignment(subjectAlignment, i, keyMatchMode, j))
+					{
+					subjectEdge->addAlignment(subjectAlignment);
+					}
+					else
+						delete subjectAlignment;
+				}
+				for(unsigned int k=0;k<KeyRightOnlyList->size();k++)
+				{
+					UINT64 currentID = KeyRightOnlyList->at(k);
+					QueryRead* queryRead = this->dataSet->getReadFromID(currentID);
+//					string queryString = (i==0 || i==1)?queryRead->getSequence():queryRead->reverseComplement();
+
+
+					Alignment *subjectAlignment = new Alignment(subjectRead, queryRead);
+					UINT8 keyMatchMode = 2;
+
+					if(this->createAlignment(subjectAlignment, i, keyMatchMode, j))
+					{
+					subjectEdge->addAlignment(subjectAlignment);
+					}
+					else
+						delete subjectAlignment;
+				}
+				KeyLeftOnlyList->clear();
+				KeyRightOnlyList->clear();
+				BothKeyList->clear();
+				delete KeyLeftOnlyList;
+				delete KeyRightOnlyList;
+				delete BothKeyList;
+			}// end if
+
+
+		}//end for
+
+		delete[] listOfReadsList;
+	}
+	return true;
+}
