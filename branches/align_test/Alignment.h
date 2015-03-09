@@ -79,8 +79,9 @@ public:
 	int orientationTranslate();
 	bool isContainedAlignment();
 	int getEditDistance(); //return the size of the editInfor
+	bool insertSubstitution(int position, char base);
 
-
+private:
 	// coordinates are defined by the query reads
 	// all insertion and deletion is on the subject read
 	// upper case char means substitution

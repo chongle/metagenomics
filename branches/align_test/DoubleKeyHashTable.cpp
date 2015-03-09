@@ -174,7 +174,9 @@ bool DoubleKeyHashTable::insertQueryRead(QueryRead *read, string subString, UINT
 		currentCollision++;
 		index = (index == hashTable->getHashTableSize() - 1) ? 0: index + 1; 	// Increment the index
 	}
-	UINT64 combinedID = read->getIdentifier() | (mode << this->numberOfLSB);
+	UINT64 a = ((UINT64)(mode) << this->numberOfLSB);
+	UINT64 b = read->getIdentifier();
+	UINT64 combinedID = a | b;
 	hashTable->insertReadIDAt(index,combinedID);							// Add the string in the list.
 
 	if(currentCollision> this->maxSingleHashCollision)
@@ -233,7 +235,7 @@ bool DoubleKeyHashTable::doAlignmentWithSeed(Alignment* subjectAlignment,string&
 				{
 					currentMismatchCount++;
 					if(currentMismatchCount>maxMismatch)return false;
-					subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
+					subjectAlignment->insertSubstitution(i, subjectBase);
 				}
 			}
 			i++;
@@ -334,16 +336,16 @@ bool DoubleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 		switch(keymatchmode)
 		{
 		case 1:
-			seedStart = subjectAlignment->queryEnd-hashKeyLength;
-			seedEnd = subjectAlignment->queryEnd-this->hashKeyLength_right-1;
+			seedStart = subjectAlignment->queryEnd-hashKeyLength+1;
+			seedEnd = subjectAlignment->queryEnd-this->hashKeyLength_right;
 			break;
 		case 2:
-			seedStart = subjectAlignment->queryEnd-this->hashKeyLength_right;
-			seedEnd = subjectAlignment->queryEnd-1;
+			seedStart = subjectAlignment->queryEnd-this->hashKeyLength_right+1;
+			seedEnd = subjectAlignment->queryEnd;
 			break;
 		case 3:
-			seedStart = subjectAlignment->queryEnd-hashKeyLength;
-			seedEnd = subjectAlignment->queryEnd-1;
+			seedStart = subjectAlignment->queryEnd-hashKeyLength+1;
+			seedEnd = subjectAlignment->queryEnd;
 			break;
 		default: return false;
 		}
@@ -384,16 +386,16 @@ bool DoubleKeyHashTable::createAlignment(Alignment* subjectAlignment, UINT8 quer
 		switch(keymatchmode)
 		{
 		case 1:
-			seedStart = subjectAlignment->queryEnd-hashKeyLength;
-			seedEnd = subjectAlignment->queryEnd-this->hashKeyLength_right-1;
+			seedStart = subjectAlignment->queryEnd-hashKeyLength+1;
+			seedEnd = subjectAlignment->queryEnd-this->hashKeyLength_right;
 			break;
 		case 2:
-			seedStart = subjectAlignment->queryEnd-this->hashKeyLength_right;
-			seedEnd = subjectAlignment->queryEnd-1;
+			seedStart = subjectAlignment->queryEnd-this->hashKeyLength_right+1;
+			seedEnd = subjectAlignment->queryEnd;
 			break;
 		case 3:
-			seedStart = subjectAlignment->queryEnd-hashKeyLength;
-			seedEnd = subjectAlignment->queryEnd-1;
+			seedStart = subjectAlignment->queryEnd-hashKeyLength+1;
+			seedEnd = subjectAlignment->queryEnd;
 			break;
 		default: return false;
 		}
@@ -419,7 +421,7 @@ bool DoubleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 		for(int i=0;i<8;i++)
 			listOfReadsList[i] = new vector<UINT64>();
 
-		if(listOfReads_left!=NULL || !listOfReads_left->empty())
+		if(listOfReads_left!=NULL && !listOfReads_left->empty())
 		{
 			for(INT64 k = 0; k < listOfReads_left->size(); k++) // For each such reads.
 			{
@@ -429,14 +431,14 @@ bool DoubleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 				if(queryMode == 0 || queryMode == 1 || queryMode == 2 || queryMode == 3)
 				{
 					QueryRead *queryRead = this->dataSet->getReadFromID(queryReadID);
-					if(subjectRead->getName()<queryRead->getName()) 			// No need to discover the same edge again. Only need to explore half of the combinations
+					if(subjectRead->getName()>queryRead->getName()) 			// No need to discover the same edge again. Only need to explore half of the combinations
 					{
 						listOfReadsList[queryMode]->push_back(queryReadID);
 					}
 				}
 			}
 		}
-		if(listOfReads_right!=NULL || !listOfReads_right->empty())
+		if(listOfReads_right!=NULL && !listOfReads_right->empty())
 		{
 			for(INT64 k = 0; k < listOfReads_right->size(); k++) // For each such reads.
 			{
@@ -446,7 +448,7 @@ bool DoubleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 				if(queryMode == 4 || queryMode == 5 || queryMode == 6 || queryMode == 7)
 				{
 					QueryRead *queryRead = this->dataSet->getReadFromID(queryReadID);
-					if(subjectRead->getName()<queryRead->getName()) 			// No need to discover the same edge again. Only need to explore half of the combinations
+					if(subjectRead->getName()>queryRead->getName()) 			// No need to discover the same edge again. Only need to explore half of the combinations
 					{
 						listOfReadsList[queryMode]->push_back(queryReadID);
 					}
@@ -456,7 +458,7 @@ bool DoubleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 
 		for(UINT8 i =0;i<=3;i++)
 		{
-			if(listOfReadsList[i]->empty()==false && listOfReadsList[i+4]->empty()==false)
+			if(listOfReadsList[i]->empty()==false || listOfReadsList[i+4]->empty()==false)
 			{
 			vector<UINT64>* KeyLeftOnlyList = new vector<UINT64>;
 			vector<UINT64>* KeyRightOnlyList = new vector<UINT64>;
@@ -527,7 +529,11 @@ bool DoubleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 
 		}//end for
 
-		delete[] listOfReadsList;
+		for(int i=0;i<8;i++)
+		{
+			listOfReadsList[i]->clear();
+			delete listOfReadsList[i];
+		}
 	}
 	return true;
 }

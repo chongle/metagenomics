@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 	}
 
 
-//--------
+//--------generate data sets-----------
 
 	QueryDataset* queryDataset = new QueryDataset(Config::getQueryDatasetFilename());
 	{
@@ -44,8 +44,8 @@ int main(int argc, char **argv)
 
 	}
 
-//--------
-
+//--------single key hash table method------
+/*
 	HashTableMethod* singleKeyHashTable = new SingleKeyHashTable(queryDataset);
 	{
 	CLOCKSTART;
@@ -66,11 +66,11 @@ int main(int argc, char **argv)
 		CLOCKSTOP;
 		}
 	}
+*/
 
 
+//---------double key hash table method-------
 
-//---------
-	/*
 	HashTableMethod* doubleKeyHashTable = new DoubleKeyHashTable(queryDataset);
 	{
 	CLOCKSTART;
@@ -80,10 +80,19 @@ int main(int argc, char **argv)
 	doubleKeyHashTable->insertQueryDataset(queryDataset);
 	MEMORYSTOP;
 	CLOCKSTOP;
+	{
+	CLOCKSTART;
+	MEMORYSTART;
+	cout << "-------overlapgraph constructing------" << endl;
+	OverlapGraphConstructor * overlapgraphConstructor = new OverlapGraphConstructor(doubleKeyHashTable);
+	overlapgraphConstructor->start();
+	MEMORYSTOP;
+	CLOCKSTOP;
 	}
-	*/
+	}
 
-//---------
+
+//---------omega hash table method------
 /*
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
 	{
@@ -98,7 +107,7 @@ int main(int argc, char **argv)
 	omegaGraph->start();
 	delete omegaGraph;
 */
-//---------
+//---------using omega hash table to filter the identical and contained reads---
 /*
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
 	{
