@@ -147,6 +147,14 @@ int Alignment::getEditDistance()
 	return size;
 }
 
+bool Alignment::insertSubstitution(int position, char base)
+{
+	if(this->editInfor==NULL)
+		this->editInfor = new map<int, char>();
+	this->editInfor->insert(std::pair<int, char>(position, base));
+	return true;
+}
+
 SubjectEdge::SubjectEdge(SubjectRead* sRead)
 {
 	this->subjectRead = sRead;

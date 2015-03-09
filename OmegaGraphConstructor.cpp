@@ -204,7 +204,7 @@ bool OmegaGraphConstructor::start()
 bool OmegaGraphConstructor::start()
 {
 
-	filePointer.open("tempoutput.txt");
+
 	CLOCKSTART;
 	MEMORYSTART;
 	vector<SubjectRead *>* subjectReadList= new vector<SubjectRead *>();
@@ -276,7 +276,7 @@ omp_set_num_threads(Config::numberOfThreads);
 	MEMORYSTOP;
 	CLOCKSTOP;
 cout<<"edge: "<<this->totaledgenumber<<endl;
-filePointer.close();
+
 	return true;
 }
 

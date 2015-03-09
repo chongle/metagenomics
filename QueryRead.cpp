@@ -158,6 +158,7 @@ bool QueryRead::printAlignmentToFile(ofstream & filePointer)
 			<<align->subjectReadSequence.length() << "," << subStart << "," << subEnd << ", no error info \r\n"<<endl;
 			*/
 	outputString = sstm.str();
+//	cout<<outputString;
 	filePointer<<outputString;
 	}
 

@@ -136,7 +136,9 @@ bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string subString, UINT
 		currentCollision++;
 		index = (index == hashTable->getHashTableSize() - 1) ? 0: index + 1; 	// Increment the index
 	}
-	UINT64 combinedID = read->getIdentifier() | (mode << this->numberOfLSB);
+	UINT64 a = ((UINT64)(mode) << this->numberOfLSB);
+	UINT64 b = read->getIdentifier();
+	UINT64 combinedID = a | b;
 	hashTable->insertReadIDAt(index,combinedID);							// Add the string in the list.
 
 	if(currentCollision> this->maxSingleHashCollision)
@@ -183,7 +185,7 @@ bool SingleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 	{
 		subString = subjectReadString.substr(j,this->hashKeyLength);
 		vector<UINT64> * listOfReads=this->getListOfReads(subString); // Search the string in the hash table.
-		if(listOfReads!=NULL || !listOfReads->empty()) // If there are some reads that contain subString as prefix or suffix of the read or their reverse complement
+		if(listOfReads!=NULL && !listOfReads->empty()) // If there are some reads that contain subString as prefix or suffix of the read or their reverse complement
 		{
 			for(INT64 k = 0; k < listOfReads->size(); k++) // For each such reads.
 			{
@@ -191,7 +193,7 @@ bool SingleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 				UINT64 queryReadID = data & 0X3FFFFFFFFFFFFFFF;
 				UINT64 queryMode = data >> this->numberOfLSB;
 				QueryRead *queryRead = this->dataSet->getReadFromID(queryReadID); 	// Least significant 62 bits store the read number.
-				if(subjectRead->getName()<queryRead->getName()) 			// No need to discover the same edge again. Only need to explore half of the combinations
+				if(subjectRead->getName()<=queryRead->getName()) 			// No need to discover the same edge again. Only need to explore half of the combinations
 				{
 					continue;
 				}
@@ -207,6 +209,7 @@ bool SingleKeyHashTable::searchHashTable(SubjectEdge * subjectEdge)
 
 					if(this->createAlignment(subjectAlignment, queryMode, j))
 					{
+
 					subjectEdge->addAlignment(subjectAlignment);
 					}
 					else
@@ -295,7 +298,7 @@ bool SingleKeyHashTable::doAlignment(Alignment* subjectAlignment,string& querySt
 			{
 				currentMismatchCount++;
 				if(currentMismatchCount>maxMismatch)return false;
-				subjectAlignment->editInfor->insert(std::pair<int, char>(i, subjectBase));
+				subjectAlignment->insertSubstitution(i, subjectBase);
 			}
 		}
 		return true;
