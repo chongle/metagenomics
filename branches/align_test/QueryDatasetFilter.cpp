@@ -41,7 +41,8 @@ QueryDatasetFilter::~QueryDatasetFilter() {
 
 bool QueryDatasetFilter::start()
 {
-	filePointer.open("temp.fasta");
+	string outFileName = Config::outputfilename;
+	filePointer.open(outFileName.c_str());
 	CLOCKSTART;
 	MEMORYSTART;
 
@@ -211,19 +212,40 @@ filePointer.close();
 void QueryDatasetFilter::printToFile()
 {
 	UINT64 count = 0;
-	for(UINT64 i = 1; i <= dataset->getNumberOfUniqueReads(); i++)
+	if(Config::useID == false)
 	{
-		QueryRead *queryRead = dataset->getReadFromID(i);
-		int tag = this->tagList->at(i);
-		if(tag==0)
+		for(UINT64 i = 1; i <= dataset->getNumberOfUniqueReads(); i++)
 		{
-			count++;
-			std::stringstream sstm;
-			sstm<<">"<<queryRead->getName()<<endl;
-			sstm<<queryRead->getSequence()<<endl;
-			this->filePointer<<sstm.str();
-			if(count%100000==0)	// Show the progress.
-				cout<<"counter: " << setw(10) << count << " Reads Written. " << setw(10) << endl;
+			QueryRead *queryRead = dataset->getReadFromID(i);
+			int tag = this->tagList->at(i);
+			if(tag==0)
+			{
+				count++;
+				std::stringstream sstm;
+				sstm<<">"<<queryRead->getName()<<endl;
+				sstm<<queryRead->getSequence()<<endl;
+				this->filePointer<<sstm.str();
+				if(count%100000==0)	// Show the progress.
+					cout<<"counter: " << setw(10) << count << " Reads Written. " << setw(10) << endl;
+			}
+		}
+	}
+	else
+	{
+		for(UINT64 i = 1; i <= dataset->getNumberOfUniqueReads(); i++)
+		{
+			QueryRead *queryRead = dataset->getReadFromID(i);
+			int tag = this->tagList->at(i);
+			if(tag==0)
+			{
+				count++;
+				std::stringstream sstm;
+				sstm<<">"<<queryRead->getIdentifier()<<endl;
+				sstm<<queryRead->getSequence()<<endl;
+				this->filePointer<<sstm.str();
+				if(count%100000==0)	// Show the progress.
+					cout<<"counter: " << setw(10) << count << " Reads Written. " << setw(10) << endl;
+			}
 		}
 	}
 	cout<<"Total counter: " << setw(10) << count << " Reads Written. " << setw(10) << endl;

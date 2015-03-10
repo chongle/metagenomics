@@ -82,10 +82,11 @@ typedef long long INT64;
 class Config {
 
 public:
-	static string operationCode;//"ConstructGraph","MergePairedEndReads","CorrectErrors"
+	static string operationCode;//"RemoveContainedReads","ConstructGraph","MergePairedEndReads","CorrectErrors"
 	static string queryFilename;
 	static vector<string> subjectFilenameList;
 	static string outputfilename;
+	static string hashtabletype;
 
 	static UINT16 minimumOverlapLength;
 	static UINT16 hashKeyLength;
@@ -96,6 +97,7 @@ public:
 
 	static bool isSingleEnd; //subject is always treated as single end, while the query is only paired end when using "MergePairedEndReads"
 	static bool isFilter;
+	static bool useID;
 
 	static bool perfectMatch;
 	static UINT16 maxMismatch; //only valid when perfectMatch is set to false
@@ -114,11 +116,14 @@ public:
 	static string getQueryDatasetFilename();	// query is database A loaded to memory
 	static UINT16 getminimumOverlapLength();
 	static UINT16 getHashKeyLength();
+	static UINT16 getHashLeftKeyLength();
+	static UINT16 getHashRightKeyLength();
 	static UINT64 getStreamChunkSize();
 
 	static bool isSingleKeyHashTable();
 	static bool allowMismatch();
 	static bool isQuerySingleEndReads();
+	static string getHashTableType();
 
 	static UINT16 getMaxMismatch();
 	static UINT16 getMaxIndel();
