@@ -20,8 +20,6 @@ int main(int argc, char **argv)
 
 
 	// parse command line options:
-	// align.exe -a -q query.fasta -s subject1.fasta ... -o CorrectErrors --single
-	// align.exe -a --query query.fasta --subject subject1.fasta ... --operation CorrectErrors --double
 	if(!Config::setConfig(argc, argv)){
 		cout << "Error: wrong configurations" << endl;
 		return false;
@@ -45,7 +43,8 @@ int main(int argc, char **argv)
 	}
 
 //--------single key hash table method------
-/*
+if(Config::getOperation()=="ConstructGraph" && Config::getHashTableType() == "single")
+{
 	HashTableMethod* singleKeyHashTable = new SingleKeyHashTable(queryDataset);
 	{
 	CLOCKSTART;
@@ -64,13 +63,16 @@ int main(int argc, char **argv)
 		overlapgraphConstructor->start();
 		MEMORYSTOP;
 		CLOCKSTOP;
+		delete overlapgraphConstructor;
 		}
 	}
-*/
+	delete singleKeyHashTable;
+}
 
 
 //---------double key hash table method-------
-
+if(Config::getOperation()=="ConstructGraph" && Config::getHashTableType() == "double")
+{
 	HashTableMethod* doubleKeyHashTable = new DoubleKeyHashTable(queryDataset);
 	{
 	CLOCKSTART;
@@ -88,12 +90,15 @@ int main(int argc, char **argv)
 	overlapgraphConstructor->start();
 	MEMORYSTOP;
 	CLOCKSTOP;
+	delete overlapgraphConstructor;
 	}
 	}
-
+	delete doubleKeyHashTable;
+}
 
 //---------omega hash table method------
-/*
+if(Config::getOperation()=="ConstructGraph" && Config::getHashTableType() == "omega")
+{
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
 	{
 	CLOCKSTART;
@@ -106,9 +111,11 @@ int main(int argc, char **argv)
 	OmegaGraphConstructor * omegaGraph = new OmegaGraphConstructor(omegaHashTable);
 	omegaGraph->start();
 	delete omegaGraph;
-*/
+	delete omegaHashTable;
+}
 //---------using omega hash table to filter the identical and contained reads---
-/*
+if(Config::getOperation()=="RemoveContainedReads")
+{
 	OmegaHashTable *omegaHashTable=new OmegaHashTable();
 	{
 	CLOCKSTART;
@@ -121,54 +128,16 @@ int main(int argc, char **argv)
 	QueryDatasetFilter * filter = new QueryDatasetFilter(omegaHashTable);
 	filter->start();
 	delete filter;
-*/
+	delete omegaHashTable;
+}
 
-//	delete omegaHashTable;
+
 	delete queryDataset;
-//	delete singleKeyHashTable;
-//	delete doubleKeyHashTable;
+
 
 	CLOCKSTOP;
 
-/*
-	if (Config::getOperation() == "ConstructGraph"){
 
-		// start graph construction
-		OverlapGraphConstructor* graphconstructor = new OverlapGraphConstructor();
-		if(!graphconstructor->start())
-		{
-			cout<< "Failed to run OverlapGraphConstructor start()";
-		}
-		delete graphconstructor;
-
-	}
-	else if (Config::getOperation() == "MergePairedEndReads"){
-		// start merge reads
-		PairedReadMerger* merger = new PairedReadMerger();
-		if(!merger->start())
-		{
-			cout<< "Failed to run PairedReadMerger start()";
-		}
-		delete merger;
-
-	}
-	else if (Config::getOperation() == "CorrectErrors"){
-		// start correct errors
-		ErrorCorrector* errorCorrector = new ErrorCorrector();
-		if(!errorCorrector->start())
-		{
-			cout<< "Failed to run ErrorCorrector start()";
-		}
-		delete errorCorrector;
-	}
-	else{
-		cout << "Error: invalid operation type."<< endl;
-		return false;
-	}
-*/
-
-//    int nthreads = omp_get_num_threads();
-//    cout<<"Number of threads = "<<nthreads<<endl;
 	return true;
 }
 

@@ -19,6 +19,7 @@ Config::~Config() {
 //Here is to create and initialize the static members
 string Config::operationCode="";//"ConstructGraph","MergePairedEndReads","CorrectErrors"
 string Config::queryFilename = "";
+string Config::hashtabletype = "single";
 
 vector<string> Config::subjectFilenameList;
 string Config::outputfilename = "out.txt";
@@ -29,6 +30,7 @@ UINT16 Config::hashKeyLength_left = 19;
 UINT16 Config::hashKeyLength_right = 20;
 UINT64 Config::streamChunkSize = 400;
 bool Config::isSingleKey = true;
+bool Config::useID = false;
 
 bool Config::isSingleEnd = true; //subject is always treated as single end, while the query is only paired end when using "MergePairedEndReads"
 bool Config::isFilter = false;
@@ -46,29 +48,43 @@ void Config::printHelp()
 {
     std::cout << std::endl
               << "  Usage:" << std::endl
-              << "    newalign [OPTION]...<PARAM>..." << std::endl
+              << "    align_test [OPTION]...<PARAM>..." << std::endl
               << std::endl
               << "  <PARAM>" << std::endl
-			  << "    -o/--operation\t ConstructGraph,MergePairedEndReads or CorrectErrors" << std::endl
+			  << "    -i/--instance\t RemoveContainedReads,ConstructGraph,MergePairedEndReads or CorrectErrors" << std::endl
               << "    -q/--query\t query file name" << std::endl  // file in fasta/fastq format.
-              << "    -s/--subject\t subject file names (comma separated)" << std::endl  // Single-end file name list
-              << "    --single/--double\t single hash table or double hash table method" << std::endl
+              << "    -s/--subject\t subject file name(s) (comma separated)" << std::endl  // Single-end file name list
+              << "    -ht/--hashtable single/double/omega\t single hash table or double hash table method or omega hash table method" << std::endl
+              << "    single hash table method is default setting except that in RemoveContainedReads omega is default" << std::endl
+
+              << "    single : please set up the key length -k" << std::endl
+              << "    double : please set up the left key length -lk and right key length -rk" << std::endl
+              << "    omega : key length will be minimum_overlap-1, will ignore -m setting because no mismatch is allowed." << std::endl
 
               << "    -l\t minimum overlap length (default:40)" << std::endl
-              << "    -k\t hash table key length (default:32)" << std::endl
+              << "    -k\t single hash table key length (default:39)" << std::endl
+              << "    -lk\t double hash table left key length (default:19)" << std::endl
+              << "    -rk\t double hash table right key length (default:20)" << std::endl
 			  << "    -m\t maximum allowed mismatch (default:1)" << std::endl
 			  << "    -t\t number of threads (default:1 [single thread])" << std::endl
 			  << "    -z\t stream chunk size of subject read file (default:400)" << std::endl
-			  << "    --out\t output file name (default:out.txt)" << std::endl
+			  << "    -o/--out\t output file name (default:out.txt)" << std::endl
 
               << std::endl
               << "  [OPTION]" << std::endl
-              << "    -h/--help" << std::endl
-			  << "    -f/--filter" << std::endl
-			  << "    -a/--align" << std::endl
+              << "    -h/--help\t only print out the help contents" << std::endl
+			  << "    -id/--ID\t use and print IDs in the fasta file rather than the names" << std::endl
+//			  << "    -f/--filter" << std::endl
+//			  << "    -a/--align" << std::endl
 			  << std::endl
 
-    		<< "Example: ./newalign -o ConstructGraph --subject sreads1.fasta,sreads2.fasta --query qreads.fasta --out outgraph.txt --double -m 1 -k 16 -t 4" << std::endl;
+	<< "Example: ./align_test -i RemoveContainedReads --ID --subject sreads1.fasta,sreads2.fasta --query qreads.fasta --out cleanreads.fasta -l 40 -t 4" << std::endl
+	<< "Example: ./align_test -i ConstructGraph -ht omega --subject sreads1.fasta,sreads2.fasta --query qreads.fasta --out outgraph.txt -l 40 -t 4" << std::endl
+    << "Example: ./align_test -i ConstructGraph -ht single --subject sreads1.fasta,sreads2.fasta --query qreads.fasta --out outgraph.txt -l 40 -m 1 -k 32 -t 4 -z 1000" << std::endl
+	<< "Example: ./align_test -i ConstructGraph -ht double --subject sreads1.fasta,sreads2.fasta --query qreads.fasta --out outgraph.txt -l 40 -m 1 -lk 16 -rk 16 -t 4" << std::endl
+
+    << "Example: ./align_test -i MergePairedEndReads -ht double --subject sreads1.fasta,sreads2.fasta --query qreads.fasta --out outgraph.txt -l 40 -m 1 -lk 16 -rk 16 -t 4" << std::endl;
+
 }
 
 bool Config::setConfig(int argc, char **argv)
@@ -108,7 +124,13 @@ bool Config::setConfig(int argc, char **argv)
 	        Config::isFilter = false;
 
 	    }
-		if (argumentsList[i] == "-o" || argumentsList[i] == "--operation")
+
+		if (argumentsList[i] == "-id" || argumentsList[i] == "--ID")
+	    {
+	        Config::useID = true;
+
+	    }
+		else if (argumentsList[i] == "-i" || argumentsList[i] == "--instance")
 	    {
 	        Config::operationCode = argumentsList[++i];
 
@@ -136,15 +158,21 @@ bool Config::setConfig(int argc, char **argv)
 			Config::outputfilename = outputFilename;
 
 		}
+		else if(argumentsList[i] == "-ht" || argumentsList[i] == "--hashtable")
+		{
+			string type=argumentsList[++i];
+			Config::hashtabletype = type;
+
+		}
 
 		else if (argumentsList[i] == "-l")
 			Config::minimumOverlapLength = atoi(argumentsList[++i].c_str());
 		else if (argumentsList[i] == "-k")
 			Config::hashKeyLength = atoi(argumentsList[++i].c_str());
-		else if (argumentsList[i] == "--single")
-			Config::isSingleKey = true;
-		else if (argumentsList[i] == "--double")
-			Config::isSingleKey = false;
+		else if (argumentsList[i] == "-lk")
+			Config::hashKeyLength_left = atoi(argumentsList[++i].c_str());
+		else if (argumentsList[i] == "-rk")
+			Config::hashKeyLength_right = atoi(argumentsList[++i].c_str());
 		else if (argumentsList[i] == "-m")
 					Config::maxMismatch = atoi(argumentsList[++i].c_str());
 		else if (argumentsList[i] == "-t")
@@ -195,6 +223,14 @@ UINT16 Config::getHashKeyLength()
 {
 	return Config::hashKeyLength;
 }
+UINT16 Config::getHashLeftKeyLength()
+{
+	return Config::hashKeyLength_left;
+}
+UINT16 Config::getHashRightKeyLength()
+{
+	return Config::hashKeyLength_right;
+}
 UINT64 Config::getStreamChunkSize()
 {
 	return Config::streamChunkSize;
@@ -203,6 +239,10 @@ UINT64 Config::getStreamChunkSize()
 bool Config::isSingleKeyHashTable()
 {
 	return Config::isSingleKey;
+}
+string Config::getHashTableType()
+{
+	return Config::hashtabletype;
 }
 bool Config::allowMismatch()
 {

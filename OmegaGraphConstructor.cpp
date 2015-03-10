@@ -252,6 +252,7 @@ omp_set_num_threads(Config::numberOfThreads);
 				{
 					 Alignment * alignment= subjectEdge->alignmentList->at(j);
 					 alignment->queryRead->addAlignment(alignment);
+					 this->totaledgenumber++;
 
 				}
 				 subjectDataset->addSubjectRead(subjectEdge->subjectRead);
@@ -343,7 +344,7 @@ bool OmegaGraphConstructor::searchHashTable(SubjectEdge * subjectEdge)
 //YAO					else
 //YAO					sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<qRead->getSequence()<<"||||"<<sRead->getSequence()<<endl;
 //YAO				filePointer<<sstm.str();
-					this->totaledgenumber++;
+
 					Alignment *subjectAlignment = new Alignment(subjectRead, queryRead);
 					switch (orientation) // Most significant 2 bit represents  00 - prefix forward, 01 - suffix forward, 10 -  prefix reverse, 11 -  suffix reverse.
 					{
