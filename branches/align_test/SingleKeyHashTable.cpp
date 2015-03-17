@@ -143,10 +143,10 @@ bool SingleKeyHashTable::insertQueryRead(QueryRead *read, string subString, UINT
 
 	if(currentCollision> this->maxSingleHashCollision)
 		this->maxSingleHashCollision = currentCollision;
-	if(currentCollision > 1000)
-	{
-		cout << currentCollision << " collisions for read " << read->getIdentifier() << " " << subString << " " << mode << endl;
-	}
+//	if(currentCollision > 1000)
+//	{
+//		cout << currentCollision << " collisions for read " << read->getIdentifier() << " " << subString << endl;
+//	}
 	return true;
 }
 
