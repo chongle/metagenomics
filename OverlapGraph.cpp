@@ -34,8 +34,8 @@ OverlapGraph::OverlapGraph(HashTable *ht)
 	numberOfNodes = 0;
 	numberOfEdges = 0;
 	flowComputed = false;
-	removeContainedReadsFromHashTable(ht);
-//	buildOverlapGraphFromHashTable(ht);
+//	removeContainedReadsFromHashTable(ht);
+	buildOverlapGraphFromHashTable(ht);
 
 }
 
@@ -422,7 +422,7 @@ bool OverlapGraph::insertAllEdgesOfRead(UINT64 readNumber, vector<nodeType> * ex
 				std::stringstream sstm;
 
 				int orientation = data>>62;
-				cout<<read1->getReadNumber() <<" "<< " >>> " << read2->getReadNumber() <<" orientation: "<<orientation<<" position: "<<j<<endl;
+//				cout<<read1->getReadNumber() <<" "<< " >>> " << read2->getReadNumber() <<" orientation: "<<orientation<<" position: "<<j<<endl;
 
 				if(read1->getStringForward()<read2->getStringForward())
 				sstm<<" orientation: "<<orientation<<" position: "<<j<<"||||"<<read1->getStringForward()<<"||||"<<read2->getStringForward()<<endl;
